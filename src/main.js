@@ -7,10 +7,11 @@ const socket = io();
 
 // Initialize 3D Dice with local assets to prevent CORS/Module loading issues
 const diceBox = new DiceBox("#dice-box", {
-    assetPath: "/assets/dice-box/assets/",
+    assetPath: "/assets/dice-box/",
     origin: "/assets/dice-box/",
     theme: "default",
     themeColor: "#FFD700",
+    offscreen: false, // Disable offscreen to make debugging easier and solve proxy issues
     spinForce: 6,
     throwForce: 6,
     gravity: 1,
@@ -89,6 +90,16 @@ function updatePlayerStatus() {
     }
 }
 
+// Test button to verify engine independently
+document.getElementById('test-roll-btn').addEventListener('click', () => {
+    console.log("Manual test roll triggered");
+    if (isDiceReady) {
+        diceBox.roll('2d6').then(() => console.log("Roll success")).catch(e => console.error("Roll error:", e));
+    } else {
+        alert("Dice engine not ready yet");
+    }
+});
+
 // Listen for remote throw from the server (which forwards it from mobile)
 socket.on('remoteThrow', ({ playerId, strength, color }) => {
     console.log(`Player ${playerId} threw the dice with color ${color}!`);
@@ -96,25 +107,27 @@ socket.on('remoteThrow', ({ playerId, strength, color }) => {
     // UI Feedback that event was received
     playerStatus.textContent = "Rolling dice!! 🎲";
     playerStatus.style.color = color || "#FFD700";
-    // Increase glow of the status box temporarily
-    document.querySelector('.center-status').style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.5), 0 0 30px ${color || '#FFD700'}`;
-    setTimeout(() => {
-        updatePlayerStatus();
-        document.querySelector('.center-status').style.boxShadow = '';
-    }, 3000);
+
+    const centerStatus = document.querySelector('.center-status');
+    if (centerStatus) {
+        centerStatus.style.boxShadow = `inset 0 0 20px rgba(0,0,0,0.5), 0 0 30px ${color || '#FFD700'}`;
+        setTimeout(() => {
+            updatePlayerStatus();
+            centerStatus.style.boxShadow = '';
+        }, 3000);
+    }
 
     if (!isDiceReady) {
         console.warn("3D Dice engine is not loaded yet!");
+        alert("Dice engine not ready yet");
         return;
     }
 
-    // Roll dice (will override previous automatically)
-    // Using a more standard API for dice-box: roll(notation) with globally set themeColor
-    // or passing options if supported. 
-    // To ensure individual colors work better, we can also use 'add'
-    diceBox.roll('2d6', { themeColor: color || "#FFD700" }).catch(err => {
+    console.log("Executing diceBox.roll...");
+    // Try simple call first as it's most compatible
+    diceBox.roll('2d6').then(results => {
+        console.log("Roll animation success:", results);
+    }).catch(err => {
         console.error("Dice roll failed:", err);
-        // Fallback: try simple string notation if complex options fail
-        diceBox.roll('2d6');
     });
 });

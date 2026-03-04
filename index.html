@@ -1,26 +1,32 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dice Board (Host)</title>
   <link rel="stylesheet" href="/src/style.css">
 </head>
+
 <body class="host-board">
   <!-- QR codes will be generated dynamically -->
   <div id="qr-top-left" class="qr-container"></div>
   <div id="qr-top-right" class="qr-container"></div>
   <div id="qr-bottom-left" class="qr-container"></div>
   <div id="qr-bottom-right" class="qr-container"></div>
-  
+
   <div class="center-status">
     <h1>Dice Game Board</h1>
     <p id="session-info">Session ID: Loading...</p>
     <p id="player-status">Waiting for players...</p>
+    <button id="test-roll-btn"
+      style="margin-top:20px; padding:12px 24px; cursor:pointer; background: var(--gold); color: #333; border:none; border-radius:5px; font-weight:bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index:100; pointer-events:auto;">Test
+      3D Engine (Manually)</button>
   </div>
-  
+
   <div id="dice-box"></div> <!-- 3D Dice rendering target -->
-  
+
   <script type="module" src="/src/main.js"></script>
 </body>
+
 </html>
