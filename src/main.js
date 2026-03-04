@@ -100,7 +100,7 @@ document.getElementById('test-roll-btn').addEventListener('click', () => {
     if (isDiceReady) {
         diceBox.roll('2d6').then(() => console.log("Roll success")).catch(e => console.error("Roll error:", e));
     } else {
-        alert("Dice engine not ready yet");
+        console.warn("Dice engine not ready yet");
     }
 });
 
@@ -122,8 +122,11 @@ socket.on('remoteThrow', ({ playerId, strength, color }) => {
     }
 
     if (!isDiceReady) {
-        console.warn("3D Dice engine is not loaded yet!");
-        alert("Dice engine not ready yet");
+        console.warn("3D Dice engine is not loaded yet! Queueing roll...");
+        // Optionally wait and retry once
+        setTimeout(() => {
+            if (isDiceReady) diceBox.roll('2d6');
+        }, 1000);
         return;
     }
 
