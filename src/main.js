@@ -5,10 +5,10 @@ import DiceBox from '@3d-dice/dice-box';
 // Socket connects using current origin (proxied to node)
 const socket = io();
 
-// Initialize 3D Dice with external CDN assets for simplicity
+// Initialize 3D Dice with local assets to prevent CORS/Module loading issues
 const diceBox = new DiceBox("#dice-box", {
-    assetPath: "https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/",
-    origin: "https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/",
+    assetPath: "/assets/dice-box/assets/",
+    origin: "/assets/dice-box/",
     theme: "default",
     themeColor: "#FFD700",
     spinForce: 6,

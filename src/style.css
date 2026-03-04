@@ -121,8 +121,6 @@ canvas {
   height: 100%;
   z-index: 5;
   /* Below QR, above background */
-  pointer-events: none;
-  /* Let clicks pass through if needed */
 }
 
 /* =========================================
