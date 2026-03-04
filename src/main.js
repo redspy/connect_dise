@@ -41,13 +41,15 @@ socket.on('connect', () => {
     socket.emit('createSession');
 });
 
-socket.on('sessionCreated', async (sessionId) => {
+socket.on('sessionCreated', async ({ sessionId, localIp }) => {
     currentSession = sessionId;
     sessionInfo.innerHTML = `Session ID<br><strong>${sessionId}</strong>`;
 
-    // Mobile Network URL matches the current host with https
+    // Mobile Network URL utilizes the backend resolved IP to bypass localhost bindings
     const scheme = window.location.protocol;
-    const mobileUrl = `${scheme}//${window.location.host}/mobile.html?session=${sessionId}`;
+    // Keep the port the same as where the Vite app is running (e.g. 5173)
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const mobileUrl = `${scheme}//${localIp}${port}/mobile.html?session=${sessionId}`;
 
     // Generate QRs
     for (const container of qrContainers) {

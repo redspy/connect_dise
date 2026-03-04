@@ -1,6 +1,7 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import os from 'os';
 
 const app = express();
 const httpServer = createServer(app);
@@ -11,6 +12,20 @@ const io = new Server(httpServer, {
     }
 });
 
+// Helper to get local IP
+function getLocalIp() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            // Skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1'; // Fallback
+}
+
 // Keep track of active sessions
 const sessions = new Map();
 
@@ -20,11 +35,14 @@ io.on('connection', (socket) => {
     // Host (PC) creates a new session
     socket.on('createSession', () => {
         const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const localIp = getLocalIp();
 
         sessions.set(sessionId, { hostSocket: socket.id, players: [] });
         socket.join(sessionId);
-        socket.emit('sessionCreated', sessionId);
-        console.log(`Session ${sessionId} created by ${socket.id}`);
+
+        // Emit session details including the forced local IP for QRs
+        socket.emit('sessionCreated', { sessionId, localIp });
+        console.log(`Session ${sessionId} created by ${socket.id} (IP: ${localIp})`);
     });
 
     // Mobile connects to a session
