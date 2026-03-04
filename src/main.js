@@ -98,7 +98,7 @@ function updatePlayerStatus() {
 document.getElementById('test-roll-btn').addEventListener('click', () => {
     console.log("Manual test roll triggered");
     if (isDiceReady) {
-        diceBox.roll('2d6').then(() => console.log("Roll success")).catch(e => console.error("Roll error:", e));
+        diceBox.roll('1d6').then(() => console.log("Roll success")).catch(e => console.error("Roll error:", e));
     } else {
         console.warn("Dice engine not ready yet");
     }
@@ -131,10 +131,23 @@ socket.on('remoteThrow', ({ playerId, strength, color }) => {
     }
 
     console.log("Executing diceBox.roll...");
-    // Try simple call first as it's most compatible
-    diceBox.roll('2d6').then(results => {
+    const canvas = document.querySelector('#dice-box canvas');
+    if (canvas) {
+        canvas.style.filter = `drop-shadow(0 0 30px ${color || "#FFFFFF"})`;
+    }
+
+    // Roll single dice (1d6) to match mobile, and apply the player's color
+    diceBox.roll('1d6', {
+        themeColor: color || "#FFD700"
+    }).then(results => {
         console.log("Roll animation success:", results);
+        // Fade out glow after some time
+        setTimeout(() => {
+            if (canvas) canvas.style.filter = 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))';
+        }, 3000);
     }).catch(err => {
         console.error("Dice roll failed:", err);
+        // Fallback: try simple string notation
+        diceBox.roll('1d6');
     });
 });
