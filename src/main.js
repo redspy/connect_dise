@@ -5,13 +5,15 @@ import DiceBox from '@3d-dice/dice-box';
 // Socket connects using current origin (proxied to node)
 const socket = io();
 
-// Initialize 3D Dice with local assets to prevent CORS/Module loading issues
-const diceBox = new DiceBox("#dice-box", {
+// Initialize 3D Dice with local assets
+// v1.1.0+ API uses a single config object
+const diceBox = new DiceBox({
+    container: "#dice-box",
     assetPath: "/assets/dice-box/",
-    origin: "/assets/dice-box/",
+    origin: window.location.origin,
     theme: "default",
     themeColor: "#FFD700",
-    offscreen: false, // Disable offscreen to make debugging easier and solve proxy issues
+    offscreen: false,
     spinForce: 6,
     throwForce: 6,
     gravity: 1,
@@ -22,6 +24,8 @@ let isDiceReady = false;
 diceBox.init().then(() => {
     console.log("DiceBox ready");
     isDiceReady = true;
+}).catch(err => {
+    console.error("DiceBox init failed:", err);
 });
 
 // Update UI elements
