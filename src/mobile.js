@@ -17,8 +17,8 @@ if (!sessionId) {
 } else {
     sessionDisplay.textContent = `Session: ${sessionId}`;
 
-    // Connect to Socket.IO server on port 3000
-    socket = io(`http://${window.location.hostname}:3000`);
+    // Connect to Socket.IO server utilizing Vite's proxy
+    socket = io();
 
     socket.on('connect', () => {
         socket.emit('joinSession', sessionId);
@@ -80,6 +80,22 @@ function initSensors() {
                         gamma: event.gamma
                     }
                 });
+            }
+        }
+    });
+
+    // Provide visual feedback by shaking the dice on screen!
+    window.addEventListener('devicemotion', (event) => {
+        const acc = event.accelerationIncludingGravity || event.acceleration;
+        if (acc) {
+            const magnitude = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+            if (magnitude > 15 && !visualDice.classList.contains('throwing')) {
+                visualDice.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) rotate(${Math.random() * 20 - 10}deg)`;
+                setTimeout(() => {
+                    if (!visualDice.classList.contains('throwing')) {
+                        visualDice.style.transform = 'none';
+                    }
+                }, 100);
             }
         }
     });

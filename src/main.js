@@ -2,8 +2,8 @@ import { io } from 'socket.io-client';
 import QRCode from 'qrcode';
 import DiceBox from '@3d-dice/dice-box';
 
-// Using window.location.hostname allows mobile devices on same network to reach the server
-const socket = io(`http://${window.location.hostname}:3000`);
+// Socket connects using current origin (proxied to node)
+const socket = io();
 
 // Initialize 3D Dice with external CDN assets for simplicity
 const diceBox = new DiceBox("#dice-box", {
@@ -45,8 +45,9 @@ socket.on('sessionCreated', async (sessionId) => {
     currentSession = sessionId;
     sessionInfo.innerHTML = `Session ID<br><strong>${sessionId}</strong>`;
 
-    // Mobile Network URL
-    const mobileUrl = `http://${window.location.hostname}:5173/mobile.html?session=${sessionId}`;
+    // Mobile Network URL matches the current host with https
+    const scheme = window.location.protocol;
+    const mobileUrl = `${scheme}//${window.location.host}/mobile.html?session=${sessionId}`;
 
     // Generate QRs
     for (const container of qrContainers) {
