@@ -89,13 +89,18 @@ function updatePlayerStatus() {
 
 // Listen for remote throw from the server (which forwards it from mobile)
 socket.on('remoteThrow', ({ playerId, strength }) => {
-    console.log(`Player ${playerId} threw the dice with strength ${strength}`);
+    console.log(`Player ${playerId} threw the dice!`);
 
-    if (!isDiceReady) return;
+    // UI Feedback that event was received
+    playerStatus.textContent = "Rolling dice!! 🎲";
+    playerStatus.style.color = "#FFD700";
+    setTimeout(updatePlayerStatus, 3000);
 
-    // Clear previous dice
-    diceBox.clear();
+    if (!isDiceReady) {
+        console.warn("3D Dice engine is not loaded yet!");
+        return;
+    }
 
-    // Throw dice (2d6 standard)
-    diceBox.roll('2d6');
+    // Roll dice (will override previous automatically)
+    diceBox.roll('2d6').catch(err => console.error("Dice roll failed:", err));
 });

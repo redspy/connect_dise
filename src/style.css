@@ -21,9 +21,9 @@ body {
 ========================================= */
 body.host-board {
   /* Green felt texture using CSS gradients */
-  background: 
-    radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%),
-    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green)), 
+  background:
+    radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%),
+    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green)),
     linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green));
   background-color: var(--felt-green);
   background-size: 100% 100%, 20px 20px, 20px 20px;
@@ -42,14 +42,14 @@ body.host-board {
   transform: translate(-50%, -50%);
   text-align: center;
   color: var(--gold);
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   z-index: 10;
   border: 4px solid var(--gold);
   padding: 30px;
   border-radius: 50%;
   background-color: rgba(28, 84, 53, 0.7);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
   width: 400px;
   height: 400px;
   display: flex;
@@ -75,7 +75,7 @@ body.host-board {
   background: white;
   padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 20;
 }
 
@@ -87,12 +87,31 @@ body.host-board {
   font-weight: bold;
 }
 
-#qr-top-left { top: 30px; left: 30px; }
-#qr-top-right { top: 30px; right: 30px; }
-#qr-bottom-left { bottom: 30px; left: 30px; }
-#qr-bottom-right { bottom: 30px; right: 30px; }
+#qr-top-left {
+  top: 30px;
+  left: 30px;
+}
 
-canvas { display: block; } /* For QRCode */
+#qr-top-right {
+  top: 30px;
+  right: 30px;
+}
+
+#qr-bottom-left {
+  bottom: 30px;
+  left: 30px;
+}
+
+#qr-bottom-right {
+  bottom: 30px;
+  right: 30px;
+}
+
+canvas {
+  display: block;
+}
+
+/* For QRCode */
 
 #dice-box {
   position: absolute;
@@ -100,8 +119,10 @@ canvas { display: block; } /* For QRCode */
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 5; /* Below QR, above background */
-  pointer-events: none; /* Let clicks pass through if needed */
+  z-index: 5;
+  /* Below QR, above background */
+  pointer-events: none;
+  /* Let clicks pass through if needed */
 }
 
 /* =========================================
@@ -136,13 +157,15 @@ body.mobile-controller {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background-color: #ff4444; /* red by default */
+  background-color: #ff4444;
+  /* red by default */
   margin-right: 10px;
   box-shadow: 0 0 10px #ff4444;
 }
 
 .status-dot.connected {
-  background-color: #00C851; /* green */
+  background-color: #00C851;
+  /* green */
   box-shadow: 0 0 10px #00C851;
 }
 
@@ -158,14 +181,25 @@ body.mobile-controller {
 .mobile-dice {
   font-size: 8rem;
   transition: transform 0.1s ease-out;
-  text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  text-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Animation for dice throwing */
 @keyframes throw-up {
-  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-  50% { transform: translateY(-200px) scale(0.5) rotate(180deg); opacity: 0.5; }
-  100% { transform: translateY(-400px) scale(0.1) rotate(360deg); opacity: 0; }
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateY(-200px) scale(0.5) rotate(180deg);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: translateY(-400px) scale(0.1) rotate(360deg);
+    opacity: 0;
+  }
 }
 
 .mobile-dice.throwing {
@@ -196,7 +230,7 @@ body.mobile-controller {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0, 0, 0, 0.8);
   justify-content: center;
   align-items: center;
 }
@@ -211,10 +245,12 @@ body.mobile-controller {
   border-radius: 10px;
   text-align: center;
   max-width: 80%;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-.modal-content h2 { color: var(--gold); }
+.modal-content h2 {
+  color: var(--gold);
+}
 
 #btn-grant-permission {
   background-color: var(--felt-green);
@@ -230,4 +266,33 @@ body.mobile-controller {
 
 #btn-grant-permission:active {
   background-color: var(--dark-green);
+}
+
+/* Retry Button */
+#btn-retry {
+  background-color: var(--gold);
+  color: #333;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  position: absolute;
+  bottom: 15%;
+}
+
+#btn-retry.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#btn-retry:active {
+  background-color: #e6c200;
 }

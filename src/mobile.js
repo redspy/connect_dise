@@ -9,6 +9,9 @@ const permissionModal = document.getElementById('permission-modal');
 const btnGrant = document.getElementById('btn-grant-permission');
 const diceArea = document.getElementById('dice-area');
 const visualDice = document.getElementById('visual-dice');
+const instructionMain = document.getElementById('instruction-main');
+const instructionSub = document.getElementById('instruction-sub');
+const btnRetry = document.getElementById('btn-retry');
 
 let socket;
 
@@ -89,13 +92,16 @@ function initSensors() {
         const acc = event.accelerationIncludingGravity || event.acceleration;
         if (acc) {
             const magnitude = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
-            if (magnitude > 15 && !visualDice.classList.contains('throwing')) {
-                visualDice.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) rotate(${Math.random() * 20 - 10}deg)`;
+            // Lowered threshold to 5 for higher sensitivity, make rotation extreme for shaking feel
+            if (magnitude > 5 && !visualDice.classList.contains('throwing')) {
+                visualDice.style.transition = 'transform 0.05s ease';
+                visualDice.style.transform = `translate(${Math.random() * 40 - 20}px, ${Math.random() * 40 - 20}px) rotate(${Math.random() * 360}deg) scale(${1 + Math.random() * 0.2})`;
                 setTimeout(() => {
                     if (!visualDice.classList.contains('throwing')) {
                         visualDice.style.transform = 'none';
+                        visualDice.style.transition = 'transform 0.1s ease-out';
                     }
-                }, 100);
+                }, 50);
             }
         }
     });
@@ -121,6 +127,8 @@ diceArea.addEventListener('dblclick', () => {
 function triggerThrow() {
     const now = Date.now();
     if (now - lastThrowTime < 500) return; // Debounce 0.5s
+    if (visualDice.classList.contains('throwing')) return; // Prevent multiple throws
+
     lastThrowTime = now;
 
     // Animate local dice (throws upwards)
@@ -128,8 +136,21 @@ function triggerThrow() {
     void visualDice.offsetWidth; // trigger reflow
     visualDice.classList.add('throwing');
 
+    // Hide instructions, show retry
+    if (instructionMain) instructionMain.classList.add('hidden');
+    if (instructionSub) instructionSub.classList.add('hidden');
+
+    // Show Retry button after animation finishes
+    setTimeout(() => {
+        if (btnRetry) {
+            btnRetry.classList.remove('hidden');
+            // Slight delay to allow display block to apply before opacity transition
+            setTimeout(() => btnRetry.classList.add('visible'), 50);
+        }
+    }, 500);
+
     // Vibrate if supported
-    if (navigator.vibrate) navigator.vibrate(200);
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
     // Emit throw event to server
     if (socket && sessionId) {
@@ -138,4 +159,20 @@ function triggerThrow() {
             strength: 1.0 // Future: Calculate strength based on DeviceAcceleration
         });
     }
+}
+
+// Attach Retry behavior
+if (btnRetry) {
+    btnRetry.addEventListener('click', () => {
+        // Reset dice
+        visualDice.classList.remove('throwing');
+
+        // Hide retry button
+        btnRetry.classList.remove('visible');
+        setTimeout(() => btnRetry.classList.add('hidden'), 300);
+
+        // Show instructions again
+        if (instructionMain) instructionMain.classList.remove('hidden');
+        if (instructionSub) instructionSub.classList.remove('hidden');
+    });
 }
