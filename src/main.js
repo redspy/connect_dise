@@ -1,0 +1,100 @@
+import { io } from 'socket.io-client';
+import QRCode from 'qrcode';
+import DiceBox from '@3d-dice/dice-box';
+
+// Using window.location.hostname allows mobile devices on same network to reach the server
+const socket = io(`http://${window.location.hostname}:3000`);
+
+// Initialize 3D Dice with external CDN assets for simplicity
+const diceBox = new DiceBox("#dice-box", {
+    assetPath: "https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/assets/",
+    origin: "https://unpkg.com/@3d-dice/dice-box@1.1.3/dist/",
+    theme: "default",
+    themeColor: "#FFD700",
+    spinForce: 6,
+    throwForce: 6,
+    gravity: 1,
+    scale: 6
+});
+
+let isDiceReady = false;
+diceBox.init().then(() => {
+    console.log("DiceBox ready");
+    isDiceReady = true;
+});
+
+// Update UI elements
+const sessionInfo = document.getElementById('session-info');
+const playerStatus = document.getElementById('player-status');
+const qrContainers = [
+    document.getElementById('qr-top-left'),
+    document.getElementById('qr-top-right'),
+    document.getElementById('qr-bottom-left'),
+    document.getElementById('qr-bottom-right')
+];
+
+let currentSession = null;
+let playerCount = 0;
+
+socket.on('connect', () => {
+    console.log('Connected to server, requesting session...');
+    socket.emit('createSession');
+});
+
+socket.on('sessionCreated', async (sessionId) => {
+    currentSession = sessionId;
+    sessionInfo.innerHTML = `Session ID<br><strong>${sessionId}</strong>`;
+
+    // Mobile Network URL
+    const mobileUrl = `http://${window.location.hostname}:5173/mobile.html?session=${sessionId}`;
+
+    // Generate QRs
+    for (const container of qrContainers) {
+        container.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        container.appendChild(canvas);
+
+        await QRCode.toCanvas(canvas, mobileUrl, {
+            width: 120,
+            margin: 1,
+            color: { dark: '#1C5435', light: '#FFFFFF' }
+        });
+
+        const text = document.createElement('p');
+        text.textContent = 'Scan to Join';
+        container.appendChild(text);
+    }
+});
+
+socket.on('playerJoined', (playerId) => {
+    playerCount++;
+    updatePlayerStatus();
+});
+
+socket.on('playerLeft', (playerId) => {
+    playerCount = Math.max(0, playerCount - 1);
+    updatePlayerStatus();
+});
+
+function updatePlayerStatus() {
+    if (playerCount > 0) {
+        playerStatus.textContent = `${playerCount} Player(s) connected and ready!`;
+        playerStatus.style.color = "#00C851";
+    } else {
+        playerStatus.textContent = 'Waiting for players...';
+        playerStatus.style.color = "#F0F0F0";
+    }
+}
+
+// Listen for remote throw from the server (which forwards it from mobile)
+socket.on('remoteThrow', ({ playerId, strength }) => {
+    console.log(`Player ${playerId} threw the dice with strength ${strength}`);
+
+    if (!isDiceReady) return;
+
+    // Clear previous dice
+    diceBox.clear();
+
+    // Throw dice (2d6 standard)
+    diceBox.roll('2d6');
+});

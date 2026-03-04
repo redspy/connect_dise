@@ -1,0 +1,233 @@
+/* src/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+:root {
+  --felt-green: #2E8B57;
+  --dark-green: #1C5435;
+  --gold: #FFD700;
+  --text-light: #F0F0F0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', sans-serif;
+  overflow: hidden;
+  background-color: #222;
+}
+
+/* =========================================
+   Host Board Styles (PC)
+========================================= */
+body.host-board {
+  /* Green felt texture using CSS gradients */
+  background: 
+    radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 100%),
+    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green)), 
+    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green));
+  background-color: var(--felt-green);
+  background-size: 100% 100%, 20px 20px, 20px 20px;
+  background-position: 0 0, 0 0, 10px 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  position: relative;
+}
+
+.center-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--gold);
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  pointer-events: none;
+  z-index: 10;
+  border: 4px solid var(--gold);
+  padding: 30px;
+  border-radius: 50%;
+  background-color: rgba(28, 84, 53, 0.7);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+  width: 400px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.center-status h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  margin-top: 0;
+}
+
+.center-status p {
+  font-size: 1.2rem;
+  margin: 5px 0;
+  color: var(--text-light);
+}
+
+/* QR Code Corners */
+.qr-container {
+  position: absolute;
+  background: white;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  z-index: 20;
+}
+
+.qr-container p {
+  text-align: center;
+  margin: 5px 0 0 0;
+  font-size: 0.8rem;
+  color: #333;
+  font-weight: bold;
+}
+
+#qr-top-left { top: 30px; left: 30px; }
+#qr-top-right { top: 30px; right: 30px; }
+#qr-bottom-left { bottom: 30px; left: 30px; }
+#qr-bottom-right { bottom: 30px; right: 30px; }
+
+canvas { display: block; } /* For QRCode */
+
+#dice-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5; /* Below QR, above background */
+  pointer-events: none; /* Let clicks pass through if needed */
+}
+
+/* =========================================
+   Mobile Controller Styles
+========================================= */
+body.mobile-controller {
+  background-color: #1a1a1a;
+  color: var(--text-light);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.controller-ui {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+}
+
+.status-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-color: #ff4444; /* red by default */
+  margin-right: 10px;
+  box-shadow: 0 0 10px #ff4444;
+}
+
+.status-dot.connected {
+  background-color: #00C851; /* green */
+  box-shadow: 0 0 10px #00C851;
+}
+
+.dice-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.mobile-dice {
+  font-size: 8rem;
+  transition: transform 0.1s ease-out;
+  text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+/* Animation for dice throwing */
+@keyframes throw-up {
+  0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: translateY(-200px) scale(0.5) rotate(180deg); opacity: 0.5; }
+  100% { transform: translateY(-400px) scale(0.1) rotate(360deg); opacity: 0; }
+}
+
+.mobile-dice.throwing {
+  animation: throw-up 0.5s forwards ease-in;
+}
+
+.instruction {
+  font-size: 1.5rem;
+  margin-top: 30px;
+  font-weight: bold;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+.instruction.sub {
+  font-size: 1rem;
+  font-weight: normal;
+  color: #aaa;
+  margin-top: 10px;
+}
+
+/* Permission Modal */
+.modal {
+  display: flex;
+  position: fixed;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: #333;
+  padding: 30px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 80%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.modal-content h2 { color: var(--gold); }
+
+#btn-grant-permission {
+  background-color: var(--felt-green);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border-radius: 5px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#btn-grant-permission:active {
+  background-color: var(--dark-green);
+}

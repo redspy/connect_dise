@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dice Controller</title>
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body class="mobile-controller">
+    <div id="permission-modal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Dice Game!</h2>
+            <p>This game requires access to your device's motion sensors to roll the dice.</p>
+            <button id="btn-grant-permission">Grant Permission & Play</button>
+        </div>
+    </div>
+
+    <div class="controller-ui">
+        <div class="status-indicator">
+            <span id="connection-status" class="status-dot"></span>
+            <span id="session-display">Session: ---</span>
+        </div>
+
+        <div class="dice-area" id="dice-area">
+            <div class="mobile-dice" id="visual-dice">🎲</div>
+            <p class="instruction">Shake to Roll!</p>
+            <p class="instruction sub">Double-Tap to Throw!</p>
+        </div>
+
+        <!-- Audio element for rattling sound (optional, will add later) -->
+    </div>
+
+    <script type="module" src="/src/mobile.js"></script>
+</body>
+
+</html>
