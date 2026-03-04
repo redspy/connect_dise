@@ -14,6 +14,7 @@ const instructionSub = document.getElementById('instruction-sub');
 const btnRetry = document.getElementById('btn-retry');
 
 let socket;
+let myColor = '#FFFFFF'; // Default
 
 if (!sessionId) {
     sessionDisplay.textContent = 'No Session ID provided';
@@ -27,8 +28,15 @@ if (!sessionId) {
         socket.emit('joinSession', sessionId);
     });
 
-    socket.on('joined', (id) => {
+    socket.on('joined', ({ sessionId, color }) => {
         connectionStatus.classList.add('connected');
+        myColor = color;
+        // Make the mobile dice reflect the assigned color
+        visualDice.style.color = myColor;
+        // Use a more intense glow for the dice
+        visualDice.style.textShadow = `0 10px 20px rgba(0,0,0,0.5), 0 0 30px ${myColor}, 0 0 60px ${myColor}`;
+        // Update instruction color slightly to match theme
+        instructionMain.style.color = myColor;
     });
 
     socket.on('hostDisconnected', () => {
@@ -156,7 +164,8 @@ function triggerThrow() {
     if (socket && sessionId) {
         socket.emit('throwDice', {
             sessionId,
-            strength: 1.0 // Future: Calculate strength based on DeviceAcceleration
+            strength: 1.0, // Future: Calculate strength based on DeviceAcceleration
+            color: myColor
         });
     }
 }

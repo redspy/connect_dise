@@ -45,17 +45,28 @@ io.on('connection', (socket) => {
         console.log(`Session ${sessionId} created by ${socket.id} (IP: ${localIp})`);
     });
 
+    // Predefined distinct colors for players
+    const playerColors = ['#FF4444', '#33B5E5', '#99CC00', '#FFBB33', '#AA66CC', '#FF00A2'];
+
     // Mobile connects to a session
     socket.on('joinSession', (sessionId) => {
         const session = sessions.get(sessionId);
         if (session) {
             socket.join(sessionId);
-            session.players.push(socket.id);
 
-            // Notify host that player joined
-            io.to(session.hostSocket).emit('playerJoined', socket.id);
-            socket.emit('joined', sessionId);
-            console.log(`Mobile ${socket.id} joined session ${sessionId}`);
+            // Assign a color based on the number of current players in the session
+            const colorIndex = session.players.length % playerColors.length;
+            const assignedColor = playerColors[colorIndex];
+
+            // Store player socket and their assigned color
+            const playerInfo = { id: socket.id, color: assignedColor };
+            session.players.push(playerInfo);
+
+            // Notify host that player joined along with their color
+            io.to(session.hostSocket).emit('playerJoined', playerInfo);
+            // Notify player of successful join and their color
+            socket.emit('joined', { sessionId, color: assignedColor });
+            console.log(`Mobile ${socket.id} joined session ${sessionId} with color ${assignedColor}`);
         } else {
             socket.emit('error', 'Session not found or invalid');
         }
@@ -71,10 +82,10 @@ io.on('connection', (socket) => {
     });
 
     // Forward dice throw event from mobile to host
-    socket.on('throwDice', ({ sessionId, strength }) => {
+    socket.on('throwDice', ({ sessionId, strength, color }) => {
         const session = sessions.get(sessionId);
         if (session) {
-            io.to(session.hostSocket).emit('remoteThrow', { playerId: socket.id, strength });
+            io.to(session.hostSocket).emit('remoteThrow', { playerId: socket.id, strength, color });
         }
     });
 
