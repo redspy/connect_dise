@@ -1,10 +1,14 @@
 /* src/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap');
 
 :root {
-  --felt-green: #2E8B57;
-  --dark-green: #1C5435;
+  --felt-green: #1a6b3a;
+  --dark-green: #0f3d21;
+  --mid-green: #155c30;
+  --rail-brown: #3d1f0a;
+  --rail-dark: #2a1406;
   --gold: #FFD700;
+  --gold-dark: #b8960c;
   --text-light: #F0F0F0;
 }
 
@@ -13,26 +17,71 @@ body {
   padding: 0;
   font-family: 'Roboto', sans-serif;
   overflow: hidden;
-  background-color: #222;
+  background-color: #111;
 }
 
 /* =========================================
-   Host Board Styles (PC)
+   Host Board Styles (PC) - Casino Table
 ========================================= */
 body.host-board {
-  /* Green felt texture using CSS gradients */
-  background:
-    radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 100%),
-    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green)),
-    linear-gradient(45deg, var(--dark-green) 25%, transparent 25%, transparent 75%, var(--dark-green) 75%, var(--dark-green));
-  background-color: var(--felt-green);
-  background-size: 100% 100%, 20px 20px, 20px 20px;
-  background-position: 0 0, 0 0, 10px 10px;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   position: relative;
+  /* Dark wooden outer frame */
+  background-color: var(--rail-dark);
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9);
+}
+
+/* Casino table felt surface */
+body.host-board::before {
+  content: '';
+  position: absolute;
+  inset: 40px;
+  border-radius: 120px;
+  /* Felt texture: subtle woven pattern */
+  background-color: var(--felt-green);
+  background-image:
+    /* Vignette darkening at edges */
+    radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 100%),
+    /* Fine diagonal weave */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.07) 2px,
+      rgba(0, 0, 0, 0.07) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.03) 2px,
+      rgba(255, 255, 255, 0.03) 4px
+    );
+  /* Gold rail border */
+  border: 6px solid var(--gold-dark);
+  box-shadow:
+    0 0 0 12px var(--rail-brown),
+    0 0 0 16px rgba(184, 150, 12, 0.4),
+    inset 0 0 60px rgba(0, 0, 0, 0.4),
+    0 0 40px rgba(0, 0, 0, 0.8);
+  z-index: 0;
+}
+
+/* Inner decorative gold oval line on the felt */
+body.host-board::after {
+  content: '';
+  position: absolute;
+  inset: 90px;
+  border-radius: 100px;
+  border: 2px solid rgba(255, 215, 0, 0.2);
+  box-shadow:
+    0 0 0 8px rgba(255, 215, 0, 0.05),
+    inset 0 0 0 8px rgba(255, 215, 0, 0.05);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .center-status {
@@ -42,69 +91,95 @@ body.host-board {
   transform: translate(-50%, -50%);
   text-align: center;
   color: var(--gold);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   pointer-events: none;
   z-index: 10;
-  border: 4px solid var(--gold);
+  /* Oval center piece with deep felt inset */
+  border: 3px solid var(--gold-dark);
   padding: 30px;
   border-radius: 50%;
-  background-color: rgba(28, 84, 53, 0.7);
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
-  width: 400px;
-  height: 400px;
+  background:
+    radial-gradient(ellipse at 40% 35%, rgba(30, 100, 60, 0.9) 0%, rgba(10, 50, 25, 0.95) 100%);
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    0 0 30px rgba(255, 215, 0, 0.15),
+    0 0 60px rgba(0, 0, 0, 0.5);
+  width: 380px;
+  height: 380px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  font-family: 'Cinzel', serif;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .center-status h1 {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   margin-bottom: 10px;
   margin-top: 0;
+  letter-spacing: 2px;
+  background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.8));
 }
 
 .center-status p {
-  font-size: 1.2rem;
-  margin: 5px 0;
-  color: var(--text-light);
+  font-size: 1.1rem;
+  margin: 6px 0;
+  color: rgba(240, 240, 240, 0.85);
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 0.5px;
 }
 
 /* QR Code Corners */
 .qr-container {
   position: absolute;
-  background: white;
+  background: rgba(20, 20, 20, 0.85);
   padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 215, 0, 0.1);
   z-index: 20;
+  backdrop-filter: blur(4px);
+}
+
+.qr-container canvas {
+  border-radius: 4px;
 }
 
 .qr-container p {
   text-align: center;
-  margin: 5px 0 0 0;
-  font-size: 0.8rem;
-  color: #333;
+  margin: 6px 0 0 0;
+  font-size: 0.75rem;
+  color: var(--gold);
   font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
 #qr-top-left {
-  top: 30px;
-  left: 30px;
+  top: 60px;
+  left: 60px;
 }
 
 #qr-top-right {
-  top: 30px;
-  right: 30px;
+  top: 60px;
+  right: 60px;
 }
 
 #qr-bottom-left {
-  bottom: 30px;
-  left: 30px;
+  bottom: 60px;
+  left: 60px;
 }
 
 #qr-bottom-right {
-  bottom: 30px;
-  right: 30px;
+  bottom: 60px;
+  right: 60px;
 }
 
 canvas {
@@ -115,13 +190,17 @@ canvas {
 
 #dice-box {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  /* Match felt table boundary so physics walls align with the table edge */
+  top: 56px;    /* inset 40px + border 6px + rail 10px */
+  left: 56px;
+  right: 56px;
+  bottom: 56px;
+  width: auto;
+  height: auto;
   z-index: 5;
-  /* Below QR, above background */
   display: block;
+  border-radius: 108px;
+  overflow: hidden;
 }
 
 #dice-box canvas {
@@ -129,6 +208,7 @@ canvas {
   height: 100% !important;
   filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
   transition: filter 0.3s ease;
+  border-radius: 108px;
 }
 
 /* =========================================
