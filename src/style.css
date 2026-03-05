@@ -307,6 +307,104 @@ body.mobile-controller {
   margin-top: 10px;
 }
 
+/* =========================================
+   Spirit Level / Gyroscope Indicator
+========================================= */
+.level-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 8px;
+  gap: 10px;
+}
+
+.level-bowl {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #1e2a1e, #0a0f0a);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    inset 0 2px 8px rgba(0, 0, 0, 0.8),
+    inset 0 0 20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+/* Crosshair lines */
+.level-crosshair-h,
+.level-crosshair-v {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.level-crosshair-h {
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.level-crosshair-v {
+  left: 50%;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+/* Center target ring */
+.level-center-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* The bubble */
+.level-bubble {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #aaffcc, #00cc66);
+  box-shadow:
+    0 0 8px rgba(0, 255, 100, 0.8),
+    0 0 20px rgba(0, 255, 100, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: top 0.1s ease-out, left 0.1s ease-out, background 0.3s ease, box-shadow 0.3s ease;
+  pointer-events: none;
+}
+
+/* Red bubble when far from center */
+.level-bubble.tilted {
+  background: radial-gradient(circle at 35% 35%, #ffaaaa, #cc3333);
+  box-shadow:
+    0 0 8px rgba(255, 80, 80, 0.8),
+    0 0 20px rgba(255, 80, 80, 0.4),
+    inset 0 1px 3px rgba(255, 255, 255, 0.6);
+}
+
+.level-values {
+  display: flex;
+  gap: 20px;
+  font-size: 0.75rem;
+  color: rgba(200, 255, 200, 0.7);
+  font-family: 'Roboto Mono', monospace, sans-serif;
+  letter-spacing: 1px;
+}
+
 /* Permission Modal */
 .modal {
   display: flex;

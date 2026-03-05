@@ -76,10 +76,40 @@ btnGrant.addEventListener('click', async () => {
 let lastUpdate = 0;
 let lastThrowTime = 0;
 
+const levelBubble = document.getElementById('level-bubble');
+const levelBeta  = document.getElementById('level-beta');
+const levelGamma = document.getElementById('level-gamma');
+const BOWL_RADIUS = 46; // px — usable radius inside the bowl (60 - bubble_radius/2)
+
+function updateLevelIndicator(beta, gamma) {
+    // beta: front-back tilt (-180~180), gamma: left-right tilt (-90~90)
+    // Clamp to ±45° for the bowl range
+    const clampedBeta  = Math.max(-45, Math.min(45, beta  ?? 0));
+    const clampedGamma = Math.max(-45, Math.min(45, gamma ?? 0));
+
+    // Map ±45° → ±BOWL_RADIUS px. Bubble moves opposite to tilt (like real bubble)
+    const x = (-clampedGamma / 45) * BOWL_RADIUS;
+    const y = (-clampedBeta  / 45) * BOWL_RADIUS;
+
+    // Position: center is 50%/50%, offset in px
+    levelBubble.style.left = `calc(50% + ${x.toFixed(1)}px)`;
+    levelBubble.style.top  = `calc(50% + ${y.toFixed(1)}px)`;
+
+    // Color: green when near center, red when tilted
+    const dist = Math.sqrt(x * x + y * y);
+    levelBubble.classList.toggle('tilted', dist > BOWL_RADIUS * 0.4);
+
+    // Text values
+    levelBeta.textContent  = `β: ${(beta  ?? 0).toFixed(1)}°`;
+    levelGamma.textContent = `γ: ${(gamma ?? 0).toFixed(1)}°`;
+}
+
 function initSensors() {
     window.addEventListener('deviceorientation', (event) => {
         const now = Date.now();
-        if (now - lastUpdate > 100) { // Throttle updates
+        updateLevelIndicator(event.beta, event.gamma);
+
+        if (now - lastUpdate > 100) { // Throttle network updates
             lastUpdate = now;
             if (socket && sessionId && connectionStatus.classList.contains('connected')) {
                 // Send gyro data to server (for future 3D tilt effects if needed)
