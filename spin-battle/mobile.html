@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Spin Battle - Controller</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="/src/spin-battle-style.css">
+</head>
+<body class="mobile-controller spin-mobile">
+
+  <!-- Permission Modal -->
+  <div id="permission-modal" class="modal">
+    <div class="modal-content">
+      <h2>Spin Battle!</h2>
+      <p>팽이 배틀 게임에 오신 걸 환영합니다.<br>센서 접근 권한이 필요합니다.</p>
+      <button id="btn-grant-permission">게임 시작</button>
+    </div>
+  </div>
+
+  <!-- Controller UI -->
+  <div class="controller-ui" id="controller-ui">
+    <div class="status-indicator">
+      <span id="connection-status" class="status-dot"></span>
+      <span id="session-display">Session: ---</span>
+    </div>
+
+    <!-- Lobby phase -->
+    <div id="phase-lobby" class="spin-phase">
+      <div class="spin-waiting-icon">🌀</div>
+      <p class="spin-phase-title">대기 중...</p>
+      <p class="spin-phase-sub">호스트가 게임을 시작하길 기다리는 중입니다.</p>
+      <div id="my-color-dot" class="my-color-display"></div>
+    </div>
+
+    <!-- Launch phase -->
+    <div id="phase-launch" class="spin-phase hidden">
+      <p class="spin-phase-title">비틀어서 런칭!</p>
+      <p class="spin-phase-sub">폰을 빠르게 비틀어 회전력을 올리세요</p>
+      <div id="launch-rpm-display" class="launch-rpm">0 RPM</div>
+      <div class="rpm-gauge-wrap">
+        <div id="launch-gauge-bar" class="rpm-gauge-bar"></div>
+      </div>
+      <div id="launch-timer" class="launch-timer">5</div>
+    </div>
+
+    <!-- Battle phase -->
+    <div id="phase-battle" class="spin-phase hidden">
+      <p class="spin-phase-title">기울여서 조종!</p>
+      <div id="battle-rpm-display" class="battle-rpm">2000 RPM</div>
+      <div class="rpm-gauge-wrap">
+        <div id="battle-gauge-bar" class="rpm-gauge-bar"></div>
+      </div>
+      <!-- Spirit level -->
+      <div class="level-container">
+        <div class="level-bowl">
+          <div class="level-crosshair-h"></div>
+          <div class="level-crosshair-v"></div>
+          <div class="level-center-ring"></div>
+          <div class="level-bubble" id="level-bubble"></div>
+        </div>
+        <div class="level-values">
+          <span id="level-beta">β: 0°</span>
+          <span id="level-gamma">γ: 0°</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Eliminated phase -->
+    <div id="phase-eliminated" class="spin-phase hidden">
+      <div class="spin-waiting-icon">💥</div>
+      <p class="spin-phase-title" id="eliminated-rank"></p>
+      <p class="spin-phase-sub">탈락했습니다!</p>
+    </div>
+  </div>
+
+  <script type="module" src="/src/spin-battle-mobile.js"></script>
+</body>
+</html>

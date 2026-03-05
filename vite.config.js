@@ -21,6 +21,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         mobile: resolve(__dirname, 'mobile.html'),
+        spinBattle: resolve(__dirname, 'spin-battle/index.html'),
+        spinBattleMobile: resolve(__dirname, 'spin-battle/mobile.html'),
       },
     },
   },
