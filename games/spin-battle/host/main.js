@@ -1,6 +1,9 @@
 import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { SpinGame } from './SpinGame.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
+import { DevPanel } from './DevPanel.js';
+
+const IS_DEV = new URLSearchParams(location.search).has('dev');
 
 const host = new HostSDK({ gameId: 'spin-battle' });
 let game = null;
@@ -8,16 +11,19 @@ const players = new Map(); // id → color
 let readyCount = 0;
 
 host.on('sessionReady', async ({ qrUrl }) => {
-  document.getElementById('session-id-display').textContent = `Session: ${host.getSessionId()}`;
+  document.getElementById('session-id-display').textContent = host.getSessionId();
 
   const qrContainer = document.getElementById('qr-main');
-  await renderQR(qrContainer, qrUrl, { width: 240 });
-  const label = document.createElement('p');
-  label.textContent = 'Scan to join';
-  qrContainer.appendChild(label);
+  await renderQR(qrContainer, qrUrl, { width: 200 });
 
   const canvas = document.getElementById('spin-canvas');
-  game = new SpinGame(host, canvas);
+  game = new SpinGame(host, canvas, { devMode: IS_DEV });
+
+  if (IS_DEV) {
+    new DevPanel({
+      onSpawnIntervalChange: (ms) => game?.setItemSpawnInterval(ms),
+    });
+  }
 });
 
 host.on('playerJoin', (player) => {

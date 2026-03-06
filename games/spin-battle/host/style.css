@@ -5,7 +5,7 @@ body.spin-board {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: #0a0a0a;
+  background: radial-gradient(ellipse at 50% 35%, #0d1a3a 0%, #07091a 55%, #020308 100%);
   width: 100vw;
   height: 100vh;
   font-family: 'Roboto', sans-serif;
@@ -33,24 +33,33 @@ body.spin-board {
   justify-content: center;
   align-items: center;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(5, 8, 25, 0.72);
+  backdrop-filter: blur(10px);
 }
 
-/* QR 컨테이너는 overlay(z-index 50) 위에 배치해 항상 스캔 가능 */
+/* QR 컨테이너 — 로비 패널 내부에 인라인으로 표시 */
 #qr-main {
-  position: fixed;
-  left: 40px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 60;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  background: rgba(0,0,0,0.5);
-  padding: 16px;
-  border-radius: 12px;
+  margin: 14px auto 0;
+  line-height: 0;
+}
+
+#qr-main canvas {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 10px;
+  display: block;
+}
+
+.spin-panel .lobby-title {
+  font-size: 1.4rem;
+  color: #00eeff;
+  margin: 0 0 4px;
+  font-family: 'Cinzel', serif;
+  text-shadow: 0 0 16px rgba(0, 238, 255, 0.7);
+  letter-spacing: 3px;
 }
 
 .spin-overlay.hidden {
@@ -58,44 +67,37 @@ body.spin-board {
 }
 
 .spin-panel {
-  background: linear-gradient(160deg, #1a2e1a 0%, #0d1a0d 100%);
-  border: 2px solid rgba(255, 215, 0, 0.5);
-  border-radius: 20px;
+  background: linear-gradient(160deg, rgba(8, 14, 35, 0.97) 0%, rgba(5, 10, 28, 0.98) 100%);
+  border: 2px solid rgba(0, 238, 255, 0.55);
+  border-radius: 24px;
   padding: 40px 50px;
   text-align: center;
-  color: #f0f0f0;
+  color: #cce8ff;
   box-shadow:
-    0 0 60px rgba(0, 0, 0, 0.8),
-    0 0 0 1px rgba(255, 215, 0, 0.15);
-  min-width: 320px;
-}
-
-.spin-panel h1 {
-  font-size: 2.4rem;
-  margin: 0 0 12px;
-  background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: 3px;
-  font-family: 'Cinzel', serif;
+    0 0 40px rgba(0, 180, 255, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(0, 238, 255, 0.12);
+  min-width: 280px;
+  max-width: 320px;
+  overflow: hidden;
 }
 
 .spin-panel h2 {
   font-size: 1.8rem;
-  color: #FFD700;
+  color: #00eeff;
   margin: 0 0 12px;
   font-family: 'Cinzel', serif;
+  text-shadow: 0 0 20px rgba(0, 238, 255, 0.6);
 }
 
 .spin-panel p {
-  color: rgba(240, 240, 240, 0.8);
+  color: #99ccee;
   margin: 8px 0;
 }
 
 .spin-sub {
   font-size: 0.9rem;
-  color: rgba(200, 200, 200, 0.6) !important;
+  color: #5588aa !important;
 }
 
 /* Player dots in lobby */
@@ -113,7 +115,7 @@ body.spin-board {
   height: 36px;
   border-radius: 50%;
   box-shadow: 0 0 12px currentColor;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.6);
 }
 
 /* Buttons */
@@ -124,18 +126,19 @@ body.spin-board {
   font-size: 1.2rem;
   font-weight: bold;
   letter-spacing: 2px;
-  border: none;
-  border-radius: 8px;
+  border: 2px solid rgba(0, 238, 255, 0.7);
+  border-radius: 50px;
   cursor: pointer;
-  background: linear-gradient(135deg, #FFD700, #b8960c);
-  color: #1a1a1a;
-  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.4);
+  background: linear-gradient(135deg, rgba(0, 150, 200, 0.3), rgba(100, 0, 200, 0.3));
+  color: #00eeff;
+  box-shadow: 0 0 20px rgba(0, 238, 255, 0.3), inset 0 0 10px rgba(0, 238, 255, 0.05);
   transition: all 0.2s ease;
   font-family: 'Cinzel', serif;
+  text-shadow: 0 0 10px rgba(0, 238, 255, 0.8);
 }
 
 #btn-start:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -143,16 +146,16 @@ body.spin-board {
 #btn-start:not(:disabled):hover,
 #btn-restart:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 30px rgba(0, 238, 255, 0.6), inset 0 0 15px rgba(0, 238, 255, 0.1);
 }
 
 /* Launch countdown */
 .spin-countdown {
   font-size: 4rem;
   font-weight: bold;
-  color: #FFD700;
+  color: #00eeff;
   margin-top: 16px;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+  text-shadow: 0 0 20px rgba(0, 238, 255, 0.7);
   font-family: 'Cinzel', serif;
 }
 
@@ -160,10 +163,11 @@ body.spin-board {
 .spin-countdown-big {
   font-size: 10rem;
   font-weight: bold;
-  color: #FFD700;
+  color: #00eeff;
   text-shadow:
-    0 0 40px rgba(255, 215, 0, 0.8),
-    0 0 80px rgba(255, 215, 0, 0.4);
+    0 0 40px rgba(0, 238, 255, 0.9),
+    0 0 80px rgba(0, 238, 255, 0.5),
+    0 0 120px rgba(150, 0, 255, 0.4);
   font-family: 'Cinzel', serif;
   animation: pulse 0.8s ease infinite;
 }
@@ -183,12 +187,13 @@ body.spin-board {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(5, 10, 30, 0.88);
   padding: 12px 20px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  box-shadow: 0 0 20px rgba(0, 150, 255, 0.12), 0 4px 16px rgba(0,0,0,0.5);
   min-width: 280px;
-  max-width: 420px;
+  max-width: 460px;
 }
 
 .rpm-row {
@@ -212,7 +217,7 @@ body.spin-board {
 .rpm-bar-bg {
   flex: 1;
   height: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -225,10 +230,17 @@ body.spin-board {
 
 .rpm-value {
   font-size: 0.7rem;
-  color: rgba(240, 240, 240, 0.7);
+  color: #88ccee;
   min-width: 70px;
   text-align: right;
   font-family: monospace;
+}
+
+.buff-icons {
+  font-size: 0.85rem;
+  min-width: 36px;
+  text-align: left;
+  line-height: 1;
 }
 
 /* Result rankings */
@@ -252,15 +264,114 @@ body.spin-board {
 }
 
 .rank-name {
-  color: rgba(240, 240, 240, 0.8);
+  color: #99ccee;
   font-family: monospace;
+}
+
+/* =========================================
+   Dev Panel
+========================================= */
+#dev-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 230px;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 70;
+  background: rgba(15, 15, 30, 0.92);
+  border-right: 2px solid rgba(255, 200, 0, 0.3);
+  padding: 12px 14px;
+  box-sizing: border-box;
+  color: #eee;
+  font-size: 0.78rem;
+  font-family: 'Roboto Mono', monospace, sans-serif;
+}
+
+.dev-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #FFD740;
+  margin-bottom: 2px;
+  letter-spacing: 1px;
+}
+
+.dev-hint {
+  font-size: 0.68rem;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+.dev-hint code {
+  background: rgba(255,255,255,0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #aef;
+}
+
+.dev-param {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.dev-param-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.dev-param-label {
+  color: #ccc;
+  font-size: 0.76rem;
+}
+
+.dev-param-value {
+  color: #FFD740;
+  font-size: 0.76rem;
+  font-family: monospace;
+  min-width: 60px;
+  text-align: right;
+}
+
+.dev-slider {
+  width: 100%;
+  height: 4px;
+  accent-color: #FFD740;
+  cursor: pointer;
+  margin-bottom: 2px;
+}
+
+.dev-param-hint {
+  font-size: 0.66rem;
+  color: #666;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.dev-reset-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 0;
+  background: rgba(255, 200, 0, 0.15);
+  border: 1px solid rgba(255, 200, 0, 0.4);
+  border-radius: 6px;
+  color: #FFD740;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.dev-reset-btn:hover {
+  background: rgba(255, 200, 0, 0.28);
 }
 
 /* =========================================
    Spin Battle — Mobile Controller
 ========================================= */
 body.spin-mobile {
-  background: #111;
+  background: linear-gradient(160deg, #a8edea 0%, #fed6e3 100%);
 }
 
 .spin-phase {
@@ -289,14 +400,14 @@ body.spin-mobile {
 .spin-phase-title {
   font-size: 1.6rem;
   font-weight: bold;
-  color: #FFD700;
+  color: #FF6B6B;
   text-align: center;
   margin: 0;
 }
 
 .spin-phase-sub {
   font-size: 0.95rem;
-  color: rgba(200, 200, 200, 0.7);
+  color: #666;
   text-align: center;
   margin: 0;
   padding: 0 20px;
@@ -308,12 +419,12 @@ body.spin-mobile {
   padding: 14px 40px;
   font-size: 1.2rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #1C5435, #2e8b57);
+  background: linear-gradient(135deg, #FF9800, #FF5722);
   color: #fff;
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(255, 100, 0, 0.35);
 }
 
 #btn-ready:disabled {
@@ -334,21 +445,21 @@ body.spin-mobile {
   padding: 14px 0;
   font-size: 1.15rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #1C5435, #2e8b57);
+  background: linear-gradient(135deg, #FF9800, #FF5722);
   color: #fff;
   border: none;
   border-radius: 50px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 20px rgba(255, 100, 0, 0.35);
 }
 
 #btn-quit {
   padding: 14px 0;
   font-size: 1.15rem;
   font-weight: bold;
-  background: rgba(80, 80, 80, 0.5);
-  color: rgba(200, 200, 200, 0.9);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(200, 200, 200, 0.5);
+  color: #555;
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 50px;
   cursor: pointer;
 }
@@ -357,7 +468,7 @@ body.spin-mobile {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.6);
   margin-top: 8px;
 }
 
@@ -369,14 +480,14 @@ body.spin-mobile {
 .launch-rpm {
   font-size: 3rem;
   font-weight: bold;
-  color: #FFD700;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  color: #FF6B6B;
+  text-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
   font-family: monospace;
 }
 
 .launch-timer {
   font-size: 2rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: #888;
   font-family: monospace;
 }
 
@@ -384,7 +495,7 @@ body.spin-mobile {
 .rpm-gauge-wrap {
   width: 80%;
   height: 14px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.08);
   border-radius: 7px;
   overflow: hidden;
 }
@@ -392,7 +503,7 @@ body.spin-mobile {
 .rpm-gauge-bar {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #33B5E5, #FFD700, #FF4444);
+  background: linear-gradient(90deg, #26C6DA, #FFD740, #FF5722);
   border-radius: 7px;
   transition: width 0.1s linear;
 }
@@ -401,7 +512,6 @@ body.spin-mobile {
 .battle-rpm {
   font-size: 2rem;
   font-weight: bold;
-  color: #f0f0f0;
+  color: #333;
   font-family: monospace;
 }
-

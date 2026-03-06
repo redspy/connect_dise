@@ -1,19 +1,24 @@
-import { SpinPhysics, MAX_RPM } from './SpinPhysics.js';
+import { SpinPhysics, MAX_RPM, ITEM_TYPES } from './SpinPhysics.js';
 import { SpinRenderer } from './SpinRenderer.js';
 
 const LAUNCH_DURATION_MS = 5000;
 const BATTLE_COUNTDOWN_MS = 3000;
 
+const ITEM_TYPE_LIST = [ITEM_TYPES.ENERGY, ITEM_TYPES.SHIELD, ITEM_TYPES.COGS];
+
 export class SpinGame {
-  constructor(hostSDK, canvasContainer) {
+  constructor(hostSDK, canvasContainer, { devMode = false } = {}) {
     this.host = hostSDK;
     this.physics = new SpinPhysics();
     this.renderer = new SpinRenderer(canvasContainer);
+    this._devMode = devMode;
 
     this.state = 'lobby'; // lobby | launching | countdown | battle | result
     this.players = new Map();   // playerId → { id, color, rpm }
     this.rankings = [];         // elimination order: { id, color }
     this.launchRpms = new Map(); // playerId → submitted RPM from launch phase
+    this._itemSpawnTimer = null;
+    this._itemSpawnIntervalMs = 5000;
 
     this._setupListeners();
     this._loop();
@@ -35,7 +40,8 @@ export class SpinGame {
 
     // Launch spin from mobile during launch phase
     this.host.onMessage('launchSpin', (player, { rpm }) => {
-      this.launchRpms.set(player.id, Math.min(3000, Math.max(300, rpm || 1000)));
+      const value = this._devMode ? MAX_RPM : Math.min(3000, Math.max(300, rpm || 1000));
+      this.launchRpms.set(player.id, value);
     });
 
     // Mobile requests game reset (다시하기)
@@ -45,6 +51,10 @@ export class SpinGame {
   }
 
   reset() {
+    this._stopItemSpawner();
+    this.renderer.clearItems();
+    this._setQRVisible(true);
+
     this.state = 'lobby';
     this.players.clear();
     this.rankings = [];
@@ -59,6 +69,32 @@ export class SpinGame {
     if (rpmBars) rpmBars.innerHTML = '';
 
     this._showOverlay('lobby-overlay');
+  }
+
+  // ─── Item spawner ────────────────────────────────────────────────────────────
+
+  _startItemSpawner() {
+    this._itemSpawnTimer = setInterval(() => {
+      if (this.state !== 'battle') return;
+      const type = ITEM_TYPE_LIST[Math.floor(Math.random() * ITEM_TYPE_LIST.length)];
+      const item = this.physics.spawnItem(type);
+      this.renderer.addItem(item);
+    }, this._itemSpawnIntervalMs);
+  }
+
+  setItemSpawnInterval(ms) {
+    this._itemSpawnIntervalMs = ms;
+    if (this._itemSpawnTimer) {
+      this._stopItemSpawner();
+      this._startItemSpawner();
+    }
+  }
+
+  _stopItemSpawner() {
+    if (this._itemSpawnTimer) {
+      clearInterval(this._itemSpawnTimer);
+      this._itemSpawnTimer = null;
+    }
   }
 
   // ─── Lifecycle helpers ──────────────────────────────────────────────────────
@@ -88,6 +124,9 @@ export class SpinGame {
       rpm: this.launchRpms.get(p.id) || 1000,
     }));
 
+    if (this._devMode) {
+      players.forEach(p => { p.rpm = MAX_RPM; });
+    }
     this.players = new Map(players.map(p => [p.id, { ...p }]));
     this.rankings = [];
     this.physics = new SpinPhysics();
@@ -117,6 +156,8 @@ export class SpinGame {
         setTimeout(() => {
           this._hideAllOverlays();
           this.state = 'battle';
+          this._setQRVisible(false);
+          this._startItemSpawner();
         }, 600);
       }
     }, 1000);
@@ -135,6 +176,7 @@ export class SpinGame {
           <div class="rpm-bar-fill" id="rpm-fill-${p.id}" style="background:${p.color};width:100%"></div>
         </div>
         <span class="rpm-value" id="rpm-val-${p.id}">${p.rpm} RPM</span>
+        <span class="buff-icons" id="buff-${p.id}"></span>
       `;
       container.appendChild(row);
     }
@@ -143,11 +185,23 @@ export class SpinGame {
   _updateRpmBar(playerId, rpm) {
     const fill = document.getElementById(`rpm-fill-${playerId}`);
     const val = document.getElementById(`rpm-val-${playerId}`);
+    const buffEl = document.getElementById(`buff-${playerId}`);
     if (fill) fill.style.width = `${(rpm / MAX_RPM) * 100}%`;
     if (val) val.textContent = `${Math.round(rpm)} RPM`;
+    if (buffEl) {
+      const buffs = this.physics.getBuffs(playerId);
+      buffEl.textContent = (buffs.shield > 0 ? '🛡️' : '') + (buffs.cogs > 0 ? '⚙️' : '');
+    }
+  }
+
+  _setQRVisible(visible) {
+    const qr = document.getElementById('qr-main');
+    if (qr) qr.style.display = visible ? '' : 'none';
   }
 
   _showResult(rankings) {
+    this._stopItemSpawner();
+    this.renderer.clearItems();
     const display = document.getElementById('rankings-display');
     display.innerHTML = '';
     const medals = ['🥇', '🥈', '🥉'];
@@ -180,7 +234,7 @@ export class SpinGame {
   _update() {
     if (this.state !== 'battle') return;
 
-    const { eliminated, collisions } = this.physics.update();
+    const { eliminated, collisions, pickedUp, expired, wallHits } = this.physics.update();
 
     // Sync 3D positions
     for (const [id, s] of this.physics.spinners) {
@@ -190,13 +244,28 @@ export class SpinGame {
       }
     }
 
-    // Collision particles
+    // Spinner-spinner collision particles
     for (const hit of collisions) {
       this.renderer.spawnCollisionParticles(
         (hit.ax + hit.bx) / 2,
         (hit.az + hit.bz) / 2,
         hit.colorA,
       );
+    }
+
+    // Wall hit particles
+    for (const hit of wallHits) {
+      this.renderer.spawnWallParticles(hit.x, hit.z, hit.color, hit.speed);
+    }
+
+    // Item pickups → remove from renderer
+    for (const { item } of pickedUp) {
+      this.renderer.removeItem(item.id);
+    }
+
+    // Item TTL expiry → remove from renderer
+    for (const item of expired) {
+      this.renderer.removeItem(item.id);
     }
 
     // Eliminations — host directly notifies each eliminated player
@@ -216,7 +285,7 @@ export class SpinGame {
     // Game over check: one or fewer spinners still active
     if (eliminated.length > 0) {
       const active = [...this.physics.spinners.values()].filter(s => !s.eliminated);
-      if (active.length <= 1 && this.players.size > 1) {
+      if (active.length === 0 || (active.length === 1 && this.players.size > 1)) {
         this.state = 'result';
 
         const winner = active[0];
