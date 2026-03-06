@@ -16,6 +16,8 @@ const io = new Server(httpServer, {
 function getLocalIp() {
     const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {
+        // Skip WSL and Hyper-V virtual adapters
+        if (name.toLowerCase().includes('wsl') || name.toLowerCase().includes('hyper-v')) continue;
         for (const iface of interfaces[name]) {
             // Skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
             if (iface.family === 'IPv4' && !iface.internal) {
@@ -101,6 +103,7 @@ io.on('connection', (socket) => {
             gameMode: 'spinner',
             gameState: 'lobby',
             launchRpms: new Map(),
+            readyPlayers: new Set(),
         });
         socket.join(sessionId);
         socket.emit('spinSessionCreated', { sessionId, localIp });
@@ -123,15 +126,35 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Host starts the game → launch phase
-    socket.on('spinStartGame', ({ sessionId }) => {
+    // Player marks themselves ready → auto-start when all ready
+    socket.on('spinPlayerReady', ({ sessionId }) => {
         const session = sessions.get(sessionId);
-        if (session && session.hostSocket === socket.id) {
+        if (!session || session.gameState !== 'lobby') return;
+        session.readyPlayers.add(socket.id);
+        const readyCount = session.readyPlayers.size;
+        const totalCount = session.players.length;
+        io.to(session.hostSocket).emit('spinReadyUpdate', { readyCount, totalCount });
+        console.log(`[Spin] ${socket.id} ready in ${sessionId} (${readyCount}/${totalCount})`);
+        if (readyCount >= totalCount && totalCount > 0) {
             session.gameState = 'launching';
             session.launchRpms = new Map();
             io.to(sessionId).emit('spinLaunchPhase');
-            console.log(`[Spin] Launch phase started in ${sessionId}`);
+            console.log(`[Spin] Auto-start: all players ready in ${sessionId}`);
         }
+    });
+
+    // Player requests game reset (after game over, pressed 다시하기)
+    socket.on('spinRequestReset', ({ sessionId }) => {
+        const session = sessions.get(sessionId);
+        if (!session) return;
+        session.gameState = 'lobby';
+        session.launchRpms = new Map();
+        session.readyPlayers = new Set();
+        session.players.forEach(p => delete p.eliminated);
+        io.to(sessionId).emit('spinGameReset', {
+            players: session.players.map(p => ({ id: p.id, color: p.color }))
+        });
+        console.log(`[Spin] Game reset (player request) in ${sessionId}`);
     });
 
     // Mobile submits launch RPM
@@ -174,6 +197,7 @@ io.on('connection', (socket) => {
         if (!session || session.hostSocket !== socket.id) return;
         session.gameState = 'lobby';
         session.launchRpms = new Map();
+        session.readyPlayers = new Set();
         session.players.forEach(p => delete p.eliminated);
         io.to(sessionId).emit('spinGameReset', {
             players: session.players.map(p => ({ id: p.id, color: p.color }))
@@ -225,7 +249,12 @@ io.on('connection', (socket) => {
                     const removed = session.players.splice(playerIndex, 1)[0];
                     const removedId = removed?.id ?? removed;
                     if (session.gameMode === 'spinner') {
+                        session.readyPlayers?.delete(removedId);
                         io.to(session.hostSocket).emit('spinPlayerLeft', { id: removedId });
+                        io.to(session.hostSocket).emit('spinReadyUpdate', {
+                            readyCount: session.readyPlayers?.size ?? 0,
+                            totalCount: session.players.length,
+                        });
                     } else {
                         io.to(session.hostSocket).emit('playerLeft', removedId);
                     }

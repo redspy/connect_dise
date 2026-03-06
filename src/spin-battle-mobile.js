@@ -12,6 +12,9 @@ const phaseLobby = document.getElementById('phase-lobby');
 const phaseLaunch = document.getElementById('phase-launch');
 const phaseBattle = document.getElementById('phase-battle');
 const phaseEliminated = document.getElementById('phase-eliminated');
+const phaseResult = document.getElementById('phase-result');
+const btnReady = document.getElementById('btn-ready');
+const readyStatus = document.getElementById('ready-status');
 
 const launchRpmDisplay = document.getElementById('launch-rpm-display');
 const launchGaugeBar = document.getElementById('launch-gauge-bar');
@@ -49,6 +52,7 @@ if (!sessionId) {
     myColorDot.style.background = color;
     myColorDot.style.boxShadow = `0 0 12px ${color}`;
     myColorDot.classList.remove('hidden');
+    btnReady.classList.remove('hidden');
   });
 
   // ─── Phase: Launch ──────────────────────────────────────────────────────────
@@ -87,18 +91,22 @@ if (!sessionId) {
 
   // ─── Game over ──────────────────────────────────────────────────────────────
   socket.on('spinGameOver', () => {
-    if (currentPhase !== 'eliminated') {
-      // Last survivor - winner!
-      _showPhase('phase-eliminated');
-      document.getElementById('eliminated-rank').textContent = '🏆 우승!';
-    }
     _stopTiltSending();
+    const isWinner = currentPhase !== 'eliminated';
+    document.getElementById('result-icon').textContent = isWinner ? '🏆' : '💥';
+    document.getElementById('result-title').textContent = isWinner ? '우승!' : `${document.getElementById('eliminated-rank').textContent}`;
+    currentPhase = 'result';
+    _showPhase('phase-result');
   });
 
-  // Host reset → back to lobby, keep connection
+  // Reset → back to lobby, keep connection
   socket.on('spinGameReset', () => {
     currentPhase = 'lobby';
     _stopTiltSending();
+    btnReady.classList.remove('hidden');
+    btnReady.disabled = false;
+    btnReady.textContent = '준비하기';
+    readyStatus.classList.add('hidden');
     _showPhase('phase-lobby');
   });
 
@@ -228,9 +236,39 @@ function _updateBattleRpm(rpm) {
   battleGaugeBar.style.width = `${(rpm / MAX_RPM) * 100}%`;
 }
 
+// ─── Ready button ─────────────────────────────────────────────────────────────
+if (btnReady) {
+  btnReady.addEventListener('click', () => {
+    if (!socket || !sessionId) return;
+    btnReady.disabled = true;
+    btnReady.classList.add('hidden');
+    readyStatus.classList.remove('hidden');
+    socket.emit('spinPlayerReady', { sessionId });
+  });
+}
+
+// ─── Result buttons ───────────────────────────────────────────────────────────
+const btnAgain = document.getElementById('btn-again');
+const btnQuit = document.getElementById('btn-quit');
+
+if (btnAgain) {
+  btnAgain.addEventListener('click', () => {
+    if (!socket || !sessionId) return;
+    socket.emit('spinRequestReset', { sessionId });
+  });
+}
+
+if (btnQuit) {
+  btnQuit.addEventListener('click', () => {
+    window.close();
+    // Fallback: 일부 브라우저에서 window.close()가 동작 안 할 수 있음
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#fff;font-size:1.5rem;">탭을 닫아주세요</div>';
+  });
+}
+
 // ─── Phase switcher ───────────────────────────────────────────────────────────
 function _showPhase(activeId) {
-  [phaseLobby, phaseLaunch, phaseBattle, phaseEliminated].forEach(el => {
+  [phaseLobby, phaseLaunch, phaseBattle, phaseEliminated, phaseResult].forEach(el => {
     if (el) el.classList.toggle('hidden', el.id !== activeId);
   });
 }

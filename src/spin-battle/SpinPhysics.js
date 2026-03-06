@@ -2,7 +2,7 @@ export const BOARD_RADIUS = 5;
 export const SPINNER_RADIUS = 0.38;
 export const MAX_RPM = 3000;
 export const BASE_DECAY = 0.3;      // rpm/frame at 60fps  (3000rpm → ~167s 자연 소진)
-export const COLLISION_PENALTY = 60;
+export const COLLISION_PENALTY = 6;
 export const EDGE_PENALTY = 0.8;
 export const MAX_MOVE_FORCE = 0.009;
 export const FRICTION = 0.96;
@@ -120,17 +120,17 @@ export class SpinPhysics {
     b.x += nx * overlap * 0.5;
     b.z += nz * overlap * 0.5;
 
-    // Impulse
+    // Impulse: elastic bounce with RPM-based minimum push
     const relVx = b.vx - a.vx;
     const relVz = b.vz - a.vz;
     const dot = relVx * nx + relVz * nz;
-    if (dot < 0) {
-      const impulse = dot * 0.85; // restitution factor
-      a.vx += impulse * nx;
-      a.vz += impulse * nz;
-      b.vx -= impulse * nx;
-      b.vz -= impulse * nz;
-    }
+    const combinedRpm = (a.rpm + b.rpm) / 2;
+    const minPush = (combinedRpm / MAX_RPM) * 0.04; // RPM 기반 최소 반발력
+    const impulse = Math.min(dot * 1.6, -minPush); // 반발계수 1.6, 항상 최소 튕김 보장
+    a.vx += impulse * nx;
+    a.vz += impulse * nz;
+    b.vx -= impulse * nx;
+    b.vz -= impulse * nz;
 
     // RPM-based push: higher RPM spinner pushes harder
     const rpmDiff = (a.rpm - b.rpm) * 0.000025;

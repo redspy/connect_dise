@@ -21,21 +21,20 @@ socket.on('spinSessionCreated', async ({ sessionId: sid, localIp }) => {
   const port = window.location.port ? `:${window.location.port}` : '';
   const mobileUrl = `${scheme}//${localIp}${port}/spin-battle/mobile.html?session=${sid}`;
 
-  // QR codes at all four corners
-  for (const id of ['qr-tl', 'qr-tr', 'qr-bl', 'qr-br']) {
-    const container = document.getElementById(id);
-    if (!container) continue;
-    container.innerHTML = '';
+  // QR code on the left
+  const qrContainer = document.getElementById('qr-main');
+  if (qrContainer) {
+    qrContainer.innerHTML = '';
     const canvas = document.createElement('canvas');
-    container.appendChild(canvas);
+    qrContainer.appendChild(canvas);
     await QRCode.toCanvas(canvas, mobileUrl, {
-      width: 120,
-      margin: 1,
+      width: 240,
+      margin: 2,
       color: { dark: '#1C5435', light: '#FFFFFF' },
     });
     const label = document.createElement('p');
-    label.textContent = 'Spin Battle';
-    container.appendChild(label);
+    label.textContent = 'Scan to join';
+    qrContainer.appendChild(label);
   }
 
   // Initialize the game (renderer + physics + socket listeners)
@@ -44,19 +43,24 @@ socket.on('spinSessionCreated', async ({ sessionId: sid, localIp }) => {
   game.sessionId = sid;
 });
 
+let readyCount = 0;
+
 // ─── Player management ────────────────────────────────────────────────────────
 socket.on('spinPlayerJoined', ({ id, color }) => {
   players.set(id, color);
   playerCount = players.size;
   _renderPlayerList();
-  _updateStartButton();
 });
 
 socket.on('spinPlayerLeft', ({ id }) => {
   players.delete(id);
   playerCount = players.size;
   _renderPlayerList();
-  _updateStartButton();
+});
+
+socket.on('spinReadyUpdate', ({ readyCount: rc, totalCount }) => {
+  readyCount = rc;
+  _renderPlayerList();
 });
 
 function _renderPlayerList() {
@@ -68,37 +72,29 @@ function _renderPlayerList() {
     dot.style.background = color;
     list.appendChild(dot);
   }
-  document.getElementById('player-count-display').textContent =
-    playerCount >= 1
-      ? `${playerCount}명 준비완료! 시작하세요.`
-      : '접속 중인 플레이어가 없습니다';
+  const countEl = document.getElementById('player-count-display');
+  if (playerCount === 0) {
+    countEl.textContent = '접속 중인 플레이어가 없습니다';
+  } else {
+    countEl.textContent = `${playerCount}명 접속 중 · ${readyCount}명 준비완료`;
+  }
 }
 
-function _updateStartButton() {
-  document.getElementById('btn-start').disabled = playerCount < 1;
-}
-
-// ─── Start & Restart ──────────────────────────────────────────────────────────
-document.getElementById('btn-start').addEventListener('click', () => {
-  if (!sessionId) return;
-  socket.emit('spinStartGame', { sessionId });
-});
-
+// ─── Restart ──────────────────────────────────────────────────────────────────
 document.getElementById('btn-restart').addEventListener('click', () => {
   if (!sessionId) return;
-  // 서버 라운드트립 기다리지 않고 즉시 호스트 화면 리셋
   if (game) game.reset();
+  readyCount = 0;
   _renderPlayerList();
-  _updateStartButton();
-  // 서버에 알려서 모바일 클라이언트도 로비로 복귀시킴
   socket.emit('spinResetGame', { sessionId });
 });
 
-// 서버가 spinGameReset을 보내면 플레이어 목록만 동기화 (화면은 이미 전환됨)
+// 서버가 spinGameReset을 보내면 플레이어 목록 동기화
 socket.on('spinGameReset', ({ players: serverPlayers }) => {
   players.clear();
   for (const p of serverPlayers) players.set(p.id, p.color);
   playerCount = players.size;
+  readyCount = 0;
   _renderPlayerList();
-  _updateStartButton();
+  if (game) game.reset();
 });

@@ -29,8 +29,9 @@
     <div id="phase-lobby" class="spin-phase">
       <div class="spin-waiting-icon">🌀</div>
       <p class="spin-phase-title">대기 중...</p>
-      <p class="spin-phase-sub">호스트가 게임을 시작하길 기다리는 중입니다.</p>
-      <div id="my-color-dot" class="my-color-display"></div>
+      <div id="my-color-dot" class="my-color-display hidden"></div>
+      <button id="btn-ready" class="hidden">준비하기</button>
+      <p id="ready-status" class="spin-phase-sub hidden">준비 완료! 다른 플레이어를 기다리는 중...</p>
     </div>
 
     <!-- Launch phase -->
@@ -71,6 +72,16 @@
       <div class="spin-waiting-icon">💥</div>
       <p class="spin-phase-title" id="eliminated-rank"></p>
       <p class="spin-phase-sub">탈락했습니다!</p>
+    </div>
+
+    <!-- Result phase (game over) -->
+    <div id="phase-result" class="spin-phase hidden">
+      <div class="spin-waiting-icon" id="result-icon">🏆</div>
+      <p class="spin-phase-title" id="result-title"></p>
+      <div class="result-buttons">
+        <button id="btn-again">다시하기</button>
+        <button id="btn-quit">그만하기</button>
+      </div>
     </div>
   </div>
 

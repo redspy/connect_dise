@@ -38,8 +38,19 @@ body.spin-board {
 }
 
 /* QR 컨테이너는 overlay(z-index 50) 위에 배치해 항상 스캔 가능 */
-#qr-tl, #qr-tr, #qr-bl, #qr-br {
+#qr-main {
+  position: fixed;
+  left: 40px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,0,0,0.5);
+  padding: 16px;
+  border-radius: 12px;
 }
 
 .spin-overlay.hidden {
@@ -291,6 +302,57 @@ body.spin-mobile {
   padding: 0 20px;
 }
 
+/* Ready & Result buttons */
+#btn-ready {
+  margin-top: 24px;
+  padding: 14px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #1C5435, #2e8b57);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+#btn-ready:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.result-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 28px;
+  width: 100%;
+  max-width: 260px;
+}
+
+#btn-again {
+  padding: 14px 0;
+  font-size: 1.15rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #1C5435, #2e8b57);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+#btn-quit {
+  padding: 14px 0;
+  font-size: 1.15rem;
+  font-weight: bold;
+  background: rgba(80, 80, 80, 0.5);
+  color: rgba(200, 200, 200, 0.9);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 50px;
+  cursor: pointer;
+}
+
 .my-color-display {
   width: 48px;
   height: 48px;
@@ -343,8 +405,3 @@ body.spin-mobile {
   font-family: monospace;
 }
 
-/* QR corner positions */
-#qr-tl {
-  top: 60px;
-  left: 60px;
-}
