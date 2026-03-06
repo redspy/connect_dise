@@ -125,8 +125,8 @@ export class SpinPhysics {
     const relVz = b.vz - a.vz;
     const dot = relVx * nx + relVz * nz;
     const combinedRpm = (a.rpm + b.rpm) / 2;
-    const minPush = (combinedRpm / MAX_RPM) * 0.04; // RPM 기반 최소 반발력
-    const impulse = Math.min(dot * 1.6, -minPush); // 반발계수 1.6, 항상 최소 튕김 보장
+    const minPush = (combinedRpm / MAX_RPM) * 0.04;
+    const impulse = Math.min(dot * 1.6, -minPush);
     a.vx += impulse * nx;
     a.vz += impulse * nz;
     b.vx -= impulse * nx;

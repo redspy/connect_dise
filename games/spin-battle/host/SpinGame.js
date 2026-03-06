@@ -5,66 +5,43 @@ const LAUNCH_DURATION_MS = 5000;
 const BATTLE_COUNTDOWN_MS = 3000;
 
 export class SpinGame {
-  constructor(socket, canvasContainer) {
-    this.socket = socket;
+  constructor(hostSDK, canvasContainer) {
+    this.host = hostSDK;
     this.physics = new SpinPhysics();
     this.renderer = new SpinRenderer(canvasContainer);
 
     this.state = 'lobby'; // lobby | launching | countdown | battle | result
     this.players = new Map();   // playerId → { id, color, rpm }
-    this.sessionId = null;
-    this.rankings = [];         // ordered list of eliminated playerIds (first = 1st eliminated)
+    this.rankings = [];         // elimination order: { id, color }
     this.launchRpms = new Map(); // playerId → submitted RPM from launch phase
 
-    this._setupSocketListeners();
+    this._setupListeners();
     this._loop();
   }
 
-  _setupSocketListeners() {
-    // ─── Server → Host ────────────────────────────────────────────────────────
-
-    // Launch phase: mobiles are twisting their phones
-    this.socket.on('spinLaunchPhase', () => {
+  _setupListeners() {
+    // All players ready → launch phase starts
+    this.host.on('allReady', () => {
       this.state = 'launching';
       this.launchRpms.clear();
       this._showOverlay('launch-overlay');
       this._startLaunchCountdown();
     });
 
-    // Server collected all launch RPMs, sends battle initialisation data
-    this.socket.on('spinBattleStart', ({ players }) => {
-      this._hideAllOverlays();
-      this.players = new Map(players.map(p => [p.id, { ...p }]));
-      this.rankings = [];
-      this.physics = new SpinPhysics();
-
-      const count = players.length;
-      players.forEach((p, i) => {
-        const angle = (i / count) * Math.PI * 2;
-        this.physics.addSpinner(p.id, p.color, p.rpm, angle);
-        this.renderer.addSpinner(p.id, p.color);
-      });
-
-      this._buildRpmBars(players);
-      this._startBattleCountdown();
+    // Tilt input from mobile during battle
+    this.host.onMessage('tiltInput', (player, { tiltX, tiltZ }) => {
+      this.physics.setTilt(player.id, tiltX, tiltZ);
     });
 
-    // Tilt forwarded from server
-    this.socket.on('spinTiltUpdate', ({ playerId, tiltX, tiltZ }) => {
-      this.physics.setTilt(playerId, tiltX, tiltZ);
+    // Launch spin from mobile during launch phase
+    this.host.onMessage('launchSpin', (player, { rpm }) => {
+      this.launchRpms.set(player.id, Math.min(3000, Math.max(300, rpm || 1000)));
     });
 
-    // Launch spin received from a mobile (host logs it)
-    this.socket.on('spinLaunchSpinReceived', ({ playerId, rpm }) => {
-      this.launchRpms.set(playerId, rpm);
+    // Mobile requests game reset (다시하기)
+    this.host.onMessage('requestReset', () => {
+      this.host.resetSession();
     });
-
-    // Game over from server
-    this.socket.on('spinGameOver', ({ rankings }) => {
-      this.state = 'result';
-      this._showResult(rankings);
-    });
-
   }
 
   reset() {
@@ -73,7 +50,6 @@ export class SpinGame {
     this.rankings = [];
     this.launchRpms.clear();
 
-    // Clear all spinner meshes from the 3D scene
     for (const id of [...this.physics.spinners.keys()]) {
       this.renderer.removeSpinner(id);
     }
@@ -97,10 +73,35 @@ export class SpinGame {
       if (sec <= 0) clearInterval(iv);
     }, 1000);
 
-    // 모바일 spinLaunchSpin이 서버에 도착할 시간(800ms)을 확보한 뒤 배틀 시작 요청
+    // Wait for mobile launch RPMs to arrive, then start battle
     setTimeout(() => {
-      this.socket.emit('spinLaunchDone', { sessionId: this.sessionId });
+      this._startBattle();
     }, LAUNCH_DURATION_MS + 800);
+  }
+
+  _startBattle() {
+    this._hideAllOverlays();
+    const allPlayers = this.host.getPlayers();
+    const players = allPlayers.map(p => ({
+      id: p.id,
+      color: p.color,
+      rpm: this.launchRpms.get(p.id) || 1000,
+    }));
+
+    this.players = new Map(players.map(p => [p.id, { ...p }]));
+    this.rankings = [];
+    this.physics = new SpinPhysics();
+
+    const count = players.length;
+    players.forEach((p, i) => {
+      const angle = (i / count) * Math.PI * 2;
+      this.physics.addSpinner(p.id, p.color, p.rpm, angle);
+      this.renderer.addSpinner(p.id, p.color);
+    });
+
+    this._buildRpmBars(players);
+    this.host.broadcast('battleStart', { players });
+    this._startBattleCountdown();
   }
 
   _startBattleCountdown() {
@@ -147,7 +148,6 @@ export class SpinGame {
   }
 
   _showResult(rankings) {
-    const overlay = document.getElementById('result-overlay');
     const display = document.getElementById('rankings-display');
     display.innerHTML = '';
     const medals = ['🥇', '🥈', '🥉'];
@@ -199,21 +199,37 @@ export class SpinGame {
       );
     }
 
-    // Eliminations
+    // Eliminations — host directly notifies each eliminated player
     for (const { id, reason, x, z } of eliminated) {
       this.renderer.removeSpinner(id);
       this.renderer.spawnCollisionParticles(x, z, this.players.get(id)?.color || '#fff');
-      this.rankings.push(id);
+      this.rankings.push({ id, color: this.players.get(id)?.color });
 
-      // Grey out the RPM bar
       const row = document.getElementById(`rpm-row-${id}`);
       if (row) row.classList.add('eliminated');
 
-      this.socket.emit('spinPlayerEliminated', {
-        sessionId: this.sessionId,
-        playerId: id,
-        reason,
-      });
+      // rank: 1-based elimination order (1 = first out)
+      const rank = this.rankings.length;
+      this.host.sendToPlayer(id, 'eliminated', { rank, reason });
+    }
+
+    // Game over check: one or fewer spinners still active
+    if (eliminated.length > 0) {
+      const active = [...this.physics.spinners.values()].filter(s => !s.eliminated);
+      if (active.length <= 1 && this.players.size > 1) {
+        this.state = 'result';
+
+        const winner = active[0];
+        const finalRankings = [];
+        if (winner) finalRankings.push({ id: winner.id, color: winner.color });
+        // Append eliminated in reverse order (last eliminated = rank 2)
+        for (let i = this.rankings.length - 1; i >= 0; i--) {
+          finalRankings.push(this.rankings[i]);
+        }
+
+        this.host.broadcast('gameOver', { rankings: finalRankings });
+        this._showResult(finalRankings);
+      }
     }
   }
 

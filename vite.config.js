@@ -7,7 +7,7 @@ export default defineConfig({
     basicSsl()
   ],
   server: {
-    host: '0.0.0.0', // Expose to local network
+    host: '0.0.0.0',
     port: 5173,
     proxy: {
       '/socket.io': {
@@ -19,10 +19,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        mobile: resolve(__dirname, 'mobile.html'),
-        spinBattle: resolve(__dirname, 'spin-battle/index.html'),
-        spinBattleMobile: resolve(__dirname, 'spin-battle/mobile.html'),
+        lobby:            resolve(__dirname, 'index.html'),
+        spinBattleHost:   resolve(__dirname, 'games/spin-battle/host/index.html'),
+        spinBattleMobile: resolve(__dirname, 'games/spin-battle/mobile/index.html'),
+        diceHost:         resolve(__dirname, 'games/dice/host/index.html'),
+        diceMobile:       resolve(__dirname, 'games/dice/mobile/index.html'),
       },
     },
   },
