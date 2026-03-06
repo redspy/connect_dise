@@ -1,14 +1,59 @@
-/* =========================================
-   Spin Battle — Host Board
-========================================= */
+:root {
+  --bg-0: #05070f;
+  --bg-1: #081227;
+  --bg-2: #122242;
+  --line-cyan: #2ce8ff;
+  --line-pink: #ff4fae;
+  --line-violet: #9960ff;
+  --text-main: #d6f7ff;
+  --text-dim: #86afc2;
+  --glass: rgba(8, 16, 34, 0.72);
+  --glass-strong: rgba(8, 14, 30, 0.9);
+  --font-display: 'Orbitron', 'BankGothic Md BT', 'Eurostile', 'Rajdhani', sans-serif;
+  --font-ui: 'Rajdhani', 'Segoe UI', Tahoma, sans-serif;
+}
+
 body.spin-board {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background: radial-gradient(ellipse at 50% 35%, #0d1a3a 0%, #07091a 55%, #020308 100%);
   width: 100vw;
   height: 100vh;
-  font-family: 'Roboto', sans-serif;
+  color: var(--text-main);
+  background:
+    radial-gradient(1200px 700px at 50% 24%, rgba(34, 105, 255, 0.32), transparent 58%),
+    radial-gradient(700px 460px at 75% 74%, rgba(255, 61, 158, 0.16), transparent 68%),
+    radial-gradient(700px 400px at 20% 80%, rgba(0, 236, 219, 0.14), transparent 70%),
+    linear-gradient(165deg, var(--bg-2) 0%, var(--bg-1) 46%, var(--bg-0) 100%);
+  font-family: var(--font-ui);
+}
+
+body.spin-board::before,
+body.spin-board::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body.spin-board::before {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(180, 240, 255, 0.035) 0,
+      rgba(180, 240, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  mix-blend-mode: screen;
+  opacity: 0.14;
+}
+
+body.spin-board::after {
+  background:
+    radial-gradient(circle at 50% 56%, transparent 0 28vh, rgba(7, 10, 20, 0.28) 56vh),
+    linear-gradient(90deg, rgba(21, 244, 255, 0.05), transparent 22%, transparent 78%, rgba(255, 68, 170, 0.05));
 }
 
 #spin-canvas {
@@ -23,9 +68,9 @@ body.spin-board {
   display: block;
   width: 100% !important;
   height: 100% !important;
+  filter: saturate(1.15) contrast(1.04);
 }
 
-/* ─── Overlays ─────────────────────────────────────────────────────────────── */
 .spin-overlay {
   position: fixed;
   inset: 0;
@@ -33,11 +78,79 @@ body.spin-board {
   justify-content: center;
   align-items: center;
   z-index: 50;
-  background: rgba(5, 8, 25, 0.72);
-  backdrop-filter: blur(10px);
+  background:
+    radial-gradient(circle at center, rgba(10, 18, 34, 0.3), rgba(3, 5, 14, 0.85)),
+    rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px) saturate(1.2);
 }
 
-/* QR 컨테이너 — 로비 패널 내부에 인라인으로 표시 */
+.spin-overlay.hidden {
+  display: none;
+}
+
+.spin-panel {
+  position: relative;
+  min-width: 300px;
+  max-width: 360px;
+  padding: 34px 34px 30px;
+  text-align: center;
+  color: var(--text-main);
+  border-radius: 20px;
+  border: 1px solid rgba(96, 221, 255, 0.36);
+  background:
+    linear-gradient(145deg, rgba(18, 30, 55, 0.84), rgba(7, 12, 28, 0.92)),
+    var(--glass-strong);
+  box-shadow:
+    0 0 0 1px rgba(255, 90, 170, 0.18) inset,
+    0 0 36px rgba(35, 200, 255, 0.16),
+    0 18px 42px rgba(0, 0, 0, 0.58);
+  overflow: hidden;
+}
+
+.spin-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.spin-panel::after {
+  content: '';
+  position: absolute;
+  left: -16%;
+  right: -16%;
+  top: -180px;
+  height: 240px;
+  background: radial-gradient(circle at center, rgba(43, 214, 255, 0.26), transparent 70%);
+  pointer-events: none;
+}
+
+.spin-panel h2,
+.spin-panel .lobby-title {
+  margin: 0 0 10px;
+  color: #8cf6ff;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 20px rgba(44, 232, 255, 0.65),
+    0 0 42px rgba(113, 100, 255, 0.24);
+}
+
+.spin-panel p {
+  margin: 8px 0;
+  color: var(--text-dim);
+}
+
+.spin-sub {
+  color: #6796ad !important;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
 #qr-main {
   display: flex;
   flex-direction: column;
@@ -47,98 +160,61 @@ body.spin-board {
 }
 
 #qr-main canvas {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: 10px;
+  max-width: 204px;
+  max-height: 204px;
   display: block;
-}
-
-.spin-panel .lobby-title {
-  font-size: 1.4rem;
-  color: #00eeff;
-  margin: 0 0 4px;
-  font-family: 'Cinzel', serif;
-  text-shadow: 0 0 16px rgba(0, 238, 255, 0.7);
-  letter-spacing: 3px;
-}
-
-.spin-overlay.hidden {
-  display: none;
-}
-
-.spin-panel {
-  background: linear-gradient(160deg, rgba(8, 14, 35, 0.97) 0%, rgba(5, 10, 28, 0.98) 100%);
-  border: 2px solid rgba(0, 238, 255, 0.55);
-  border-radius: 24px;
-  padding: 40px 50px;
-  text-align: center;
-  color: #cce8ff;
+  border-radius: 12px;
+  border: 1px solid rgba(132, 240, 255, 0.58);
   box-shadow:
-    0 0 40px rgba(0, 180, 255, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(0, 238, 255, 0.12);
-  min-width: 280px;
-  max-width: 320px;
-  overflow: hidden;
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 26px rgba(42, 201, 255, 0.32);
 }
 
-.spin-panel h2 {
-  font-size: 1.8rem;
-  color: #00eeff;
-  margin: 0 0 12px;
-  font-family: 'Cinzel', serif;
-  text-shadow: 0 0 20px rgba(0, 238, 255, 0.6);
-}
-
-.spin-panel p {
-  color: #99ccee;
-  margin: 8px 0;
-}
-
-.spin-sub {
-  font-size: 0.9rem;
-  color: #5588aa !important;
-}
-
-/* Player dots in lobby */
 #player-list {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   margin: 20px 0 10px;
   flex-wrap: wrap;
-  min-height: 40px;
+  min-height: 42px;
 }
 
 .player-dot {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  box-shadow: 0 0 12px currentColor;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 0 18px currentColor,
+    0 0 0 2px rgba(6, 10, 20, 0.6) inset;
 }
 
-/* Buttons */
 #btn-start,
 #btn-restart {
-  margin-top: 24px;
-  padding: 14px 40px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  letter-spacing: 2px;
-  border: 2px solid rgba(0, 238, 255, 0.7);
-  border-radius: 50px;
+  position: relative;
+  margin-top: 22px;
+  min-width: 190px;
+  padding: 13px 34px;
+  border: 1px solid rgba(86, 227, 255, 0.68);
+  border-radius: 999px;
   cursor: pointer;
-  background: linear-gradient(135deg, rgba(0, 150, 200, 0.3), rgba(100, 0, 200, 0.3));
-  color: #00eeff;
-  box-shadow: 0 0 20px rgba(0, 238, 255, 0.3), inset 0 0 10px rgba(0, 238, 255, 0.05);
-  transition: all 0.2s ease;
-  font-family: 'Cinzel', serif;
-  text-shadow: 0 0 10px rgba(0, 238, 255, 0.8);
+  color: #d7fdff;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  background:
+    linear-gradient(140deg, rgba(28, 186, 255, 0.26), rgba(148, 78, 255, 0.34) 55%, rgba(255, 79, 174, 0.24));
+  box-shadow:
+    0 0 18px rgba(44, 225, 255, 0.28),
+    inset 0 0 14px rgba(255, 255, 255, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 #btn-start:disabled {
-  opacity: 0.3;
+  opacity: 0.34;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -146,173 +222,204 @@ body.spin-board {
 #btn-start:not(:disabled):hover,
 #btn-restart:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(0, 238, 255, 0.6), inset 0 0 15px rgba(0, 238, 255, 0.1);
+  filter: brightness(1.08);
+  box-shadow:
+    0 0 34px rgba(77, 235, 255, 0.44),
+    0 0 12px rgba(255, 93, 182, 0.25),
+    inset 0 0 22px rgba(255, 255, 255, 0.08);
 }
 
-/* Launch countdown */
 .spin-countdown {
-  font-size: 4rem;
-  font-weight: bold;
-  color: #00eeff;
-  margin-top: 16px;
-  text-shadow: 0 0 20px rgba(0, 238, 255, 0.7);
-  font-family: 'Cinzel', serif;
-}
-
-/* Battle countdown (big center) */
-.spin-countdown-big {
-  font-size: 10rem;
-  font-weight: bold;
-  color: #00eeff;
+  margin-top: 10px;
+  font-size: 4.2rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.12em;
+  color: #8af4ff;
   text-shadow:
-    0 0 40px rgba(0, 238, 255, 0.9),
-    0 0 80px rgba(0, 238, 255, 0.5),
-    0 0 120px rgba(150, 0, 255, 0.4);
-  font-family: 'Cinzel', serif;
-  animation: pulse 0.8s ease infinite;
+    0 0 20px rgba(56, 236, 255, 0.68),
+    0 0 56px rgba(173, 65, 255, 0.35);
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+.spin-countdown-big {
+  font-size: clamp(6rem, 18vw, 11rem);
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: #9bfbff;
+  letter-spacing: 0.06em;
+  text-shadow:
+    0 0 28px rgba(31, 233, 255, 0.9),
+    0 0 70px rgba(45, 198, 255, 0.55),
+    0 0 140px rgba(255, 68, 170, 0.36);
+  animation: pulse-countdown 0.72s ease infinite;
 }
 
-/* ─── HUD (RPM bars) ───────────────────────────────────────────────────────── */
+@keyframes pulse-countdown {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.18);
+  }
+}
+
 #spin-hud {
   position: fixed;
-  bottom: 20px;
   left: 50%;
+  bottom: 22px;
   transform: translateX(-50%);
   z-index: 30;
+  min-width: 300px;
+  max-width: min(560px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(86, 220, 255, 0.36);
+  background:
+    linear-gradient(145deg, rgba(15, 28, 54, 0.82), rgba(8, 13, 27, 0.92)),
+    var(--glass);
+  backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow:
+    0 0 28px rgba(52, 203, 255, 0.14),
+    0 10px 28px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+#rpm-bars {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: rgba(5, 10, 30, 0.88);
-  padding: 12px 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 200, 255, 0.35);
-  box-shadow: 0 0 20px rgba(0, 150, 255, 0.12), 0 4px 16px rgba(0,0,0,0.5);
-  min-width: 280px;
-  max-width: 460px;
+  gap: 8px;
 }
 
 .rpm-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px 1fr auto auto;
   align-items: center;
   gap: 10px;
-  transition: opacity 0.3s;
+  transition: opacity 0.3s ease, filter 0.3s ease;
 }
 
 .rpm-row.eliminated {
-  opacity: 0.3;
+  opacity: 0.32;
+  filter: saturate(0.3);
 }
 
 .rpm-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
 }
 
 .rpm-bar-bg {
-  flex: 1;
-  height: 8px;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 4px;
+  position: relative;
+  height: 9px;
+  border-radius: 999px;
   overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rpm-bar-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
 }
 
 .rpm-bar-fill {
+  position: relative;
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.1s linear;
+  border-radius: inherit;
+  transition: width 0.11s linear;
+  box-shadow: 0 0 18px currentColor;
 }
 
 .rpm-value {
-  font-size: 0.7rem;
-  color: #88ccee;
-  min-width: 70px;
+  min-width: 78px;
   text-align: right;
-  font-family: monospace;
+  color: #b2d7e9;
+  font-size: 0.74rem;
+  font-family: 'Consolas', 'Roboto Mono', monospace;
+  letter-spacing: 0.04em;
 }
 
 .buff-icons {
-  font-size: 0.85rem;
   min-width: 36px;
+  color: #f7d76e;
   text-align: left;
+  font-size: 0.9rem;
   line-height: 1;
 }
 
-/* Result rankings */
 .rank-row {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 8px 0;
-  font-size: 1.1rem;
+  font-size: 1.02rem;
 }
 
 .rank-medal {
-  font-size: 1.4rem;
   width: 32px;
+  font-size: 1.38rem;
 }
 
 .rank-dot {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
 }
 
 .rank-name {
-  color: #99ccee;
-  font-family: monospace;
+  color: #b6d8ea;
+  font-family: 'Consolas', 'Roboto Mono', monospace;
 }
 
-/* =========================================
-   Dev Panel
-========================================= */
 #dev-panel {
   position: fixed;
-  left: 0;
   top: 0;
-  width: 230px;
+  left: 0;
+  width: 238px;
   height: 100vh;
-  overflow-y: auto;
   z-index: 70;
-  background: rgba(15, 15, 30, 0.92);
-  border-right: 2px solid rgba(255, 200, 0, 0.3);
+  overflow-y: auto;
   padding: 12px 14px;
   box-sizing: border-box;
-  color: #eee;
+  color: #e3ecff;
   font-size: 0.78rem;
-  font-family: 'Roboto Mono', monospace, sans-serif;
+  font-family: 'Consolas', 'Roboto Mono', monospace;
+  border-right: 1px solid rgba(255, 220, 124, 0.35);
+  background: rgba(10, 10, 24, 0.88);
+  backdrop-filter: blur(8px);
 }
 
 .dev-title {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #FFD740;
   margin-bottom: 2px;
-  letter-spacing: 1px;
+  color: #ffd56e;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
 }
 
 .dev-hint {
-  font-size: 0.68rem;
-  color: #888;
   margin-bottom: 12px;
+  color: #90a0c4;
+  font-size: 0.68rem;
 }
 
 .dev-hint code {
-  background: rgba(255,255,255,0.1);
   padding: 1px 4px;
   border-radius: 3px;
-  color: #aef;
+  color: #d7f2ff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .dev-param {
   margin-bottom: 10px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .dev-param-header {
@@ -323,53 +430,49 @@ body.spin-board {
 }
 
 .dev-param-label {
-  color: #ccc;
+  color: #cfd8ef;
   font-size: 0.76rem;
 }
 
 .dev-param-value {
-  color: #FFD740;
-  font-size: 0.76rem;
-  font-family: monospace;
   min-width: 60px;
   text-align: right;
+  color: #ffd56e;
+  font-size: 0.76rem;
 }
 
 .dev-slider {
   width: 100%;
   height: 4px;
-  accent-color: #FFD740;
-  cursor: pointer;
   margin-bottom: 2px;
+  cursor: pointer;
+  accent-color: #ffd56e;
 }
 
 .dev-param-hint {
-  font-size: 0.66rem;
-  color: #666;
-  line-height: 1.3;
   margin-top: 2px;
+  color: #8190b6;
+  font-size: 0.66rem;
+  line-height: 1.3;
 }
 
 .dev-reset-btn {
   width: 100%;
   margin-top: 8px;
   padding: 8px 0;
-  background: rgba(255, 200, 0, 0.15);
-  border: 1px solid rgba(255, 200, 0, 0.4);
+  border: 1px solid rgba(255, 213, 110, 0.45);
   border-radius: 6px;
-  color: #FFD740;
-  font-size: 0.8rem;
   cursor: pointer;
-  transition: background 0.2s;
+  color: #ffd56e;
+  font-size: 0.8rem;
+  background: rgba(255, 213, 110, 0.16);
+  transition: background 0.2s ease;
 }
 
 .dev-reset-btn:hover {
-  background: rgba(255, 200, 0, 0.28);
+  background: rgba(255, 213, 110, 0.3);
 }
 
-/* =========================================
-   Spin Battle — Mobile Controller
-========================================= */
 body.spin-mobile {
   background: linear-gradient(160deg, #a8edea 0%, #fed6e3 100%);
 }
@@ -393,37 +496,40 @@ body.spin-mobile {
 }
 
 @keyframes spin-idle {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spin-phase-title {
+  margin: 0;
+  color: #ff6b6b;
   font-size: 1.6rem;
   font-weight: bold;
-  color: #FF6B6B;
   text-align: center;
-  margin: 0;
 }
 
 .spin-phase-sub {
-  font-size: 0.95rem;
-  color: #666;
-  text-align: center;
   margin: 0;
   padding: 0 20px;
+  color: #666;
+  font-size: 0.95rem;
+  text-align: center;
 }
 
-/* Ready & Result buttons */
 #btn-ready {
   margin-top: 24px;
   padding: 14px 40px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #FF9800, #FF5722);
-  color: #fff;
   border: none;
   border-radius: 50px;
   cursor: pointer;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
   box-shadow: 0 4px 20px rgba(255, 100, 0, 0.35);
 }
 
@@ -436,82 +542,114 @@ body.spin-mobile {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  margin-top: 28px;
   width: 100%;
   max-width: 260px;
+  margin-top: 28px;
 }
 
 #btn-again {
   padding: 14px 0;
-  font-size: 1.15rem;
-  font-weight: bold;
-  background: linear-gradient(135deg, #FF9800, #FF5722);
-  color: #fff;
   border: none;
   border-radius: 50px;
   cursor: pointer;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #ff9800, #ff5722);
   box-shadow: 0 4px 20px rgba(255, 100, 0, 0.35);
 }
 
 #btn-quit {
   padding: 14px 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50px;
+  cursor: pointer;
+  color: #555;
   font-size: 1.15rem;
   font-weight: bold;
   background: rgba(200, 200, 200, 0.5);
-  color: #555;
-  border: 1px solid rgba(0,0,0,0.1);
-  border-radius: 50px;
-  cursor: pointer;
 }
 
 .my-color-display {
   width: 48px;
   height: 48px;
+  margin-top: 8px;
   border-radius: 50%;
   border: 3px solid rgba(255, 255, 255, 0.6);
-  margin-top: 8px;
 }
 
 .my-color-display.hidden {
   display: none;
 }
 
-/* Launch RPM display */
 .launch-rpm {
+  color: #ff6b6b;
   font-size: 3rem;
   font-weight: bold;
-  color: #FF6B6B;
   text-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
   font-family: monospace;
 }
 
 .launch-timer {
-  font-size: 2rem;
   color: #888;
+  font-size: 2rem;
   font-family: monospace;
 }
 
-/* RPM gauge */
 .rpm-gauge-wrap {
   width: 80%;
   height: 14px;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 7px;
   overflow: hidden;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .rpm-gauge-bar {
-  height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #26C6DA, #FFD740, #FF5722);
+  height: 100%;
   border-radius: 7px;
+  background: linear-gradient(90deg, #26c6da, #ffd740, #ff5722);
   transition: width 0.1s linear;
 }
 
-/* Battle RPM */
 .battle-rpm {
+  color: #333;
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
   font-family: monospace;
+}
+
+@media (max-width: 720px) {
+  .spin-panel {
+    min-width: 0;
+    width: calc(100vw - 34px);
+    max-width: 420px;
+    padding: 30px 22px 24px;
+  }
+
+  .spin-panel h2,
+  .spin-panel .lobby-title {
+    font-size: 1.45rem;
+    letter-spacing: 0.16em;
+  }
+
+  #spin-hud {
+    bottom: 14px;
+    min-width: 0;
+    width: calc(100vw - 20px);
+    padding: 10px 10px;
+  }
+
+  .rpm-row {
+    grid-template-columns: 14px 1fr auto;
+    gap: 8px;
+  }
+
+  .buff-icons {
+    display: none;
+  }
+
+  #dev-panel {
+    width: 210px;
+  }
 }

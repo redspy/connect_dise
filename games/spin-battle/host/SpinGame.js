@@ -90,6 +90,18 @@ export class SpinGame {
     }
   }
 
+  setVisualParam(key, value) {
+    this.renderer?.setVisualParam(key, value);
+  }
+
+  getVisualState() {
+    return this.renderer?.getVisualState?.() || {};
+  }
+
+  resetVisualParams() {
+    this.renderer?.resetVisualParams?.();
+  }
+
   _stopItemSpawner() {
     if (this._itemSpawnTimer) {
       clearInterval(this._itemSpawnTimer);

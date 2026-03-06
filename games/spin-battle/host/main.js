@@ -22,6 +22,9 @@ host.on('sessionReady', async ({ qrUrl }) => {
   if (IS_DEV) {
     new DevPanel({
       onSpawnIntervalChange: (ms) => game?.setItemSpawnInterval(ms),
+      onVisualParamChange: (key, value) => game?.setVisualParam(key, value),
+      onVisualReset: () => game?.resetVisualParams(),
+      getVisualState: () => game?.getVisualState() || {},
     });
   }
 });
