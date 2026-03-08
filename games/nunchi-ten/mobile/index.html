@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>눈치 10단</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="nunchi-mobile">
+
+  <!-- ── 프로필 설정 화면 ─────────────────────────────────────────── -->
+  <div class="n-screen" data-screen="setup">
+    <div class="setup-wrap">
+      <h1 class="mobile-title">눈치 10단</h1>
+      <p class="mobile-sub">닉네임과 아바타를 선택하세요</p>
+
+      <input
+        id="nickname-input"
+        class="nickname-input"
+        type="text"
+        maxlength="8"
+        placeholder="닉네임 (최대 8자)"
+        autocomplete="off"
+      >
+
+      <div class="avatar-section-title">아바타 선택</div>
+      <div id="avatar-grid" class="avatar-grid"></div>
+
+      <button id="btn-join" class="btn-primary">참여하기 →</button>
+    </div>
+  </div>
+
+  <!-- ── 대기 화면 ────────────────────────────────────────────────── -->
+  <div class="n-screen hidden" data-screen="waiting">
+    <div class="waiting-wrap">
+      <img id="waiting-my-avatar" class="my-avatar-big" src="" alt="">
+      <div id="waiting-nickname" class="waiting-nickname"></div>
+      <div class="waiting-hint">게임 시작을 기다리는 중...</div>
+
+      <div class="waiting-players-wrap">
+        <div class="section-label">함께하는 플레이어</div>
+        <div id="waiting-players" class="waiting-players"></div>
+      </div>
+
+      <button id="btn-ready" class="btn-primary">준비하기</button>
+    </div>
+  </div>
+
+  <!-- ── 라운드 입력 화면 ─────────────────────────────────────────── -->
+  <div class="n-screen hidden" data-screen="round_input">
+    <div class="my-header">
+      <div class="my-header-left">
+        <img id="my-avatar-header" class="my-avatar-sm" src="" alt="">
+        <div>
+          <div id="my-name-header" class="my-name-sm"></div>
+          <div id="my-score-header" class="my-score-sm">0점</div>
+        </div>
+      </div>
+      <div class="my-header-right">
+        <div id="round-label" class="round-label">Round 1 / 10</div>
+        <div id="doubles-left" class="doubles-left">더블 3개 남음</div>
+      </div>
+    </div>
+
+    <div class="card-section-title">카드 선택</div>
+    <div id="card-grid" class="card-grid"></div>
+
+    <button id="btn-double" class="btn-double">더블 사용 OFF (3개 남음)</button>
+    <button id="btn-submit" class="btn-submit" disabled>선택하기</button>
+  </div>
+
+  <!-- ── 제출 후 대기 화면 ─────────────────────────────────────────── -->
+  <div class="n-screen hidden" data-screen="waiting_reveal">
+    <div class="waiting-reveal-wrap">
+      <div class="submitted-card-label">제출한 카드</div>
+      <div id="submitted-card-display" class="submitted-card-big"></div>
+      <div id="submitted-double-display" class="submitted-double"></div>
+      <div id="waiting-count" class="waiting-count-text">제출 완료, 기다리는 중...</div>
+      <div class="waiting-anim">⏳</div>
+    </div>
+  </div>
+
+  <!-- ── 라운드 결과 화면 ─────────────────────────────────────────── -->
+  <div class="n-screen hidden" data-screen="round_result">
+    <div class="round-result-wrap">
+      <div id="result-round" class="result-round-title">Round ? 결과</div>
+      <div class="result-card-label">내가 낸 카드</div>
+      <div id="result-my-card" class="result-card-big"></div>
+      <div id="result-base" class="result-base"></div>
+      <div id="result-double-row" class="result-double-row">× 2 더블 적용!</div>
+      <div id="result-final" class="result-final"></div>
+      <div id="result-total" class="result-total"></div>
+      <div id="result-next-hint" class="result-next-hint"></div>
+      <div id="round-countdown" class="round-countdown"></div>
+    </div>
+  </div>
+
+  <!-- ── 최종 결과 화면 ─────────────────────────────────────────── -->
+  <div class="n-screen hidden" data-screen="game_result">
+    <div class="game-result-wrap">
+      <div class="gr-my-section">
+        <div id="game-result-my-rank" class="gr-my-rank"></div>
+        <div id="game-result-my-score" class="gr-my-score">0점</div>
+      </div>
+      <div class="section-label">최종 순위</div>
+      <div id="game-result-rankings" class="gr-list"></div>
+      <button id="btn-rematch" class="btn-primary">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

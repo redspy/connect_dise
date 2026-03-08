@@ -17,7 +17,7 @@
     </div>
 
     <!-- Lobby Overlay -->
-    <div id="lobby-overlay" class="spin-overlay">
+    <div id="lobby-overlay" class="spin-overlay" data-phase="lobby">
       <div class="spin-panel">
         <h2 class="lobby-title">Top Battle</h2>
         <div id="qr-main"></div>
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Launching Overlay -->
-    <div id="launch-overlay" class="spin-overlay hidden">
+    <div id="launch-overlay" class="spin-overlay hidden" data-phase="launching">
       <div class="spin-panel">
         <h2>런칭!</h2>
         <p>핸드폰을 좌우로 흔들어 회전력을 모으세요!</p>
@@ -37,12 +37,12 @@
     </div>
 
     <!-- Countdown Overlay -->
-    <div id="countdown-overlay" class="spin-overlay hidden">
+    <div id="countdown-overlay" class="spin-overlay hidden" data-phase="countdown">
       <div class="spin-countdown-big" id="battle-countdown">3</div>
     </div>
 
     <!-- Result Overlay -->
-    <div id="result-overlay" class="spin-overlay hidden">
+    <div id="result-overlay" class="spin-overlay hidden" data-phase="result">
       <div class="spin-panel">
         <h2>결과</h2>
         <div id="rankings-display"></div>
