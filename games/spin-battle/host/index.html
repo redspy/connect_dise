@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spin Battle - Board</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body class="spin-board">
+    <!-- Three.js canvas container -->
+    <div id="spin-canvas"></div>
+
+    <!-- HUD Overlay -->
+    <div id="spin-hud">
+      <div id="rpm-bars"></div>
+    </div>
+
+    <!-- Lobby Overlay -->
+    <div id="lobby-overlay" class="spin-overlay">
+      <div class="spin-panel">
+        <h2 class="lobby-title">Top Battle</h2>
+        <div id="qr-main"></div>
+        <p id="session-id-display" class="spin-sub"></p>
+        <div id="player-list"></div>
+        <p id="player-count-display" class="spin-sub">QR코드로 접속하세요</p>
+      </div>
+    </div>
+
+    <!-- Launching Overlay -->
+    <div id="launch-overlay" class="spin-overlay hidden">
+      <div class="spin-panel">
+        <h2>런칭!</h2>
+        <p>핸드폰을 좌우로 흔들어 회전력을 모으세요!</p>
+        <div id="launch-countdown" class="spin-countdown">3</div>
+      </div>
+    </div>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="spin-overlay hidden">
+      <div class="spin-countdown-big" id="battle-countdown">3</div>
+    </div>
+
+    <!-- Result Overlay -->
+    <div id="result-overlay" class="spin-overlay hidden">
+      <div class="spin-panel">
+        <h2>결과</h2>
+        <div id="rankings-display"></div>
+        <button id="btn-restart">다시 하기</button>
+      </div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

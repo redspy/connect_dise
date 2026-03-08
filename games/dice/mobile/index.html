@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dice Controller</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body class="mobile-controller">
+  <div id="permission-modal" class="modal">
+    <div class="modal-content">
+      <h2>Welcome to Dice Game!</h2>
+      <p>This game requires access to your device's motion sensors to roll the dice.</p>
+      <button id="btn-grant-permission">Grant Permission & Play</button>
+    </div>
+  </div>
+
+  <div class="controller-ui">
+    <div class="status-indicator">
+      <span id="connection-status" class="status-dot"></span>
+      <span id="session-display">Session: ---</span>
+    </div>
+
+    <div class="dice-area" id="dice-area">
+      <div class="mobile-dice" id="visual-dice">🎲</div>
+      <p class="instruction" id="instruction-main">Shake to Roll!</p>
+      <p class="instruction sub" id="instruction-sub">Double-Tap to Throw!</p>
+      <button id="btn-retry" class="hidden">Retry (Get Dice Back)</button>
+    </div>
+
+    <!-- Gyroscope spirit level indicator -->
+    <div class="level-container">
+      <div class="level-bowl">
+        <div class="level-crosshair-h"></div>
+        <div class="level-crosshair-v"></div>
+        <div class="level-center-ring"></div>
+        <div class="level-bubble" id="level-bubble"></div>
+      </div>
+      <div class="level-values">
+        <span id="level-beta">β: 0°</span>
+        <span id="level-gamma">γ: 0°</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+
+</html>

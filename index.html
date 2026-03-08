@@ -1,32 +1,97 @@
 <!DOCTYPE html>
 <html lang="ko">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dice Board (Host)</title>
+  <title>게임 로비</title>
   <link rel="stylesheet" href="/src/style.css">
+  <style>
+    body.host-board {
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    #game-list {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+      z-index: 10;
+      position: relative;
+    }
+
+    .game-card {
+      background: linear-gradient(160deg, #1a2e1a 0%, #0d1a0d 100%);
+      border: 2px solid rgba(255, 215, 0, 0.4);
+      border-radius: 20px;
+      padding: 36px 40px;
+      text-align: center;
+      color: #f0f0f0;
+      cursor: pointer;
+      min-width: 220px;
+      box-shadow:
+        0 0 40px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 215, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(255, 215, 0, 0.8);
+      box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 215, 0, 0.3);
+    }
+
+    .game-thumbnail {
+      font-size: 4rem;
+      margin-bottom: 12px;
+    }
+
+    .game-card h2 {
+      margin: 0 0 8px;
+      font-size: 1.5rem;
+      font-family: 'Cinzel', serif;
+      background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .game-card p {
+      margin: 4px 0;
+      color: rgba(200, 200, 200, 0.8);
+      font-size: 0.95rem;
+    }
+
+    .game-meta {
+      font-size: 0.8rem !important;
+      color: rgba(255, 215, 0, 0.6) !important;
+      margin-top: 12px !important;
+    }
+
+    .lobby-title {
+      position: relative;
+      z-index: 10;
+      font-family: 'Cinzel', serif;
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      letter-spacing: 4px;
+    }
+  </style>
 </head>
-
 <body class="host-board">
-  <!-- QR codes will be generated dynamically -->
-  <div id="qr-top-left" class="qr-container"></div>
-  <div id="qr-top-right" class="qr-container"></div>
-  <div id="qr-bottom-left" class="qr-container"></div>
-  <div id="qr-bottom-right" class="qr-container"></div>
-
-  <div class="center-status">
-    <h1>Dice Game Board</h1>
-    <p id="session-info">Session ID: Loading...</p>
-    <p id="player-status">Waiting for players...</p>
-    <button id="test-roll-btn"
-      style="margin-top:20px; padding:12px 24px; cursor:pointer; background: var(--gold); color: #333; border:none; border-radius:5px; font-weight:bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index:100; pointer-events:auto;">Test
-      3D Engine (Manually)</button>
-  </div>
-
-  <div id="dice-box"></div> <!-- 3D Dice rendering target -->
-
-  <script type="module" src="/src/main.js"></script>
+  <h1 class="lobby-title">🎮 게임 선택</h1>
+  <div id="game-list"></div>
+  <script type="module" src="/src/lobby.js"></script>
 </body>
-
 </html>
