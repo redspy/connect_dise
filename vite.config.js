@@ -24,6 +24,8 @@ export default defineConfig({
         spinBattleMobile: resolve(__dirname, 'games/spin-battle/mobile/index.html'),
         diceHost:         resolve(__dirname, 'games/dice/host/index.html'),
         diceMobile:       resolve(__dirname, 'games/dice/mobile/index.html'),
+        nunchiHost:       resolve(__dirname, 'games/nunchi-ten/host/index.html'),
+        nunchiMobile:     resolve(__dirname, 'games/nunchi-ten/mobile/index.html'),
       },
     },
   },

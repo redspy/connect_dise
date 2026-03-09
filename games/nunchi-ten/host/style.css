@@ -1,0 +1,710 @@
+/* ── 눈치 10단 호스트 스타일 ──────────────────────────────────────────────── */
+
+/* ── Dev 패널 ───────────────────────────────────────────────────────────────── */
+
+#nunchi-dev-panel {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9999;
+  background: rgba(8, 12, 24, 0.92);
+  border: 1px solid #2a3654;
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+  backdrop-filter: blur(8px);
+}
+
+.ndp-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f59e0b;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.ndp-section-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #94a3b8;
+}
+
+.ndp-btn {
+  background: #1c2540;
+  border: 1px solid #2a3654;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ndp-btn:hover {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+}
+
+:root {
+  --nunchi-bg: #0c1220;
+  --nunchi-panel: #141c2e;
+  --nunchi-panel2: #1c2540;
+  --nunchi-border: #2a3654;
+  --nunchi-gold: #f59e0b;
+  --nunchi-gold-dim: rgba(245, 158, 11, 0.15);
+  --nunchi-text: #e2e8f0;
+  --nunchi-sub: #94a3b8;
+  --nunchi-green: #22c55e;
+  --nunchi-red: #ef4444;
+  --nunchi-card-bg: #1e2a42;
+  --avatar-size-lg: 108px;
+  --avatar-size-md: 84px;
+}
+
+body.nunchi-host {
+  background: var(--nunchi-bg);
+  color: var(--nunchi-text);
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ── 게임 보드 (항상 노출) ─────────────────────────────────────────────────── */
+
+#game-board {
+  position: relative;
+  height: 100vh;
+  padding: 20px 28px 0;
+  box-sizing: border-box;
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--nunchi-border);
+  padding-bottom: 12px;
+}
+
+.board-header-left,
+.board-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-header {
+  background: transparent;
+  border: 1px solid var(--nunchi-border);
+  color: var(--nunchi-sub);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.btn-header:hover {
+  border-color: var(--nunchi-gold);
+  color: var(--nunchi-gold);
+}
+
+.board-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--nunchi-gold);
+  letter-spacing: 2px;
+}
+
+.round-display {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--nunchi-text);
+  letter-spacing: 1px;
+}
+
+/* ── 플레이어 상태 그리드 ──────────────────────────────────────────────────── */
+
+/* ── 게임 메시지 영역 ──────────────────────────────────────────────────────── */
+
+.game-message {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 29vh;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  z-index: 2;
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 3px;
+}
+
+.game-message:not(:empty) {
+  animation: msg-pulse 2s ease-in-out infinite;
+}
+
+@keyframes msg-pulse {
+  0%,
+  100% {
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    transform: translateY(-50%) scale(1.04);
+  }
+}
+
+/* ── 플레이어 상태 그리드 ──────────────────────────────────────────────────── */
+
+.player-status-grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50vh;
+  bottom: 0;
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  padding: 0 28px;
+}
+
+.player-status-card {
+  position: relative;
+  background: var(--nunchi-panel);
+  border: 2px solid var(--nunchi-border);
+  border-radius: 24px;
+  padding: 64px 36px 28px;
+  text-align: center;
+  min-width: 200px;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+/* ── 순위 배지 ──────────────────────────────────────────────────────────────── */
+
+.ps-rank {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ps-rank[data-rank='1'] {
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+.ps-rank[data-rank='2'] {
+  color: #c0c0c0;
+}
+.ps-rank[data-rank='3'] {
+  color: #cd7f32;
+}
+.ps-rank[data-rank='4'],
+.ps-rank[data-rank='5'],
+.ps-rank[data-rank='6'] {
+  color: var(--nunchi-sub);
+  font-size: 1.1rem;
+}
+
+.player-status-card.submitted {
+  border-color: var(--nunchi-green);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.2);
+}
+
+.player-status-card.waiting {
+  border-color: var(--nunchi-border);
+}
+
+.ps-avatar {
+  width: var(--avatar-size-lg);
+  height: var(--avatar-size-lg);
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  margin: 0 auto 8px;
+}
+
+.ps-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ps-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ps-score {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--nunchi-gold);
+  margin-bottom: 8px;
+}
+
+.ps-status {
+  font-size: 1rem;
+  color: var(--nunchi-sub);
+}
+
+.player-status-card.submitted .ps-status {
+  color: var(--nunchi-green);
+}
+
+/* ── 공통 오버레이 ──────────────────────────────────────────────────────────── */
+
+.n-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(6px);
+}
+
+.n-overlay.hidden {
+  display: none;
+}
+
+/* ── 로비 ─────────────────────────────────────────────────────────────────── */
+
+.lobby-panel {
+  background: var(--nunchi-panel);
+  border: 1px solid var(--nunchi-border);
+  border-radius: 24px;
+  padding: 40px 48px;
+  text-align: center;
+  width: min(960px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.game-title {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--nunchi-gold);
+  margin: 0 0 6px;
+  letter-spacing: 3px;
+}
+
+.game-subtitle {
+  color: var(--nunchi-sub);
+  margin: 0 0 28px;
+  font-size: 0.95rem;
+}
+
+/* ── 로비 두 카드 레이아웃 ──────────────────────────────────────────────────── */
+
+.lobby-cards-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 24px;
+}
+
+.lobby-card {
+  flex: 1;
+  background: var(--nunchi-panel2);
+  border: 1px solid var(--nunchi-border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lobby-qr-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.session-info {
+  font-size: 1rem;
+  color: var(--nunchi-sub);
+}
+
+.session-info strong {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--nunchi-text);
+  margin-top: 6px;
+}
+
+.qr-url {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--nunchi-sub);
+  word-break: break-all;
+  max-width: 200px;
+  line-height: 1.4;
+}
+
+.lobby-desc-card {
+  text-align: left;
+}
+
+.lobby-desc-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--nunchi-sub);
+  margin-bottom: 14px;
+}
+
+.lobby-desc-list {
+  margin: 0 0 14px;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lobby-desc-list li {
+  font-size: 0.88rem;
+  color: var(--nunchi-text);
+  line-height: 1.45;
+}
+
+.lobby-desc-list b {
+  color: var(--nunchi-gold);
+  font-weight: 700;
+}
+
+.lobby-desc-tip {
+  font-size: 0.8rem;
+  color: var(--nunchi-sub);
+  background: var(--nunchi-gold-dim);
+  border-radius: 8px;
+  padding: 8px 12px;
+  line-height: 1.4;
+  margin-top: auto;
+}
+
+.lobby-players-wrap {
+  margin-bottom: 20px;
+}
+
+.lobby-players-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--nunchi-sub);
+  margin-bottom: 12px;
+}
+
+.lobby-players-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 80px;
+}
+
+.lobby-player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.lp-avatar {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  background: var(--nunchi-panel2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lp-placeholder {
+  font-size: 1.4rem;
+  color: var(--nunchi-sub);
+}
+
+.lp-name {
+  font-size: 0.78rem;
+  color: var(--nunchi-sub);
+  max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ready-status-text {
+  font-size: 0.9rem;
+  color: var(--nunchi-sub);
+  margin-bottom: 16px;
+}
+
+.btn-start {
+  background: var(--nunchi-gold);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 40px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
+  letter-spacing: 1px;
+}
+
+.btn-start:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.btn-start:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 공개 오버레이 ──────────────────────────────────────────────────────────── */
+
+.reveal-panel {
+  background: var(--nunchi-panel);
+  border: 1px solid var(--nunchi-border);
+  border-radius: 24px;
+  padding: 36px 48px;
+  text-align: center;
+  width: min(900px, 95vw);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.reveal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--nunchi-gold);
+  margin: 0 0 28px;
+}
+
+.reveal-cards {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.reveal-card {
+  background: var(--nunchi-card-bg);
+  border: 2px solid var(--nunchi-border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  text-align: center;
+  min-width: 140px;
+  animation: reveal-in 0.5s ease both;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reveal-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+.reveal-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.reveal-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.reveal-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+.reveal-card:nth-child(5) {
+  animation-delay: 0.5s;
+}
+.reveal-card:nth-child(6) {
+  animation-delay: 0.6s;
+}
+
+.rc-avatar {
+  width: var(--avatar-size-md);
+  height: var(--avatar-size-md);
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  margin: 0 auto 8px;
+}
+
+.rc-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rc-name {
+  font-size: 0.85rem;
+  color: var(--nunchi-sub);
+  margin-bottom: 10px;
+}
+
+.rc-number {
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: var(--nunchi-text);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.rc-double {
+  display: inline-block;
+  background: var(--nunchi-gold);
+  color: #000;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.rc-score-gained {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--nunchi-green);
+  margin-bottom: 2px;
+}
+
+.rc-total {
+  font-size: 0.8rem;
+  color: var(--nunchi-sub);
+}
+
+/* ── 최종 결과 ──────────────────────────────────────────────────────────────── */
+
+.result-panel {
+  background: var(--nunchi-panel);
+  border: 1px solid var(--nunchi-border);
+  border-radius: 24px;
+  padding: 40px 52px;
+  text-align: center;
+  width: min(560px, 90vw);
+}
+
+.result-panel .result-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--nunchi-gold);
+  margin: 0 0 28px;
+}
+
+.final-rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.final-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--nunchi-panel2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.final-rank-row.winner {
+  background: var(--nunchi-gold-dim);
+  border: 1px solid var(--nunchi-gold);
+}
+
+.fr-medal {
+  font-size: 1.6rem;
+  width: 3.2rem;
+  flex-shrink: 0;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fr-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.fr-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fr-name {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fr-score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--nunchi-gold);
+}
+
+.btn-restart {
+  background: transparent;
+  border: 2px solid var(--nunchi-gold);
+  color: var(--nunchi-gold);
+  border-radius: 10px;
+  padding: 12px 36px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-restart:hover {
+  background: var(--nunchi-gold-dim);
+}

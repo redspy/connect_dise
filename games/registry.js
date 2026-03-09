@@ -1,5 +1,15 @@
 export const GAMES = [
   {
+    id: 'nunchi-ten',
+    name: '눈치 10단',
+    description: '숫자 카드 심리전! 나보다 낮은 숫자를 낸 플레이어 수만큼 점수 획득',
+    hostPath: '/games/nunchi-ten/host/',
+    mobilePath: '/games/nunchi-ten/mobile/',
+    minPlayers: 3,
+    maxPlayers: 6,
+    thumbnail: '🃏',
+  },
+  {
     id: 'spin-battle',
     name: '팽이 배틀',
     description: '팽이를 충돌시켜 마지막까지 살아남아라!',

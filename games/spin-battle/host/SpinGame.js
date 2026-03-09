@@ -1,81 +1,116 @@
+import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { SpinPhysics, MAX_RPM, ITEM_TYPES } from './SpinPhysics.js';
 import { SpinRenderer } from './SpinRenderer.js';
 
 const LAUNCH_DURATION_MS = 5000;
 const BATTLE_COUNTDOWN_MS = 3000;
-
 const ITEM_TYPE_LIST = [ITEM_TYPES.ENERGY, ITEM_TYPES.SHIELD, ITEM_TYPES.COGS];
 
-export class SpinGame {
+export class SpinGame extends HostBaseGame {
   constructor(hostSDK, canvasContainer, { devMode = false } = {}) {
-    this.host = hostSDK;
-    this.physics = new SpinPhysics();
+    super(hostSDK, { overlayClass: 'spin-overlay', qrContainerId: 'qr-main' });
+
     this.renderer = new SpinRenderer(canvasContainer);
     this._devMode = devMode;
 
-    this.state = 'lobby'; // lobby | launching | countdown | battle | result
-    this.players = new Map();   // playerId → { id, color, rpm }
-    this.rankings = [];         // elimination order: { id, color }
-    this.launchRpms = new Map(); // playerId → submitted RPM from launch phase
+    this._readyCount = 0;
+    this._launchRpms = new Map();
     this._itemSpawnTimer = null;
     this._itemSpawnIntervalMs = 5000;
+    this.physics = null;
 
-    this._setupListeners();
+    // 게임 고유 메시지 등록
+    this.onMessage('tiltInput', (player, { tiltX, tiltZ }) => {
+      this.physics?.setTilt(player.id, tiltX, tiltZ);
+    });
+    this.onMessage('launchSpin', (player, { rpm }) => {
+      const value = this._devMode ? MAX_RPM : Math.min(3000, Math.max(300, rpm || 1000));
+      this._launchRpms.set(player.id, value);
+    });
+    this.onMessage('requestReset', () => {
+      this.resetSession();
+    });
+
     this._loop();
   }
 
-  _setupListeners() {
-    // All players ready → launch phase starts
-    this.host.on('allReady', () => {
-      this.state = 'launching';
-      this.launchRpms.clear();
-      this._showOverlay('launch-overlay');
-      this._startLaunchCountdown();
-    });
+  // ─── HostBaseGame 라이프사이클 오버라이드 ────────────────────────────────
 
-    // Tilt input from mobile during battle
-    this.host.onMessage('tiltInput', (player, { tiltX, tiltZ }) => {
-      this.physics.setTilt(player.id, tiltX, tiltZ);
+  async onSetup({ sessionId }) {
+    document.getElementById('session-id-display').textContent = sessionId;
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      this._readyCount = 0;
+      this._renderPlayerList();
+      this.resetSession();
     });
-
-    // Launch spin from mobile during launch phase
-    this.host.onMessage('launchSpin', (player, { rpm }) => {
-      const value = this._devMode ? MAX_RPM : Math.min(3000, Math.max(300, rpm || 1000));
-      this.launchRpms.set(player.id, value);
-    });
-
-    // Mobile requests game reset (다시하기)
-    this.host.onMessage('requestReset', () => {
-      this.host.resetSession();
-    });
+    this.setPhase('lobby');
   }
 
-  reset() {
+  onPlayerJoin(_player) {
+    this._renderPlayerList();
+  }
+
+  onPlayerLeave(_playerId) {
+    this._renderPlayerList();
+  }
+
+  onReadyUpdate({ readyCount }) {
+    this._readyCount = readyCount;
+    this._renderPlayerList();
+  }
+
+  onAllReady() {
+    this._launchRpms.clear();
+    this.setPhase('launching');
+    this._startLaunchCountdown();
+  }
+
+  onReset() {
     this._stopItemSpawner();
     this.renderer.clearItems();
     this._setQRVisible(true);
 
-    this.state = 'lobby';
-    this.players.clear();
-    this.rankings = [];
-    this.launchRpms.clear();
+    this._readyCount = 0;
+    this._launchRpms.clear();
 
-    for (const id of [...this.physics.spinners.keys()]) {
-      this.renderer.removeSpinner(id);
+    if (this.physics) {
+      for (const id of [...this.physics.spinners.keys()]) {
+        this.renderer.removeSpinner(id);
+      }
+      this.physics = null;
     }
-    this.physics = new SpinPhysics();
 
     const rpmBars = document.getElementById('rpm-bars');
     if (rpmBars) rpmBars.innerHTML = '';
 
-    this._showOverlay('lobby-overlay');
+    this._renderPlayerList();
+    this.setPhase('lobby');
   }
 
-  // ─── Item spawner ────────────────────────────────────────────────────────────
+  // ─── 플레이어 목록 렌더링 ────────────────────────────────────────────────
+
+  _renderPlayerList() {
+    const list = document.getElementById('player-list');
+    list.innerHTML = '';
+    for (const [, player] of this.players) {
+      const dot = document.createElement('div');
+      dot.className = 'player-dot';
+      dot.style.background = player.color;
+      list.appendChild(dot);
+    }
+    const countEl = document.getElementById('player-count-display');
+    if (this.playerCount === 0) {
+      countEl.textContent = '접속 중인 플레이어가 없습니다';
+    } else {
+      countEl.textContent = `${this.playerCount}명 접속 중 · ${this._readyCount}명 준비완료`;
+    }
+  }
+
+  // ─── 아이템 스포너 ────────────────────────────────────────────────────────
 
   _startItemSpawner() {
     this._itemSpawnTimer = setInterval(() => {
-      if (this.state !== 'battle') return;
+      if (this.phase !== 'battle') return;
       const type = ITEM_TYPE_LIST[Math.floor(Math.random() * ITEM_TYPE_LIST.length)];
       const item = this.physics.spawnItem(type);
       this.renderer.addItem(item);
@@ -90,17 +125,9 @@ export class SpinGame {
     }
   }
 
-  setVisualParam(key, value) {
-    this.renderer?.setVisualParam(key, value);
-  }
-
-  getVisualState() {
-    return this.renderer?.getVisualState?.() || {};
-  }
-
-  resetVisualParams() {
-    this.renderer?.resetVisualParams?.();
-  }
+  setVisualParam(key, value) { this.renderer?.setVisualParam(key, value); }
+  getVisualState() { return this.renderer?.getVisualState?.() || {}; }
+  resetVisualParams() { this.renderer?.resetVisualParams?.(); }
 
   _stopItemSpawner() {
     if (this._itemSpawnTimer) {
@@ -109,7 +136,7 @@ export class SpinGame {
     }
   }
 
-  // ─── Lifecycle helpers ──────────────────────────────────────────────────────
+  // ─── 게임 흐름 ───────────────────────────────────────────────────────────
 
   _startLaunchCountdown() {
     const el = document.getElementById('launch-countdown');
@@ -121,28 +148,23 @@ export class SpinGame {
       if (sec <= 0) clearInterval(iv);
     }, 1000);
 
-    // Wait for mobile launch RPMs to arrive, then start battle
-    setTimeout(() => {
-      this._startBattle();
-    }, LAUNCH_DURATION_MS + 800);
+    setTimeout(() => this._startBattle(), LAUNCH_DURATION_MS + 800);
   }
 
   _startBattle() {
-    this._hideAllOverlays();
-    const allPlayers = this.host.getPlayers();
+    const allPlayers = this.sdk.getPlayers();
     const players = allPlayers.map(p => ({
       id: p.id,
       color: p.color,
-      rpm: this.launchRpms.get(p.id) || 1000,
+      rpm: this._launchRpms.get(p.id) || 1000,
     }));
 
     if (this._devMode) {
       players.forEach(p => { p.rpm = MAX_RPM; });
     }
-    this.players = new Map(players.map(p => [p.id, { ...p }]));
-    this.rankings = [];
-    this.physics = new SpinPhysics();
 
+    this._rankings = [];
+    this.physics = new SpinPhysics();
     const count = players.length;
     players.forEach((p, i) => {
       const angle = (i / count) * Math.PI * 2;
@@ -151,12 +173,12 @@ export class SpinGame {
     });
 
     this._buildRpmBars(players);
-    this.host.broadcast('battleStart', { players });
+    this.broadcast('battleStart', { players });
     this._startBattleCountdown();
   }
 
   _startBattleCountdown() {
-    this._showOverlay('countdown-overlay');
+    this.setPhase('countdown');
     const el = document.getElementById('battle-countdown');
     let sec = Math.ceil(BATTLE_COUNTDOWN_MS / 1000);
     el.textContent = sec;
@@ -166,8 +188,7 @@ export class SpinGame {
       if (sec <= 0) {
         clearInterval(iv);
         setTimeout(() => {
-          this._hideAllOverlays();
-          this.state = 'battle';
+          this.setPhase('battle');
           this._setQRVisible(false);
           this._startItemSpawner();
         }, 600);
@@ -218,7 +239,7 @@ export class SpinGame {
     display.innerHTML = '';
     const medals = ['🥇', '🥈', '🥉'];
     rankings.forEach((entry, i) => {
-      const p = this.players.get(entry.id) || { color: '#fff' };
+      const p = this.getPlayer(entry.id) || { color: '#fff' };
       const div = document.createElement('div');
       div.className = 'rank-row';
       div.innerHTML = `
@@ -228,27 +249,16 @@ export class SpinGame {
       `;
       display.appendChild(div);
     });
-    this._showOverlay('result-overlay');
+    this.setPhase('result');
   }
 
-  _showOverlay(id) {
-    document.querySelectorAll('.spin-overlay').forEach(el => {
-      el.classList.toggle('hidden', el.id !== id);
-    });
-  }
-
-  _hideAllOverlays() {
-    document.querySelectorAll('.spin-overlay').forEach(el => el.classList.add('hidden'));
-  }
-
-  // ─── Game loop ──────────────────────────────────────────────────────────────
+  // ─── 게임 루프 ───────────────────────────────────────────────────────────
 
   _update() {
-    if (this.state !== 'battle') return;
+    if (this.phase !== 'battle' || !this.physics) return;
 
     const { eliminated, collisions, pickedUp, expired, wallHits } = this.physics.update();
 
-    // Sync 3D positions
     for (const [id, s] of this.physics.spinners) {
       if (!s.eliminated) {
         this.renderer.updateSpinner(id, s.x, s.z, s.rpm);
@@ -256,7 +266,6 @@ export class SpinGame {
       }
     }
 
-    // Spinner-spinner collision particles
     for (const hit of collisions) {
       this.renderer.spawnCollisionParticles(
         (hit.ax + hit.bx) / 2,
@@ -265,50 +274,41 @@ export class SpinGame {
       );
     }
 
-    // Wall hit particles
     for (const hit of wallHits) {
       this.renderer.spawnWallParticles(hit.x, hit.z, hit.color, hit.speed);
     }
 
-    // Item pickups → remove from renderer
     for (const { item } of pickedUp) {
       this.renderer.removeItem(item.id);
     }
 
-    // Item TTL expiry → remove from renderer
     for (const item of expired) {
       this.renderer.removeItem(item.id);
     }
 
-    // Eliminations — host directly notifies each eliminated player
     for (const { id, reason, x, z } of eliminated) {
       this.renderer.removeSpinner(id);
-      this.renderer.spawnCollisionParticles(x, z, this.players.get(id)?.color || '#fff');
-      this.rankings.push({ id, color: this.players.get(id)?.color });
+      this.renderer.spawnCollisionParticles(x, z, this.getPlayer(id)?.color || '#fff');
+      this._rankings.push({ id, color: this.getPlayer(id)?.color });
 
       const row = document.getElementById(`rpm-row-${id}`);
       if (row) row.classList.add('eliminated');
 
-      // rank: 1-based elimination order (1 = first out)
-      const rank = this.rankings.length;
-      this.host.sendToPlayer(id, 'eliminated', { rank, reason });
+      const rank = this._rankings.length;
+      this.sendToPlayer(id, 'eliminated', { rank, reason });
     }
 
-    // Game over check: one or fewer spinners still active
     if (eliminated.length > 0) {
       const active = [...this.physics.spinners.values()].filter(s => !s.eliminated);
-      if (active.length === 0 || (active.length === 1 && this.players.size > 1)) {
-        this.state = 'result';
-
+      if (active.length === 0 || (active.length === 1 && this.playerCount > 1)) {
         const winner = active[0];
         const finalRankings = [];
         if (winner) finalRankings.push({ id: winner.id, color: winner.color });
-        // Append eliminated in reverse order (last eliminated = rank 2)
-        for (let i = this.rankings.length - 1; i >= 0; i--) {
-          finalRankings.push(this.rankings[i]);
+        for (let i = this._rankings.length - 1; i >= 0; i--) {
+          finalRankings.push(this._rankings[i]);
         }
-
-        this.host.broadcast('gameOver', { rankings: finalRankings });
+        this._rankings = [];
+        this.broadcast('gameOver', { rankings: finalRankings });
         this._showResult(finalRankings);
       }
     }

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>눈치 10단</title>
+  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="nunchi-host">
+
+  <!-- ── 항상 보이는 게임 보드 ─────────────────────────────────── -->
+  <div id="game-board">
+    <header class="board-header">
+      <div class="board-header-left">
+        <button id="btn-back" class="btn-header" onclick="location.href='/'">← 로비</button>
+        <div class="board-title">눈치 10단</div>
+      </div>
+      <div class="board-header-right">
+        <div id="round-display" class="round-display">Round - / 10</div>
+        <button id="btn-restart-game" class="btn-header">다시하기</button>
+      </div>
+    </header>
+
+    <!-- 게임 메시지 영역 -->
+    <div id="game-message" class="game-message"></div>
+
+    <!-- 플레이어 제출 상태 -->
+    <div id="player-status-grid" class="player-status-grid"></div>
+  </div>
+
+  <!-- ── 로비 오버레이 ──────────────────────────────────────────── -->
+  <div class="n-overlay" data-phase="lobby">
+    <div class="lobby-panel">
+      <h1 class="game-title">눈치 10단</h1>
+      <p class="game-subtitle">숫자 카드 심리전 · 2~6명</p>
+
+      <!-- QR 카드 + 게임 설명 카드 -->
+      <div class="lobby-cards-row">
+
+        <div class="lobby-card">
+          <div class="lobby-qr-area">
+            <div id="qr-container"></div>
+            <div class="session-info">
+              방 코드 <strong id="session-code">------</strong>
+              <div id="qr-url-display" class="qr-url"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lobby-card lobby-desc-card">
+          <div class="lobby-desc-title">게임 방법</div>
+          <ul class="lobby-desc-list">
+            <li>라운드마다 <b>1~10 숫자 카드</b> 중 하나를 비공개로 선택</li>
+            <li>내 카드보다 <b>낮은 카드</b>를 낸 사람 수만큼 점수 획득</li>
+            <li>각 카드는 게임 당 <b>1회만</b> 사용 가능</li>
+            <li><b>더블 아이템 3개</b> — 해당 라운드 점수를 2배로!</li>
+            <li><b>10라운드</b> 후 가장 높은 점수가 승리</li>
+          </ul>
+          <div class="lobby-desc-tip">💡 높은 숫자가 항상 유리하지 않아요. 심리전이 핵심!</div>
+        </div>
+
+      </div>
+
+      <div class="lobby-players-wrap">
+        <div class="lobby-players-title">참가자</div>
+        <div id="lobby-players" class="lobby-players-grid"></div>
+      </div>
+
+      <div id="ready-status" class="ready-status-text">플레이어를 기다리는 중...</div>
+      <button id="btn-start" class="btn-start" disabled>최소 2명 필요</button>
+    </div>
+  </div>
+
+  <!-- ── 공개 오버레이 ──────────────────────────────────────────── -->
+  <div class="n-overlay hidden" data-phase="round_reveal">
+    <div class="reveal-panel">
+      <h2 id="reveal-round-title" class="reveal-title">Round ? 결과</h2>
+      <div id="reveal-cards" class="reveal-cards"></div>
+    </div>
+  </div>
+
+  <!-- ── 최종 결과 오버레이 ─────────────────────────────────────── -->
+  <div class="n-overlay hidden" data-phase="game_result">
+    <div class="result-panel">
+      <h2 class="result-title">🏆 게임 종료!</h2>
+      <div id="final-rankings" class="final-rankings"></div>
+      <button id="btn-restart" class="btn-restart">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
