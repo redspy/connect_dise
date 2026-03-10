@@ -15,4 +15,4 @@ jobs:
           cd /d D:\Source\connect_dise
           git fetch origin main
           git reset --hard origin/main
-          call deploy.bat
+          call D:\Source\connect_dise\deploy.bat
