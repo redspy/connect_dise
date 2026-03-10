@@ -2,6 +2,8 @@ import { io } from 'socket.io-client';
 import { SensorManager } from './shared/SensorManager.js';
 import { QRScanner } from './shared/QRScanner.js';
 
+const RECONNECT_KEY = (sessionId) => `_sdk_reconnect_${sessionId}`;
+
 export class MobileSDK extends EventTarget {
   constructor() {
     super();
@@ -22,14 +24,24 @@ export class MobileSDK extends EventTarget {
 
     socket.on('connect', () => {
       if (this._sessionId) {
-        socket.emit('platform:joinSession', { sessionId: this._sessionId });
+        // 이전 세션의 stable player ID가 있으면 재연결 시도
+        const reconnectId = sessionStorage.getItem(RECONNECT_KEY(this._sessionId)) || null;
+        socket.emit('platform:joinSession', { sessionId: this._sessionId, reconnectId });
       }
     });
 
-    socket.on('platform:joined', ({ player }) => {
+    socket.on('platform:joined', ({ player, reconnected }) => {
       this._player = player;
+      // stable player ID를 sessionStorage에 저장 (탭 생존 기간 동안 유지)
+      sessionStorage.setItem(RECONNECT_KEY(this._sessionId), player.id);
       this._hideScanBtn();
-      this._emit('join', player);
+
+      if (reconnected) {
+        // 화면 전환 없이 조용히 재연결 — 게임 계속
+        this._emit('rejoin', player);
+      } else {
+        this._emit('join', player);
+      }
     });
 
     socket.on('platform:allReady', () => {
@@ -44,7 +56,12 @@ export class MobileSDK extends EventTarget {
       this._showScanBtn();
     });
 
+    socket.on('connect', () => {
+      // 재연결 후 스캔 버튼 숨김은 platform:joined 처리 후
+    });
+
     socket.on('hostDisconnected', () => {
+      sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
       this._emit('hostDisconnect', {});
       this._showScanBtn();
     });
@@ -109,10 +126,6 @@ export class MobileSDK extends EventTarget {
     return this._sessionId;
   }
 
-  /**
-   * QR 스캔 오버레이를 열어 읽힌 URL로 이동합니다.
-   * 게임 페이지에서 직접 호출하거나, SDK가 자동으로 호출(hostDisconnect 시)합니다.
-   */
   async showQRScanner() {
     const scanner = new QRScanner();
     const url = await scanner.scan();
@@ -123,14 +136,13 @@ export class MobileSDK extends EventTarget {
     document.getElementById('_sdk-scan-btn')?.remove();
   }
 
-  /** 빨간 상태(미연결)일 때 화면에 스캔 버튼을 주입합니다. */
   _showScanBtn() {
     if (document.getElementById('_sdk-scan-btn')) return;
 
     const btn = document.createElement('button');
     btn.id = '_sdk-scan-btn';
     btn.title = 'QR 코드 스캔';
-    btn.innerHTML = '&#x1F4F7;'; // 📷
+    btn.innerHTML = '&#x1F4F7;';
     btn.style.cssText = [
       'position:fixed;top:12px;right:12px;z-index:8000',
       'width:44px;height:44px;border-radius:50%',
@@ -141,7 +153,6 @@ export class MobileSDK extends EventTarget {
       'animation:_sdk-pulse 1.8s ease infinite',
     ].join(';');
 
-    // 펄스 애니메이션 스타일 (한 번만 삽입)
     if (!document.getElementById('_sdk-scan-style')) {
       const style = document.createElement('style');
       style.id = '_sdk-scan-style';

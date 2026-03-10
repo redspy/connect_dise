@@ -305,6 +305,27 @@ body.nunchi-host {
   overflow-y: auto;
 }
 
+.lobby-panel-top {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
+
+.lobby-main-img-wrap {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  aspect-ratio: 16 / 7;
+}
+
+.lobby-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .game-title {
   font-size: 2.8rem;
   font-weight: 900;
