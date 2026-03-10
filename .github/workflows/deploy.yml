@@ -10,8 +10,9 @@ jobs:
 
     steps:
       - name: Run deployment script
+        shell: cmd
         run: |
-          cd D:\Source\connect_dise
+          cd /d D:\Source\connect_dise
           git fetch origin main
           git reset --hard origin/main
-          .\deploy.bat
+          call deploy.bat
