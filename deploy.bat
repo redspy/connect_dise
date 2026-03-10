@@ -2,8 +2,9 @@
 cd /d %~dp0
 
 echo [Step 1] Stopping server...
-call pm2 stop connect_dise >nul 2>&1
-call pm2 delete connect_dise >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000 ^| findstr LISTENING') do (
+    taskkill /F /PID %%a >nul 2>&1
+)
 
 echo [Step 2] Installing dependencies...
 call npm install
@@ -20,7 +21,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [Step 4] Starting server...
-call pm2 start server/index.js --name connect_dise
+wmic process call create "cmd /c cd /d D:\Source\connect_dise && node server/index.js > server.log 2>&1"
 
 echo ========================================
 echo  Deploy complete!
