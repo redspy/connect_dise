@@ -14,7 +14,7 @@ echo [Step 4] Building frontend...
 call npm run build
 
 echo [Step 5] Starting server...
-node server/index.js
+start "connect_dise_server" /min node server/index.js
 
 
 echo ========================================
