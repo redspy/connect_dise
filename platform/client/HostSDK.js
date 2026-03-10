@@ -37,6 +37,12 @@ export class HostSDK extends EventTarget {
       this._emit('playerLeave', playerId);
     });
 
+    // 재연결: 플레이어 Map 갱신 후 게임에 알림
+    socket.on('platform:playerRejoined', ({ player }) => {
+      this._players.set(player.id, player);
+      this._emit('playerRejoin', player);
+    });
+
     socket.on('platform:readyUpdate', ({ readyCount, totalCount }) => {
       this._emit('readyUpdate', { readyCount, total: totalCount });
     });

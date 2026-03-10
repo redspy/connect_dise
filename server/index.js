@@ -6,13 +6,14 @@ import { SessionManager } from '../platform/server/SessionManager.js';
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
 const sm = new SessionManager();
+
+// 플레이어 연결 끊김 후 실제 제거까지의 유예 시간
+const RECONNECT_GRACE_MS = 30_000;
+const disconnectTimers = new Map(); // playerId → timer
 
 io.on('connection', (socket) => {
   console.log('Connected:', socket.id);
@@ -23,20 +24,36 @@ io.on('connection', (socket) => {
     const { sessionId, localIp } = sm.createSession(socket.id, gameId);
     socket.join(sessionId);
     socket.emit('platform:sessionCreated', { sessionId, localIp });
-    console.log(`[${gameId}] Session ${sessionId} created by ${socket.id} (IP: ${localIp})`);
+    console.log(`[${gameId}] Session ${sessionId} created (IP: ${localIp})`);
   });
 
-  socket.on('platform:joinSession', ({ sessionId }) => {
-    const player = sm.joinSession(sessionId, socket.id);
-    if (!player) {
+  socket.on('platform:joinSession', ({ sessionId, reconnectId = null }) => {
+    const result = sm.joinSession(sessionId, socket.id, reconnectId);
+    if (!result) {
       socket.emit('error', 'Session not found or invalid');
       return;
     }
+
+    const { player, reconnected } = result;
+
+    // 유예 타이머 취소 (재연결 성공)
+    if (reconnected) {
+      const timer = disconnectTimers.get(player.id);
+      if (timer) { clearTimeout(timer); disconnectTimers.delete(player.id); }
+      console.log(`Player ${player.id} reconnected to session ${sessionId}`);
+    }
+
     socket.join(sessionId);
+    socket.emit('platform:joined', { player, reconnected });
+
     const session = sm.getSession(sessionId);
-    socket.emit('platform:joined', { player });
-    io.to(session.hostSocketId).emit('platform:playerJoined', { player });
-    console.log(`Player ${socket.id} joined session ${sessionId} with color ${player.color}`);
+    if (reconnected) {
+      // 호스트에게 재연결 알림 (playerJoin 재호출 없이)
+      io.to(session.hostSocketId).emit('platform:playerRejoined', { player });
+    } else {
+      io.to(session.hostSocketId).emit('platform:playerJoined', { player });
+      console.log(`Player ${player.id} joined session ${sessionId} (color: ${player.color})`);
+    }
   });
 
   socket.on('platform:playerReady', ({ sessionId }) => {
@@ -46,10 +63,10 @@ io.on('connection', (socket) => {
     if (!session) return;
     const { readyCount, totalCount, allReady } = result;
     io.to(session.hostSocketId).emit('platform:readyUpdate', { readyCount, totalCount });
-    console.log(`[${sessionId}] ${socket.id} ready (${readyCount}/${totalCount})`);
+    console.log(`[${sessionId}] ready ${readyCount}/${totalCount}`);
     if (allReady) {
       io.to(sessionId).emit('platform:allReady', {});
-      console.log(`[${sessionId}] All players ready — allReady broadcast`);
+      console.log(`[${sessionId}] All players ready`);
     }
   });
 
@@ -59,40 +76,63 @@ io.on('connection', (socket) => {
     console.log(`[${sessionId}] Session reset`);
   });
 
-  // ─── Game message routing (server is content-agnostic) ──────────────────────
+  // ─── Game message routing ─────────────────────────────────────────────────
 
   socket.on('game:toHost', ({ sessionId, type, payload }) => {
     const session = sm.getSession(sessionId);
     if (!session) return;
-    io.to(session.hostSocketId).emit('game:fromPlayer', { from: socket.id, type, payload });
+    const info = sm.socketToSession.get(socket.id);
+    const stablePlayerId = info?.playerId ?? socket.id;
+    io.to(session.hostSocketId).emit('game:fromPlayer', { from: stablePlayerId, type, payload });
   });
 
-  socket.on('game:toPlayer', ({ to, type, payload }) => {
-    io.to(to).emit('game:fromHost', { type, payload });
+  socket.on('game:toPlayer', ({ sessionId, to, type, payload }) => {
+    const socketId = sm.getSocketId(sessionId, to);
+    if (socketId) io.to(socketId).emit('game:fromHost', { type, payload });
   });
 
   socket.on('game:broadcast', ({ sessionId, type, payload }) => {
     const session = sm.getSession(sessionId);
     if (!session) return;
     for (const p of session.players) {
-      io.to(p.id).emit('game:fromHost', { type, payload });
+      io.to(p.socketId).emit('game:fromHost', { type, payload });
     }
   });
 
-  // ─── Disconnect ─────────────────────────────────────────────────────────────
+  // ─── Disconnect ───────────────────────────────────────────────────────────
 
   socket.on('disconnect', () => {
     console.log('Disconnected:', socket.id);
     const events = sm.removeSocket(socket.id);
+
     for (const { sessionId, role, data } of events) {
       if (role === 'host') {
         io.to(sessionId).emit('hostDisconnected');
         console.log(`Session ${sessionId} closed — host disconnected`);
+
       } else if (data?.player) {
-        const { player, readyCount, totalCount, hostSocketId } = data;
-        io.to(hostSocketId).emit('platform:playerLeft', { playerId: player.id });
-        io.to(hostSocketId).emit('platform:readyUpdate', { readyCount, totalCount });
-        console.log(`Player ${player.id} removed from session ${sessionId}`);
+        const { player, hostSocketId } = data;
+        const oldSocketId = socket.id;
+
+        // 호스트에게 일시 연결 끊김 알림 (선택적 UI용)
+        io.to(hostSocketId).emit('platform:playerDisconnected', { playerId: player.id });
+        console.log(`[${sessionId}] Player ${player.id} disconnected — grace ${RECONNECT_GRACE_MS / 1000}s`);
+
+        // 유예 기간 후 완전 제거
+        const timer = setTimeout(() => {
+          disconnectTimers.delete(player.id);
+          const result = sm.finalizePlayerRemoval(sessionId, player.id, oldSocketId);
+          if (result) {
+            io.to(result.hostSocketId).emit('platform:playerLeft', { playerId: player.id });
+            io.to(result.hostSocketId).emit('platform:readyUpdate', {
+              readyCount: result.readyCount,
+              totalCount: result.totalCount,
+            });
+            console.log(`[${sessionId}] Player ${player.id} removed after grace period`);
+          }
+        }, RECONNECT_GRACE_MS);
+
+        disconnectTimers.set(player.id, timer);
       }
     }
   });

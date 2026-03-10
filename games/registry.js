@@ -5,9 +5,10 @@ export const GAMES = [
     description: '숫자 카드 심리전! 나보다 낮은 숫자를 낸 플레이어 수만큼 점수 획득',
     hostPath: '/games/nunchi-ten/host/',
     mobilePath: '/games/nunchi-ten/mobile/',
-    minPlayers: 3,
+    minPlayers: 2,
     maxPlayers: 6,
     thumbnail: '🃏',
+    thumbnailImg: '/games/nunchi-ten/assets/thumbnail.png',
   },
   {
     id: 'spin-battle',

@@ -44,6 +44,12 @@ export class MobileBaseGame {
       this.onJoin(player);
     });
 
+    // 재연결: 화면 전환 없이 플레이어 정보만 갱신
+    this.sdk.on('rejoin', (player) => {
+      this._player = player;
+      this.onRejoin(player);
+    });
+
     this.sdk.on('allReady', () => {
       this.onAllReady();
     });
@@ -112,6 +118,13 @@ export class MobileBaseGame {
    * @param {{ id: string, color: string }} player
    */
   onJoin(player) {} // eslint-disable-line no-unused-vars
+
+  /**
+   * 백그라운드 복귀 등으로 재연결됐을 때.
+   * 기본 동작: 아무것도 하지 않음 (현재 화면 유지).
+   * @param {{ id: string, color: string }} player
+   */
+  onRejoin(player) {} // eslint-disable-line no-unused-vars
 
   /** 모든 플레이어 준비 완료 (호스트가 게임 시작). */
   onAllReady() {}

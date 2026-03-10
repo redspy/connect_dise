@@ -73,6 +73,11 @@ export class HostBaseGame {
       this.onAllReady();
     });
 
+    this.sdk.on('playerRejoin', (player) => {
+      this._players.set(player.id, player);
+      this.onPlayerRejoin(player);
+    });
+
     this.sdk.on('reset', () => {
       // 플레이어 맵을 SDK 현재 상태로 복원
       this._players.clear();
@@ -147,6 +152,12 @@ export class HostBaseGame {
    * @param {{ id: string, color: string }} player
    */
   onPlayerJoin(player) {} // eslint-disable-line no-unused-vars
+
+  /**
+   * 플레이어 재연결 (grace period 이내 복귀).
+   * @param {{ id: string, color: string }} player
+   */
+  onPlayerRejoin(player) {} // eslint-disable-line no-unused-vars
 
   /**
    * 플레이어 퇴장. this.players에서 이미 제거된 상태입니다.
