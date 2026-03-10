@@ -1,0 +1,17 @@
+name: Windows Auto Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Run deployment script
+        run: |
+          # 윈도우 경로 이동 (본인의 프로젝트 경로로 수정하세요)
+          cd D:\Source\connect_dise
+          # 윈도우 배치 파일 실행
+          .\deploy.bat
