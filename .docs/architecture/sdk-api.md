@@ -24,7 +24,8 @@ const host = new HostSDK({ gameId: 'my-game' });
 |--------|----------|----------|
 | `sessionReady` | `{ sessionId, qrUrl }` | 세션이 생성되고 QR URL이 준비됐을 때 |
 | `playerJoin` | `player` | 새 플레이어가 입장했을 때 |
-| `playerLeave` | `playerId` | 플레이어가 연결을 끊었을 때 |
+| `playerLeave` | `playerId` | 플레이어가 완전 제거됐을 때 (유예 만료) |
+| `playerRejoin` | `player` | 플레이어가 재연결했을 때 (유예 중 복귀) |
 | `readyUpdate` | `{ readyCount, total }` | 준비 상태가 바뀔 때마다 |
 | `allReady` | `{}` | 모든 플레이어가 준비 완료됐을 때 |
 | `reset` | `{}` | 세션 리셋 후 |
@@ -33,6 +34,7 @@ const host = new HostSDK({ gameId: 'my-game' });
 ```js
 host.on('sessionReady', ({ sessionId, qrUrl }) => { ... });
 host.on('playerJoin', (player) => { ... });
+host.on('playerRejoin', (player) => { ... });
 host.on('allReady', () => { ... });
 ```
 
@@ -92,7 +94,7 @@ import { MobileSDK } from '../../../platform/client/MobileSDK.js';
 const mobile = new MobileSDK();
 ```
 
-생성자 호출 시 자동으로 서버에 연결하고 세션에 입장을 시도합니다.
+생성자 호출 시 자동으로 서버에 연결하고 세션에 입장을 시도합니다. sessionStorage에 저장된 reconnectId가 있으면 자동으로 재연결을 시도합니다.
 
 ---
 
@@ -101,6 +103,7 @@ const mobile = new MobileSDK();
 | 이벤트 | 콜백 인자 | 발생 시점 |
 |--------|----------|----------|
 | `join` | `player` | 세션 입장 완료 (`player.id`, `player.color` 포함) |
+| `rejoin` | `player` | 재연결 성공 (기존 플레이어 정보 복원) |
 | `allReady` | `{}` | 모든 플레이어가 준비 완료됐을 때 |
 | `reset` | `{}` | 세션 리셋 후 |
 | `hostDisconnect` | `{}` | 호스트 연결 종료 시 |
@@ -109,6 +112,10 @@ const mobile = new MobileSDK();
 ```js
 mobile.on('join', (player) => {
   console.log('내 색상:', player.color);
+});
+
+mobile.on('rejoin', (player) => {
+  console.log('재연결 성공:', player.id);
 });
 ```
 
@@ -181,6 +188,126 @@ mobile.getSessionId()             // string — 현재 세션 ID
 
 ---
 
+## HostBaseGame
+
+`platform/client/HostBaseGame.js`
+
+호스트 게임의 베이스 클래스입니다. HostSDK를 래핑하여 플레이어 추적, 페이즈 관리, QR 자동 렌더링 등 공통 기능을 제공합니다.
+
+### 초기화
+
+```js
+import { HostSDK } from '../../../platform/client/HostSDK.js';
+import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+
+class MyGame extends HostBaseGame {
+  constructor(sdk) {
+    super(sdk, {
+      overlayClass: 'game-overlay',    // 페이즈 오버레이 CSS 클래스
+      qrContainerId: 'qr-container',   // QR 자동 렌더링 요소 ID
+    });
+  }
+}
+
+const sdk = new HostSDK({ gameId: 'my-game' });
+const game = new MyGame(sdk);
+```
+
+### 라이프사이클 훅
+
+서브클래스에서 필요한 메서드만 override합니다.
+
+| 훅 | 인자 | 호출 시점 |
+|----|------|----------|
+| `onSetup({ qrUrl, sessionId })` | 세션 정보 | 세션 생성 + QR 렌더링 완료 후 |
+| `onPlayerJoin(player)` | `{ id, color }` | 새 플레이어 입장 (players에 이미 추가됨) |
+| `onPlayerRejoin(player)` | `{ id, color }` | 플레이어 재연결 |
+| `onPlayerLeave(playerId)` | `string` | 플레이어 퇴장 (players에서 이미 제거됨) |
+| `onReadyUpdate({ readyCount, total })` | 준비 현황 | 준비 상태 변경 |
+| `onAllReady()` | - | 전원 준비 완료 |
+| `onReset()` | - | 세션 리셋 (players 자동 복원됨) |
+| `onPhaseChange(from, to)` | 이전/현재 | `setPhase()` 호출 후 |
+
+### 페이즈 관리
+
+```js
+this.setPhase('lobby');   // overlayClass를 가진 요소 중 data-phase="lobby"만 표시
+this.setPhase('battle');  // data-phase="battle"만 표시
+this.phase;               // 현재 페이즈 이름
+```
+
+### SDK 바로가기
+
+```js
+this.broadcast(type, payload)          // 전체 브로드캐스트
+this.sendToPlayer(id, type, payload)   // 특정 플레이어에게 전송
+this.onMessage(type, callback)         // 게임 메시지 핸들러 등록
+this.resetSession()                    // 세션 리셋
+this.players                           // Map<id, player> — 현재 플레이어
+this.playerCount                       // 현재 인원 수
+this.getPlayer(id)                     // 특정 플레이어 조회
+```
+
+---
+
+## MobileBaseGame
+
+`platform/client/MobileBaseGame.js`
+
+모바일 게임의 베이스 클래스입니다. MobileSDK를 래핑하여 화면 전환, 플레이어 정보 관리 등 공통 기능을 제공합니다.
+
+### 초기화
+
+```js
+import { MobileSDK } from '../../../platform/client/MobileSDK.js';
+import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
+
+class MyMobileGame extends MobileBaseGame {
+  constructor(sdk) {
+    super(sdk, {
+      screenClass: 'game-screen',  // 화면 전환 CSS 클래스
+    });
+  }
+}
+
+const sdk = new MobileSDK();
+const game = new MyMobileGame(sdk);
+```
+
+### 라이프사이클 훅
+
+| 훅 | 인자 | 호출 시점 |
+|----|------|----------|
+| `onJoin(player)` | `{ id, color }` | 세션 입장 완료 |
+| `onRejoin(player)` | `{ id, color }` | 재연결 성공 (화면 유지) |
+| `onAllReady()` | - | 전원 준비 완료 |
+| `onReset()` | - | 세션 리셋 |
+| `onHostDisconnect()` | - | 호스트 연결 끊김 |
+
+### 화면 관리
+
+```js
+this.showScreen('waiting');  // screenClass를 가진 요소 중 data-screen="waiting"만 표시
+this.showScreen('game');     // data-screen="game"만 표시
+```
+
+### SDK 바로가기
+
+```js
+this.sendToHost(type, payload)    // 호스트에게 전송
+this.ready()                      // 준비 완료
+this.onMessage(type, callback)    // 게임 메시지 핸들러 등록
+this.vibrate(pattern)             // 진동
+this.requestSensors()             // 센서 권한 요청
+this.onOrientation(callback)      // 기울기 센서
+this.onMotion(callback)           // 모션 센서
+this.player                       // { id, color }
+this.playerId                     // string
+this.playerColor                  // string
+```
+
+---
+
 ## 공유 컴포넌트
 
 ### QRDisplay (`platform/client/shared/QRDisplay.js`)
@@ -212,3 +339,7 @@ mobile.onOrientation(({ beta, gamma }) => {
 ```
 
 `BOWL_RADIUS`는 46px로 고정되어 있으며, 기울기가 커질수록 버블이 그릇 테두리 쪽으로 이동합니다.
+
+### SensorManager (`platform/client/shared/SensorManager.js`)
+
+iOS DeviceMotion/Orientation 권한 요청과 센서 이벤트를 래핑합니다. MobileSDK 내부에서 사용되므로 직접 import할 필요는 거의 없습니다.

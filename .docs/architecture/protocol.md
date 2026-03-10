@@ -23,14 +23,18 @@ platform:sessionCreated
 ```
 모바일 → 서버
 platform:joinSession
-{ sessionId: string }
+{ sessionId: string, reconnectId: string | null }
 
 서버 → 모바일
 platform:joined
+{ player: { id: string, color: string }, reconnected: boolean }
+
+서버 → 호스트 (신규 입장)
+platform:playerJoined
 { player: { id: string, color: string } }
 
-서버 → 호스트
-platform:playerJoined
+서버 → 호스트 (재연결)
+platform:playerRejoined
 { player: { id: string, color: string } }
 ```
 
@@ -65,6 +69,11 @@ platform:reset
 ### 플레이어 연결 해제 (disconnect)
 
 ```
+서버 → 호스트 (일시 연결 끊김 알림)
+platform:playerDisconnected
+{ playerId: string }
+
+(30초 유예 후 재연결 없으면)
 서버 → 호스트
 platform:playerLeft
 { playerId: string }
@@ -95,15 +104,17 @@ game:toHost
 
 서버 → 호스트
 game:fromPlayer
-{ from: string (socketId), type: string, payload: any }
+{ from: string (stablePlayerId), type: string, payload: any }
 ```
+
+> `from` 필드에는 소켓 ID가 아닌 **안정 플레이어 ID**가 전달됩니다. 재연결 후에도 동일한 ID를 유지합니다.
 
 ### 호스트 → 특정 모바일
 
 ```
 호스트 → 서버
 game:toPlayer
-{ to: string (socketId), type: string, payload: any }
+{ to: string (playerId), type: string, payload: any }
 
 서버 → 해당 모바일
 game:fromHost
@@ -124,7 +135,9 @@ game:fromHost
 
 ---
 
-## 팽이 배틀 게임 메시지 예시
+## 게임별 메시지 예시
+
+### 팽이 배틀
 
 | 방향 | type | payload | 용도 |
 |------|------|---------|------|
@@ -134,3 +147,12 @@ game:fromHost
 | 호스트 → 전체 | `battleStart` | `{ players: Player[] }` | 배틀 시작 |
 | 호스트 → 특정 | `eliminated` | `{ rank: number, reason: string }` | 탈락 통보 |
 | 호스트 → 전체 | `gameOver` | `{ rankings: Player[] }` | 게임 종료 |
+
+### 눈치 10단
+
+| 방향 | type | payload | 용도 |
+|------|------|---------|------|
+| 모바일 → 호스트 | `chooseNumber` | `{ number: number, useDouble: boolean }` | 숫자 카드 선택 |
+| 호스트 → 전체 | `roundStart` | `{ round: number, totalRounds: number }` | 라운드 시작 |
+| 호스트 → 전체 | `roundResult` | `{ cards: [], scores: [] }` | 라운드 결과 |
+| 호스트 → 전체 | `gameOver` | `{ rankings: [] }` | 최종 결과 |
