@@ -99,6 +99,38 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ─── P2P Signaling relay ─────────────────────────────────────────────────
+
+  // 호스트 → 플레이어: offer 전달
+  socket.on('p2p:offer', ({ sessionId, to, sdp }) => {
+    const socketId = sm.getSocketId(sessionId, to);
+    if (socketId) io.to(socketId).emit('p2p:offer', { sdp });
+  });
+
+  // 플레이어 → 호스트: answer 전달
+  socket.on('p2p:answer', ({ sessionId, sdp }) => {
+    const session = sm.getSession(sessionId);
+    const info = sm.socketToSession.get(socket.id);
+    if (session && info) {
+      io.to(session.hostSocketId).emit('p2p:answer', { from: info.playerId, sdp });
+    }
+  });
+
+  // ICE 후보 양방향 relay
+  // to 있음 → 호스트→플레이어, to 없음 → 플레이어→호스트
+  socket.on('p2p:ice', ({ sessionId, to, candidate }) => {
+    if (to) {
+      const socketId = sm.getSocketId(sessionId, to);
+      if (socketId) io.to(socketId).emit('p2p:ice', { candidate });
+    } else {
+      const session = sm.getSession(sessionId);
+      const info = sm.socketToSession.get(socket.id);
+      if (session && info) {
+        io.to(session.hostSocketId).emit('p2p:ice', { from: info.playerId, candidate });
+      }
+    }
+  });
+
   // ─── Disconnect ───────────────────────────────────────────────────────────
 
   socket.on('disconnect', () => {
