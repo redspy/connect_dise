@@ -1,10 +1,17 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { SessionManager } from '../platform/server/SessionManager.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const httpServer = createServer(app);
+
+// 프로덕션: vite build 결과물(dist/) 정적 서빙
+app.use(express.static(join(__dirname, '..', 'dist')));
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
 });
