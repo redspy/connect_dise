@@ -1,5 +1,11 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 
+const _chooseNumberAudio = new Audio('/games/nunchi-ten/assets/choose_number.mp3');
+function _playChooseNumber() {
+  _chooseNumberAudio.currentTime = 0;
+  _chooseNumberAudio.play().catch(() => {});
+}
+
 const MAX_ROUNDS = 10;
 const MIN_PLAYERS = 2;
 const REVEAL_DURATION_MS = 6000;
@@ -17,7 +23,7 @@ export const AVATARS = [
 
 export function avatarUrl(id) {
   const avatar = AVATARS.find(a => a.id === Number(id));
-  return `/avatars/nunchi-ten/${avatar?.file ?? '01_bear_explorer.png'}`;
+  return `/games/nunchi-ten/assets/avatars/${avatar?.file ?? '01_bear_explorer.png'}`;
 }
 
 export class NunchiGame extends HostBaseGame {
@@ -31,6 +37,9 @@ export class NunchiGame extends HostBaseGame {
     this._currentRound = 0;
     this._submissions = new Map(); // id → { card, useDouble }
     this._revealing = false;
+    this._gameStarted = false;
+    this._lastRoundResult = null;
+    this._lastRankings = null;
 
     this._wireGameMessages();
   }
@@ -53,9 +62,19 @@ export class NunchiGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
-    this._initPlayerData(player.id);
-    this._renderLobby();
-    this._updateReadyStatus();
+    if (this._gameStarted) {
+      // 게임 중 합류 — 현재 라운드에 맞게 사용 카드 처리
+      this._initPlayerDataForRound(player.id, this._currentRound);
+      this._renderSubmissionStatus();
+    } else {
+      this._initPlayerData(player.id);
+      this._renderLobby();
+      this._updateReadyStatus();
+    }
+  }
+
+  onPlayerRejoin(player) {
+    this._sendRejoinState(player.id);
   }
 
   onPlayerLeave(playerId) {
@@ -82,7 +101,9 @@ export class NunchiGame extends HostBaseGame {
   }
 
   onAllReady() {
-    this._startGame();
+    if (!this._gameStarted) {
+      this._startGame();
+    }
   }
 
   onReset() {
@@ -92,6 +113,9 @@ export class NunchiGame extends HostBaseGame {
     this._readyCount = 0;
     this._currentRound = 0;
     this._revealing = false;
+    this._gameStarted = false;
+    this._lastRoundResult = null;
+    this._lastRankings = null;
     for (const p of this.players.values()) this._initPlayerData(p.id);
     document.getElementById('ready-status').textContent = '플레이어를 기다리는 중...';
     this._renderLobby();
@@ -105,6 +129,11 @@ export class NunchiGame extends HostBaseGame {
       this._profiles.set(player.id, { nickname: nickname.trim() || '익명', avatarId: Number(avatarId) || 1 });
       this._renderLobby();
       this._broadcastPlayerList();
+      // 게임 진행 중에 합류한 경우 → 즉시 게임 상태 전송
+      if (this._gameStarted) {
+        this._sendRejoinState(player.id);
+        this._renderSubmissionStatus();
+      }
     });
 
     this.onMessage('submitChoice', (player, { card, useDouble }) => {
@@ -124,6 +153,75 @@ export class NunchiGame extends HostBaseGame {
       remainingCards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       doublesLeft: 3,
       highestRound: 0,
+    });
+  }
+
+  // 게임 중 참가자 — 지나간 라운드만큼 임의 카드를 사용한 것으로 초기화
+  _initPlayerDataForRound(id, round) {
+    const usedCount = Math.min(Math.max(0, round - 1), 10);
+    const allCards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const shuffled = [...allCards].sort(() => Math.random() - 0.5);
+    const remaining = shuffled.slice(usedCount).sort((a, b) => a - b);
+    this._data.set(id, {
+      totalScore: 0,
+      remainingCards: remaining,
+      doublesLeft: Math.max(0, 3 - Math.floor(usedCount / 3)),
+      highestRound: 0,
+    });
+  }
+
+  // 재연결한 플레이어에게 현재 게임 상태 전송
+  _sendRejoinState(playerId) {
+    const data = this._data.get(playerId);
+    if (!data) return;
+
+    const players = this._buildPlayerList();
+
+    // 로비 단계: 프로필이 있으면 대기 화면으로, 없으면 설정 화면으로
+    if (!this._gameStarted) {
+      const profile = this._profiles.get(playerId);
+      this.sendToPlayer(playerId, 'rejoinState', {
+        phase: 'lobby',
+        players,
+        myData: data,
+        round: 0,
+        maxRounds: MAX_ROUNDS,
+        myProfile: profile ?? null,
+        rankings: null,
+        alreadySubmitted: null,
+        lastRoundResult: null,
+      });
+      return;
+    }
+
+    if (this.phase === 'game_result') {
+      this.sendToPlayer(playerId, 'rejoinState', {
+        phase: 'game_result',
+        players,
+        myData: data,
+        round: this._currentRound,
+        maxRounds: MAX_ROUNDS,
+        rankings: this._lastRankings,
+        alreadySubmitted: null,
+        lastRoundResult: null,
+      });
+      return;
+    }
+
+    const sub = this._submissions.get(playerId);
+    const alreadySubmitted = sub
+      ? { ...sub, submittedCount: this._submissions.size, total: this.playerCount }
+      : null;
+
+    this.sendToPlayer(playerId, 'rejoinState', {
+      phase: this.phase,
+      players,
+      myData: data,
+      round: this._currentRound,
+      maxRounds: MAX_ROUNDS,
+      rankings: null,
+      alreadySubmitted,
+      lastRoundResult: this.phase === 'round_reveal' ? this._lastRoundResult : null,
     });
   }
 
@@ -201,6 +299,7 @@ export class NunchiGame extends HostBaseGame {
   // ─── Game flow ───────────────────────────────────────────────────────────
 
   _startGame() {
+    this._gameStarted = true;
     // Reset data for all players
     for (const id of this.players.keys()) this._initPlayerData(id);
     const players = this._buildPlayerList();
@@ -213,6 +312,7 @@ export class NunchiGame extends HostBaseGame {
     this._submissions.clear();
     this._revealing = false;
 
+    _playChooseNumber();
     this._renderBoard();
     this.setPhase('round_input');
 
@@ -290,6 +390,7 @@ export class NunchiGame extends HostBaseGame {
       totals,
     };
 
+    this._lastRoundResult = roundResult;
     this.broadcast('roundRevealed', { roundResult });
     this._renderReveal(roundResult);
     this.setPhase('round_reveal');
@@ -319,6 +420,7 @@ export class NunchiGame extends HostBaseGame {
         return b.highestRound - a.highestRound;
       });
 
+    this._lastRankings = ranked;
     this.broadcast('gameFinished', { rankings: ranked });
     this._renderGameResult(ranked);
     this.setPhase('game_result');

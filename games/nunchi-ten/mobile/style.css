@@ -77,6 +77,21 @@ body.nunchi-mobile {
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--nm-sub);
+  border: 1px solid var(--nm-sub);
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: opacity 0.15s;
+  margin-top: 8px;
+}
+.btn-secondary:active { opacity: 0.6; }
+
 /* ── 프로필 설정 ─────────────────────────────────────────────────────────────── */
 
 .setup-wrap {

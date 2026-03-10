@@ -33,6 +33,15 @@ export class NunchiMobile extends MobileBaseGame {
     this.showScreen('setup');
   }
 
+  onRejoin(player) {
+    if (this._nickname) {
+      // localStorage에서 복구된 닉네임이 있음 → 즉시 프로필 재전송하여 setup 화면 건너뜀
+      // 호스트가 이후 rejoinState로 실제 게임/로비 화면을 보내줌
+      this._sendProfile();
+    }
+    // 닉네임 없으면 초기 setup 화면 유지 (첫 접속 사용자)
+  }
+
   onAllReady() {
     // Not used: game start is controlled by host button
   }
@@ -67,6 +76,10 @@ export class NunchiMobile extends MobileBaseGame {
   // ─── Message handlers ────────────────────────────────────────────────────
 
   _wireMessages() {
+    this.onMessage('rejoinState', (payload) => {
+      this._applyRejoinState(payload);
+    });
+
     this.onMessage('playerListUpdated', ({ players }) => {
       this._otherPlayers = players.filter(p => p.id !== this.playerId);
       this._renderWaitingPlayers();
@@ -97,6 +110,7 @@ export class NunchiMobile extends MobileBaseGame {
         this._doublesLeft = myData.doublesLeft;
         this._totalScore = myData.totalScore;
       }
+      _vibrate([200, 150, 200, 150, 600]); // 둥 둥 두우우웅
       this._showScreen_RoundInput();
     });
 
@@ -108,6 +122,7 @@ export class NunchiMobile extends MobileBaseGame {
     });
 
     this.onMessage('roundRevealed', ({ roundResult }) => {
+      _vibrate([120, 80, 120]); // 두두
       const myScore = roundResult.scores[this.playerId];
       this._totalScore = roundResult.totals[this.playerId] ?? this._totalScore;
       this._myRoundResult = myScore;
@@ -128,6 +143,11 @@ export class NunchiMobile extends MobileBaseGame {
       if (!nick) { alert('닉네임을 입력해주세요'); return; }
       this._nickname = nick;
       this._sendProfile();
+    });
+
+    // Waiting: change profile (back to setup)
+    document.getElementById('btn-change-profile').addEventListener('click', () => {
+      this.showScreen('setup');
     });
 
     // Waiting: ready button
@@ -162,6 +182,22 @@ export class NunchiMobile extends MobileBaseGame {
   }
 
   _prefillNickname() {
+    const savedNick = localStorage.getItem('nunchi_nickname');
+    const savedAvatarId = Number(localStorage.getItem('nunchi_avatarId') || '0');
+
+    if (savedNick) {
+      // 이전 게임의 닉네임·아바타 복구
+      this._nickname = savedNick;
+      this._avatarId = savedAvatarId || 1;
+      const input = document.getElementById('nickname-input');
+      if (input) input.value = savedNick;
+      document.querySelectorAll('.avatar-btn').forEach(b => {
+        b.classList.toggle('selected', Number(b.dataset.avatarId) === this._avatarId);
+      });
+      return;
+    }
+
+    // 처음 접속 — 랜덤 닉네임 생성
     const adjectives = ['빠른', '느린', '용감한', '조용한', '귀여운', '날카로운', '엉뚱한', '현명한'];
     const nouns = ['판다', '여우', '펭귄', '곰', '고블린', '기사', '마법사', '로봇'];
     const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
@@ -194,6 +230,8 @@ export class NunchiMobile extends MobileBaseGame {
 
   _sendProfile() {
     this.sendToHost('setProfile', { nickname: this._nickname, avatarId: this._avatarId });
+    localStorage.setItem('nunchi_nickname', this._nickname);
+    localStorage.setItem('nunchi_avatarId', String(this._avatarId));
     this._renderMyHeader();
     document.getElementById('waiting-nickname').textContent = this._nickname;
     const waitingAvatar = document.getElementById('waiting-my-avatar');
@@ -289,6 +327,85 @@ export class NunchiMobile extends MobileBaseGame {
     this.showScreen('waiting_reveal');
   }
 
+  _applyRejoinState({ phase, players, myData, round, maxRounds, alreadySubmitted, rankings, lastRoundResult, myProfile }) {
+    // 로비 상태: 프로필 복구 후 대기 화면으로
+    if (phase === 'lobby') {
+      this._otherPlayers = players.filter(p => p.id !== this.playerId);
+      if (myProfile) {
+        this._nickname = myProfile.nickname;
+        this._avatarId = myProfile.avatarId;
+        // onRejoin에서 이미 _sendProfile()을 보냈으므로 화면만 직접 전환
+        document.getElementById('waiting-nickname').textContent = this._nickname;
+        const waitingAvatar = document.getElementById('waiting-my-avatar');
+        if (waitingAvatar) {
+          waitingAvatar.src = avatarUrl(this._avatarId);
+          waitingAvatar.style.borderColor = this.playerColor ?? '#fff';
+        }
+        this._renderWaitingPlayers();
+        this.showScreen('waiting');
+      } else {
+        this.showScreen('setup'); // 프로필 미설정 → 설정 화면
+      }
+      return;
+    }
+
+    this._currentRound = round;
+    this._maxRounds = maxRounds;
+    this._otherPlayers = players.filter(p => p.id !== this.playerId);
+
+    // 페이지 새로고침 후 닉네임·아바타가 초기화된 경우 플레이어 목록에서 복구
+    const me = players.find(p => p.id === this.playerId);
+    if (me) {
+      if (!this._nickname && me.nickname) this._nickname = me.nickname;
+      if (me.avatarId) this._avatarId = me.avatarId;
+    }
+
+    if (myData) {
+      this._remainingCards = myData.remainingCards;
+      this._doublesLeft = myData.doublesLeft;
+      this._totalScore = myData.totalScore;
+    }
+
+    if (phase === 'game_result' && rankings) {
+      this._showScreen_GameResult(rankings);
+      return;
+    }
+
+    if (alreadySubmitted) {
+      // 이미 제출한 상태 — 공개 대기 화면으로 복구
+      this._submitted = true;
+      this._selectedCard = alreadySubmitted.card;
+      this._useDouble = alreadySubmitted.useDouble;
+      document.getElementById('submitted-card-display').textContent = alreadySubmitted.card;
+      document.getElementById('submitted-double-display').textContent =
+        alreadySubmitted.useDouble ? '더블 사용 ✓' : '';
+      document.getElementById('waiting-count').textContent =
+        `${alreadySubmitted.submittedCount} / ${alreadySubmitted.total}명 제출완료`;
+      this.showScreen('waiting_reveal');
+      return;
+    }
+
+    if (phase === 'round_reveal' && lastRoundResult) {
+      // 공개 중 — 내 점수가 있는 경우만 라운드 결과 표시
+      const myScore = lastRoundResult.scores?.[this.playerId];
+      if (myScore) {
+        this._totalScore = lastRoundResult.totals?.[this.playerId] ?? this._totalScore;
+        this._myRoundResult = myScore;
+        this._showScreen_RoundResult(lastRoundResult);
+        return;
+      }
+      // 내 점수 없으면 (게임 중 신규 합류) 라운드 입력 대기
+    }
+
+    // 기본: 라운드 입력 화면
+    this._submitted = false;
+    this._selectedCard = null;
+    this._useDouble = false;
+    this._myRoundResult = null;
+    this._clearCountdown();
+    this._showScreen_RoundInput();
+  }
+
   _showScreen_RoundResult(roundResult) {
     const myScore = roundResult.scores[this.playerId];
     if (!myScore) return;
@@ -354,6 +471,10 @@ export class NunchiMobile extends MobileBaseGame {
 
     this.showScreen('game_result');
   }
+}
+
+function _vibrate(pattern) {
+  try { navigator.vibrate?.(pattern); } catch (_) {}
 }
 
 function _calcRankMedals(rankings, medals) {
