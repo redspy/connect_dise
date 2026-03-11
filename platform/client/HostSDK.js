@@ -23,7 +23,8 @@ export class HostSDK extends EventTarget {
       this._sessionId = sessionId;
       const scheme = window.location.protocol;
       const port = window.location.port ? `:${window.location.port}` : '';
-      this._qrUrl = `${scheme}//${localIp}${port}/games/${this.gameId}/mobile/?session=${sessionId}`;
+      const host = window.location.hostname;
+      this._qrUrl = `${scheme}//${host}${port}/games/${this.gameId}/mobile/?session=${sessionId}`;
       this._emit('sessionReady', { sessionId, qrUrl: this._qrUrl });
     });
 
