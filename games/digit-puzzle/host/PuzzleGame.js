@@ -9,7 +9,7 @@ export class PuzzleGame extends HostBaseGame {
     super(sdk, { overlayClass: 'dp-overlay', qrContainerId: null });
 
     this._profiles = new Map();   // id → { nickname }
-    this._progress = new Map();   // id → { correctCount, progress, moves, seconds }
+    this._progress = new Map();   // id → { correctCount, progress, moves, seconds, board }
     this._board = null;           // number[16] shared shuffled board
     this._winner = null;          // { id, nickname, color, moves, seconds }
     this._readyCount = 0;
@@ -108,9 +108,9 @@ export class PuzzleGame extends HostBaseGame {
       this._broadcastPlayerList();
     });
 
-    this.onMessage('progressUpdate', (player, { correctCount, moves, seconds }) => {
+    this.onMessage('progressUpdate', (player, { correctCount, moves, seconds, board }) => {
       const progress = Math.round((correctCount / 15) * 100);
-      this._progress.set(player.id, { correctCount, progress, moves, seconds });
+      this._progress.set(player.id, { correctCount, progress, moves, seconds, board: board || null });
       this._renderDashboard();
     });
 
@@ -125,7 +125,10 @@ export class PuzzleGame extends HostBaseGame {
         moves,
         seconds,
       };
-      this._progress.set(player.id, { correctCount: 15, progress: 100, moves, seconds });
+      // 완료된 보드 상태: 정렬된 상태
+      const solvedBoard = [...Array(15).keys()].map(i => i + 1);
+      solvedBoard.push(0);
+      this._progress.set(player.id, { correctCount: 15, progress: 100, moves, seconds, board: solvedBoard });
 
       // Build rankings
       const rankings = this._buildRankings();
@@ -206,7 +209,7 @@ export class PuzzleGame extends HostBaseGame {
 
     // Init progress for all players
     for (const id of this.players.keys()) {
-      this._progress.set(id, { correctCount: 0, progress: 0, moves: 0, seconds: 0 });
+      this._progress.set(id, { correctCount: 0, progress: 0, moves: 0, seconds: 0, board: [...this._board] });
     }
 
     this.broadcast('gameStarted', { board: this._board });
@@ -272,6 +275,24 @@ export class PuzzleGame extends HostBaseGame {
 
   // ─── Dashboard rendering ─────────────────────────────────────────────────
 
+  _renderMiniBoard(board) {
+    if (!board || board.length !== 16) {
+      return '<div class="dp-mini-board">' + Array(16).fill('<div class="dp-mini-tile empty"></div>').join('') + '</div>';
+    }
+    let html = '<div class="dp-mini-board">';
+    for (let i = 0; i < 16; i++) {
+      const v = board[i];
+      if (v === 0) {
+        html += '<div class="dp-mini-tile empty"></div>';
+      } else {
+        const isCorrect = v === i + 1;
+        html += `<div class="dp-mini-tile${isCorrect ? ' correct' : ''}">${v}</div>`;
+      }
+    }
+    html += '</div>';
+    return html;
+  }
+
   _renderDashboard() {
     const grid = document.getElementById('dashboard-grid');
     if (!grid) return;
@@ -279,7 +300,7 @@ export class PuzzleGame extends HostBaseGame {
 
     for (const [id, player] of this.players) {
       const profile = this._profiles.get(id);
-      const prog = this._progress.get(id) || { correctCount: 0, progress: 0, moves: 0, seconds: 0 };
+      const prog = this._progress.get(id) || { correctCount: 0, progress: 0, moves: 0, seconds: 0, board: null };
       const isWinner = this._winner?.id === id;
 
       const card = document.createElement('div');
@@ -294,10 +315,11 @@ export class PuzzleGame extends HostBaseGame {
           <div class="dp-dash-bar" style="width:${prog.progress}%; background:${player.color}; transition: width 0.3s ease"></div>
         </div>
         <div class="dp-dash-stats">
-          <span>${prog.progress}%</span>
+          <span>${prog.correctCount ?? 0}/15</span>
           <span>${prog.moves}수</span>
           <span>${this._formatTime(prog.seconds)}</span>
         </div>
+        ${this._renderMiniBoard(prog.board)}
       `;
       grid.appendChild(card);
     }

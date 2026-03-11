@@ -428,6 +428,7 @@ export class PuzzleMobile extends MobileBaseGame {
       correctCount: this._getCorrectCount(),
       moves: this._moves,
       seconds: this._seconds,
+      board: [...this._board],
     });
   }
 
