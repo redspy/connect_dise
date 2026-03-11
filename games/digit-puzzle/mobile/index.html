@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Digit Puzzle</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="dp-mobile">
+
+  <!-- ── 닉네임 설정 ─────────────────────────────────────────── -->
+  <div class="dp-screen" data-screen="setup">
+    <div class="dp-setup-wrap">
+      <h1 class="dp-mobile-title">Digit Puzzle</h1>
+      <p class="dp-mobile-sub">닉네임을 입력하세요</p>
+      <input
+        id="nickname-input"
+        class="dp-nickname-input"
+        type="text"
+        maxlength="8"
+        placeholder="닉네임 (최대 8자)"
+        autocomplete="off"
+      >
+      <button id="btn-join" class="dp-btn-primary">참여하기</button>
+    </div>
+  </div>
+
+  <!-- ── 대기 화면 ────────────────────────────────────────────── -->
+  <div class="dp-screen hidden" data-screen="waiting">
+    <div class="dp-waiting-wrap">
+      <div id="waiting-nickname" class="dp-waiting-nickname"></div>
+      <div class="dp-waiting-hint">게임 시작을 기다리는 중...</div>
+      <div id="waiting-players" class="dp-waiting-players"></div>
+      <button id="btn-ready" class="dp-btn-primary">준비하기</button>
+    </div>
+  </div>
+
+  <!-- ── 게임 화면 ────────────────────────────────────────────── -->
+  <div class="dp-screen hidden" data-screen="game">
+    <div class="dp-game-wrap">
+      <div class="dp-game-header">
+        <div class="dp-game-stat">
+          <span class="dp-stat-label">이동</span>
+          <span id="game-moves" class="dp-stat-value">0</span>
+        </div>
+        <div class="dp-game-stat">
+          <span class="dp-stat-label">시간</span>
+          <span id="game-timer" class="dp-stat-value">00:00</span>
+        </div>
+      </div>
+      <div id="puzzle-board" class="dp-board"></div>
+    </div>
+  </div>
+
+  <!-- ── 결과 화면 ────────────────────────────────────────────── -->
+  <div class="dp-screen hidden" data-screen="result">
+    <div class="dp-result-wrap">
+      <div class="dp-result-icon">&#x1F3C6;</div>
+      <div id="result-status" class="dp-result-status"></div>
+      <div class="dp-result-stats">
+        <div class="dp-result-stat">
+          <span class="dp-stat-label">이동 수</span>
+          <span id="result-moves" class="dp-stat-value">0</span>
+        </div>
+        <div class="dp-result-stat">
+          <span class="dp-stat-label">시간</span>
+          <span id="result-time" class="dp-stat-value">00:00</span>
+        </div>
+      </div>
+      <button id="btn-rematch" class="dp-btn-primary">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

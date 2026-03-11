@@ -156,3 +156,15 @@ game:fromHost
 | 호스트 → 전체 | `roundStart` | `{ round: number, totalRounds: number }` | 라운드 시작 |
 | 호스트 → 전체 | `roundResult` | `{ cards: [], scores: [] }` | 라운드 결과 |
 | 호스트 → 전체 | `gameOver` | `{ rankings: [] }` | 최종 결과 |
+
+### Digit Puzzle
+
+| 방향 | type | payload | 용도 |
+|------|------|---------|------|
+| 모바일 → 호스트 | `setProfile` | `{ nickname }` | 닉네임 설정 |
+| 모바일 → 호스트 | `progressUpdate` | `{ correctCount, moves, seconds }` | 진행률 (500ms 스로틀) |
+| 모바일 → 호스트 | `puzzleComplete` | `{ moves, seconds }` | 퍼즐 완성 |
+| 모바일 → 호스트 | `requestRematch` | `{}` | 다시하기 요청 |
+| 호스트 → 전체 | `playerListUpdated` | `{ players }` | 플레이어 목록 갱신 |
+| 호스트 → 전체 | `gameStarted` | `{ board: number[16] }` | 게임 시작 (셔플된 보드 전송) |
+| 호스트 → 전체 | `gameFinished` | `{ winner, rankings }` | 최초 완성자 발생, 게임 종료 |

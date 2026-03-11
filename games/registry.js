@@ -30,4 +30,14 @@ export const GAMES = [
     maxPlayers: 6,
     thumbnail: '🎲',
   },
+  {
+    id: 'digit-puzzle',
+    name: 'Digit Puzzle',
+    description: '4×4 슬라이딩 퍼즐 레이스! 먼저 완성하면 승리',
+    hostPath: '/games/digit-puzzle/host/',
+    mobilePath: '/games/digit-puzzle/mobile/',
+    minPlayers: 2,
+    maxPlayers: 4,
+    thumbnail: '🧩',
+  },
 ];

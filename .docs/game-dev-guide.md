@@ -333,6 +333,9 @@ game.onOrientation(({ beta, gamma }) => {
 
 ## 참고 파일
 
+- **Digit Puzzle** — BaseGame 패턴, 4코너 QR 수동 렌더링, 실시간 진행률 대시보드, 터치 이벤트 포팅 예시
+  - [`games/digit-puzzle/host/PuzzleGame.js`](../games/digit-puzzle/host/PuzzleGame.js)
+  - [`games/digit-puzzle/mobile/PuzzleMobile.js`](../games/digit-puzzle/mobile/PuzzleMobile.js)
 - **눈치 10단** — BaseGame 패턴, 카드 UI, 라운드 상태 머신 예시
   - [`games/nunchi-ten/host/NunchiGame.js`](../games/nunchi-ten/host/NunchiGame.js)
   - [`games/nunchi-ten/mobile/NunchiMobile.js`](../games/nunchi-ten/mobile/NunchiMobile.js)

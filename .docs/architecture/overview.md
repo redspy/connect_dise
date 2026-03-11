@@ -77,6 +77,9 @@ connect_dise/
 │   │   ├── assets/               #   아바타(8종), 사운드, 이미지
 │   │   ├── host/                 #   NunchiGame.js, NunchiDevPanel.js
 │   │   └── mobile/               #   NunchiMobile.js
+│   ├── digit-puzzle/             # Digit Puzzle (4×4 슬라이딩 퍼즐 레이스)
+│   │   ├── host/                 #   PuzzleGame.js (대시보드 + 4코너 QR)
+│   │   └── mobile/               #   PuzzleMobile.js (퍼즐 플레이)
 │   ├── spin-battle/
 │   │   ├── host/
 │   │   │   ├── index.html
@@ -175,6 +178,8 @@ input: {
   diceMobile:       'games/dice/mobile/index.html',
   nunchiHost:       'games/nunchi-ten/host/index.html',
   nunchiMobile:     'games/nunchi-ten/mobile/index.html',
+  digitPuzzleHost:   'games/digit-puzzle/host/index.html',
+  digitPuzzleMobile: 'games/digit-puzzle/mobile/index.html',
 }
 ```
 

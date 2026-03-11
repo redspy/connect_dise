@@ -21,6 +21,7 @@
 - [x] **주사위** — 흔들기/더블탭으로 3D 주사위 굴리기
 - [x] **팽이 배틀** — 3D 팽이 물리 배틀 (Three.js + 센서)
 - [x] **눈치 10단** — 숫자 카드 심리전
+- [x] **Digit Puzzle** — 4×4 슬라이딩 퍼즐 멀티플레이어 레이스
 
 ## 배포
 
@@ -36,5 +37,6 @@
 - [x] Socket.IO 프로토콜 (`.docs/architecture/protocol.md`)
 - [x] 새 게임 추가 가이드 (`.docs/game-dev-guide.md`)
 - [x] 눈치 10단 기획 문서 (`.docs/games/nunchi-ten/nunchi-ten.md`)
+- [x] Digit Puzzle 기획 문서 (`.docs/games/digit-puzzle/digit-puzzle.md`)
 - [x] README.md
 - [x] 테스트 가이드 (`walkthrough.md`)
