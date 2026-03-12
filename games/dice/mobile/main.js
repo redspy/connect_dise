@@ -104,9 +104,13 @@ let lastTap = 0;
 diceArea.addEventListener('touchstart', (e) => {
   const now = Date.now();
   const timesince = now - lastTap;
-  if (timesince < 300 && timesince > 0) triggerThrow();
+  if (timesince < 300 && timesince > 0) {
+    e.preventDefault(); // iOS 더블탭 브라우저 확대(Zoom) 방지
+    triggerThrow();
+  }
   lastTap = now;
 });
+
 
 diceArea.addEventListener('dblclick', () => triggerThrow());
 
