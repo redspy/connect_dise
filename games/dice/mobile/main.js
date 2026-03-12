@@ -94,10 +94,16 @@ function initSensors() {
 
 // ─── Throw ────────────────────────────────────────────────────────────────────
 
-// 터치 이벤트는 제거 (센서로만 스윙)
-// let lastTap = 0;
-// diceArea.addEventListener('touchstart', (e) => { ... });
-// diceArea.addEventListener('dblclick', () => triggerThrow());
+// 터치 이벤트 복구 (센서 오류 대비 더블탭 지원)
+let lastTap = 0;
+diceArea.addEventListener('touchstart', (e) => {
+  const now = Date.now();
+  const timesince = now - lastTap;
+  if (timesince < 300 && timesince > 0) triggerThrow();
+  lastTap = now;
+});
+
+diceArea.addEventListener('dblclick', () => triggerThrow());
 
 function triggerThrow() {
   const now = Date.now();

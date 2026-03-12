@@ -5,18 +5,35 @@ export class SensorManager {
   }
 
   async requestPermission() {
+    let granted = true;
+
+    // iOS 13+ requires explicit permission for DeviceOrientation
     if (
       typeof DeviceOrientationEvent !== 'undefined' &&
       typeof DeviceOrientationEvent.requestPermission === 'function'
     ) {
       try {
         const state = await DeviceOrientationEvent.requestPermission();
-        return state === 'granted';
-      } catch {
-        return true; // fallback on error
+        granted = granted && (state === 'granted');
+      } catch (err) {
+        console.warn('DeviceOrientationEvent permit error:', err);
       }
     }
-    return true; // non-iOS
+
+    // iOS 13+ requires explicit permission for DeviceMotion
+    if (
+      typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function'
+    ) {
+      try {
+        const state = await DeviceMotionEvent.requestPermission();
+        granted = granted && (state === 'granted');
+      } catch (err) {
+        console.warn('DeviceMotionEvent permit error:', err);
+      }
+    }
+
+    return granted;
   }
 
   onOrientation(callback) {
