@@ -1,20 +1,20 @@
 /* ================================================================
    Give You Fire — Mobile Style
-   접두사: gyf-
+   조작: 스와이프 풀 제스처 (버튼 없음)
    테마: 다크 / 파이어 오렌지 / 민트 대비
 ================================================================ */
 
 :root {
-  --gyf-bg:       #080c14;
-  --gyf-panel:    #0f1923;
-  --gyf-panel2:   #162030;
-  --gyf-border:   #1e3352;
-  --gyf-fire:     #ff6a00;
-  --gyf-fire2:    #ff4d00;
-  --gyf-mint:     #00ffb3;
-  --gyf-text:     #dff0ff;
-  --gyf-sub:      #5a80a0;
-  --gyf-danger:   #ff2244;
+  --gyf-bg:     #080c14;
+  --gyf-panel:  #0f1923;
+  --gyf-panel2: #162030;
+  --gyf-border: #1e3352;
+  --gyf-fire:   #ff6a00;
+  --gyf-fire2:  #ff4d00;
+  --gyf-mint:   #00ffb3;
+  --gyf-text:   #dff0ff;
+  --gyf-sub:    #5a80a0;
+  --gyf-danger: #ff2244;
 }
 
 /* ─── 전체 레이아웃 ─────────────────────────────────────────────── */
@@ -22,9 +22,9 @@ body.mobile-controller {
   background: var(--gyf-bg);
   color: var(--gyf-text);
   font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
-  height: 100dvh;          /* Dynamic Viewport Height (iOS 대응) */
+  height: 100dvh;
   overflow: hidden;
-  touch-action: none;       /* 브라우저 기본 터치 동작 방지 */
+  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -41,10 +41,8 @@ body.mobile-controller {
 }
 .gyf-screen.hidden { display: none; }
 
-/* 게임 화면은 열방향 꽉 채움 */
 .gyf-screen[data-screen="game"] {
   justify-content: flex-start;
-  padding: 0;
 }
 
 /* ─── 공통 로고 ─────────────────────────────────────────────────── */
@@ -99,11 +97,7 @@ body.mobile-controller {
   width: 100%;
   max-width: 360px;
 }
-.gyf-setup-hint {
-  color: var(--gyf-sub);
-  font-size: 0.88rem;
-  margin: 0;
-}
+.gyf-setup-hint { color: var(--gyf-sub); font-size: .88rem; margin: 0; }
 
 /* ─── 대기 화면 ─────────────────────────────────────────────────── */
 .gyf-waiting-panel {
@@ -115,46 +109,24 @@ body.mobile-controller {
   width: 100%;
   max-width: 360px;
 }
-.gyf-waiting-nick {
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--gyf-mint);
-}
-.gyf-waiting-hint {
-  color: var(--gyf-sub);
-  font-size: 0.85rem;
-  text-align: center;
-  margin: 0;
-}
+.gyf-waiting-nick  { font-size: 1.4rem; font-weight: 800; color: var(--gyf-mint); }
+.gyf-waiting-hint  { color: var(--gyf-sub); font-size: .85rem; text-align: center; margin: 0; }
 .gyf-waiting-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  min-height: 36px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; min-height: 36px;
 }
 .gyf-wait-player {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex; align-items: center; gap: 6px;
   background: var(--gyf-panel2);
   border: 1px solid var(--gyf-border);
-  border-radius: 16px;
-  padding: 5px 12px;
-  font-size: 0.85rem;
+  border-radius: 16px; padding: 5px 12px; font-size: .85rem;
 }
-.gyf-wait-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
+.gyf-wait-dot { width: 8px; height: 8px; border-radius: 50%; }
 
-/* ─── 게임 화면 레이아웃 ─────────────────────────────────────────── */
-
-/* 레벨 바 */
+/* ─── 게임 화면: 레벨 바 ─────────────────────────────────────────── */
 .gyf-level-bar-wrap {
   width: 100%;
-  height: 32px;
+  height: 34px;
   background: var(--gyf-panel);
   border-bottom: 1px solid var(--gyf-border);
   position: relative;
@@ -163,51 +135,51 @@ body.mobile-controller {
   align-items: center;
 }
 .gyf-level-bar-fill {
+  position: absolute;
+  left: 0; top: 0;
   height: 100%;
   width: 1%;
   min-width: 2px;
   background: linear-gradient(90deg, var(--gyf-fire2), var(--gyf-fire));
-  transition: width 0.4s ease;
-  position: absolute;
-  left: 0;
-  top: 0;
+  transition: width .4s ease;
 }
-/* 레벨업 공격 수신 시 점등 */
 .gyf-level-bar-fill.gyf-level-flash {
   background: linear-gradient(90deg, var(--gyf-danger), #ff8800);
-  box-shadow: 0 0 12px var(--gyf-danger);
+  box-shadow: 0 0 14px var(--gyf-danger);
   transition: none;
 }
 .gyf-level-label {
   position: absolute;
-  right: 10px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--gyf-text);
+  right: 12px;
+  font-size: .85rem; font-weight: 700;
   font-family: monospace;
+  color: var(--gyf-text);
   z-index: 1;
 }
 
-/* 보드 영역 */
+/* ─── 게임 화면: 보드 영역 (제스처 영역) ────────────────────────── */
 .gyf-board-area {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 6px;
-  min-height: 0;         /* flex 자식이 넘치지 않게 */
+  gap: 12px;
+  padding: 8px;
+  min-height: 0;
   overflow: hidden;
+  position: relative;   /* 힌트 오버레이 기준 */
+  /* 제스처 캡처 — 스크롤 방지 */
+  touch-action: none;
+  cursor: crosshair;
 }
 
-/* 보드 캔버스 */
+/* 보드 캔버스: 세로 최대한 활용 */
 .gyf-board-canvas {
   height: 100%;
   width: auto;
-  max-width: 100%;
+  max-width: 50vw;  /* 가로가 너무 넓어지지 않도록 */
   display: block;
-  cursor: pointer;        /* 탭 시 회전 */
-  touch-action: none;
+  pointer-events: none; /* 터치 이벤트는 부모(gesture-area)에서 처리 */
 }
 
 /* 미리보기 패널 */
@@ -219,7 +191,7 @@ body.mobile-controller {
   flex-shrink: 0;
 }
 .gyf-next-label {
-  font-size: 0.7rem;
+  font-size: .7rem;
   color: var(--gyf-sub);
   letter-spacing: 1px;
 }
@@ -227,147 +199,77 @@ body.mobile-controller {
   border: 1px solid var(--gyf-border);
   border-radius: 4px;
   background: #0a1628;
+  pointer-events: none;
 }
 
-/* ─── 5버튼 조작 영역 ───────────────────────────────────────────── */
-.gyf-controls {
-  width: 100%;
+/* ─── 제스처 힌트 오버레이 ──────────────────────────────────────── */
+.gyf-gesture-hint {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 6px;
-  padding: 6px 8px;
-  padding-bottom: max(6px, env(safe-area-inset-bottom));
-  background: var(--gyf-panel);
-  border-top: 1px solid var(--gyf-border);
-  flex-shrink: 0;
-}
-
-.gyf-ctrl-btn {
-  flex: 1;
-  border: 1px solid var(--gyf-border);
-  border-radius: 10px;
-  background: var(--gyf-panel2);
-  color: var(--gyf-text);
-  font-size: 1.4rem;
-  line-height: 1;
-  padding: 14px 0;
-  cursor: pointer;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: background .1s;
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
+  background: rgba(8, 12, 20, 0.78);
+  backdrop-filter: blur(4px);
+  border-radius: 0;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity .5s ease;
+  z-index: 10;
 }
-.gyf-ctrl-btn:active {
-  background: var(--gyf-border);
+.gyf-gesture-hint.gyf-hint-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
-
-/* 하드 드롭 버튼: 강조 */
-.gyf-ctrl-hard {
-  background: rgba(255, 77, 0, 0.15);
-  border-color: var(--gyf-fire2);
-  color: var(--gyf-fire);
-  font-size: 1.1rem;
-  font-weight: 700;
+.gyf-hint-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gyf-text);
 }
-.gyf-ctrl-hard:active {
-  background: rgba(255, 77, 0, 0.35);
-}
-
-/* 소프트 드롭 버튼: 민트 포인트 */
-.gyf-ctrl-soft {
-  background: rgba(0, 255, 179, 0.08);
-  border-color: rgba(0, 255, 179, 0.3);
-  color: var(--gyf-mint);
-  font-size: 1.2rem;
-}
-.gyf-ctrl-soft:active {
-  background: rgba(0, 255, 179, 0.2);
+.gyf-hint-icon {
+  font-size: 1.3rem;
+  width: 32px;
+  text-align: center;
 }
 
 /* ─── 탈락 화면 ─────────────────────────────────────────────────── */
 .gyf-elim-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 40px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px; padding: 40px 24px;
 }
-.gyf-elim-title {
-  font-size: 2.4rem;
-  font-weight: 900;
-  color: var(--gyf-danger);
-}
-.gyf-elim-hint {
-  color: var(--gyf-sub);
-  font-size: 0.9rem;
-  text-align: center;
-}
+.gyf-elim-title { font-size: 2.4rem; font-weight: 900; color: var(--gyf-danger); }
+.gyf-elim-hint  { color: var(--gyf-sub); font-size: .9rem; text-align: center; }
 
-/* ─── 솔로 클리어 화면 ──────────────────────────────────────────── */
+/* ─── 솔로 클리어 ──────────────────────────────────────────────── */
 .gyf-clear-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 40px 24px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px; padding: 40px 24px;
 }
 .gyf-clear-title {
-  font-size: 2.4rem;
-  font-weight: 900;
+  font-size: 2.4rem; font-weight: 900;
   color: var(--gyf-fire);
-  text-shadow: 0 0 20px rgba(255, 106, 0, 0.6);
+  text-shadow: 0 0 20px rgba(255,106,0,.6);
 }
-.gyf-clear-hint {
-  color: var(--gyf-sub);
-  font-size: 0.9rem;
-  text-align: center;
-}
+.gyf-clear-hint { color: var(--gyf-sub); font-size: .9rem; text-align: center; }
 
 /* ─── 결과 화면 ─────────────────────────────────────────────────── */
 .gyf-result-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  padding: 32px 24px;
-  width: 100%;
-  max-width: 360px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 20px;
+  padding: 32px 24px; width: 100%; max-width: 360px;
 }
-.gyf-result-my-rank {
-  font-size: 3rem;
-  font-weight: 900;
-  color: var(--gyf-mint);
-}
-.gyf-result-list {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+.gyf-result-my-rank { font-size: 3rem; font-weight: 900; color: var(--gyf-mint); }
+.gyf-result-list    { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .gyf-result-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   padding: 10px 12px;
-  background: var(--gyf-panel);
-  border-radius: 8px;
-  font-size: 0.9rem;
+  background: var(--gyf-panel); border-radius: 8px; font-size: .9rem;
 }
-.gyf-result-row.gyf-result-me {
-  border: 1px solid var(--gyf-mint);
-}
-.gyf-result-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.gyf-result-detail {
-  margin-left: auto;
-  color: var(--gyf-sub);
-  font-size: 0.8rem;
-}
+.gyf-result-row.gyf-result-me { border: 1px solid var(--gyf-mint); }
+.gyf-result-dot    { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.gyf-result-detail { margin-left: auto; color: var(--gyf-sub); font-size: .8rem; }

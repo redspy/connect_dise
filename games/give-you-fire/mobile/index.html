@@ -55,33 +55,26 @@
       <span class="gyf-level-label" id="game-level">Lv.1</span>
     </div>
 
-    <!-- 보드 + 미리보기 영역 -->
-    <div class="gyf-board-area">
+    <!-- 보드 + 미리보기: 전체 제스처 영역 -->
+    <div class="gyf-board-area" id="gesture-area">
+
+      <!-- 보드 캔버스 (터치 이벤트는 gesture-area에서 처리) -->
       <canvas class="gyf-board-canvas" id="game-board-canvas" width="300" height="600"></canvas>
 
-      <!-- 다음 블록 미리보기 (showNextPiece ON일 때만 표시) -->
+      <!-- 다음 블록 미리보기 (showNextPiece ON 시만 표시) -->
       <div class="gyf-next-panel" id="next-panel" style="display:none;">
         <div class="gyf-next-label">NEXT</div>
         <canvas class="gyf-next-canvas" id="next-piece-canvas" width="80" height="80"></canvas>
       </div>
-    </div>
 
-    <!-- 5버튼 조작 -->
-    <div class="gyf-controls">
-      <!-- 왼쪽 이동 -->
-      <button class="gyf-ctrl-btn gyf-ctrl-lr" id="btn-left">◀</button>
+      <!-- 제스처 힌트 오버레이 (게임 시작 후 3초간 표시) -->
+      <div class="gyf-gesture-hint" id="gesture-hint">
+        <div class="gyf-hint-row"><span class="gyf-hint-icon">👆</span> 탭 → 회전</div>
+        <div class="gyf-hint-row"><span class="gyf-hint-icon">↔</span> 드래그 → 이동</div>
+        <div class="gyf-hint-row"><span class="gyf-hint-icon">👇</span> 드래그 유지 → 빠른 낙하</div>
+        <div class="gyf-hint-row"><span class="gyf-hint-icon">⚡</span> 빠른 스와이프 → 즉시 드롭</div>
+      </div>
 
-      <!-- 소프트 드롭 (왼쪽) -->
-      <button class="gyf-ctrl-btn gyf-ctrl-soft" id="btn-soft-left">▼</button>
-
-      <!-- 하드 드롭 (중앙) -->
-      <button class="gyf-ctrl-btn gyf-ctrl-hard" id="btn-hard-drop">⬇⬇</button>
-
-      <!-- 소프트 드롭 (오른쪽) -->
-      <button class="gyf-ctrl-btn gyf-ctrl-soft" id="btn-soft-right">▼</button>
-
-      <!-- 오른쪽 이동 -->
-      <button class="gyf-ctrl-btn gyf-ctrl-lr" id="btn-right">▶</button>
     </div>
   </div>
 
