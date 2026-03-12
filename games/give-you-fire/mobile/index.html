@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Give You Fire</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-controller">
+
+  <!-- ══════════════════════════════════════════
+       설정 화면 (data-screen="setup")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen" data-screen="setup">
+    <div class="gyf-setup-panel">
+      <div class="gyf-mobile-logo">
+        <span class="gyf-logo-fire">Give You</span>
+        <span class="gyf-logo-accent"> Fire</span> 🔥
+      </div>
+      <p class="gyf-setup-hint">닉네임을 입력하고 참여하세요</p>
+      <input
+        class="gyf-input"
+        id="nickname-input"
+        type="text"
+        maxlength="8"
+        placeholder="닉네임 (최대 8자)"
+        autocomplete="off"
+      >
+      <button class="gyf-btn gyf-btn-primary" id="btn-join">참여하기</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       대기 화면 (data-screen="waiting")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen hidden" data-screen="waiting">
+    <div class="gyf-waiting-panel">
+      <div class="gyf-mobile-logo">🔥</div>
+      <div class="gyf-waiting-nick" id="waiting-nickname">-</div>
+      <p class="gyf-waiting-hint">호스트가 게임을 시작할 때까지 대기하세요</p>
+      <div class="gyf-waiting-players" id="waiting-players"></div>
+      <button class="gyf-btn gyf-btn-primary" id="btn-ready">준비하기</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       게임 화면 (data-screen="game")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen hidden" data-screen="game">
+
+    <!-- 속도 레벨 바 -->
+    <div class="gyf-level-bar-wrap">
+      <div class="gyf-level-bar-fill" id="level-bar-fill"></div>
+      <span class="gyf-level-label" id="game-level">Lv.1</span>
+    </div>
+
+    <!-- 보드 + 미리보기 영역 -->
+    <div class="gyf-board-area">
+      <canvas class="gyf-board-canvas" id="game-board-canvas" width="300" height="600"></canvas>
+
+      <!-- 다음 블록 미리보기 (showNextPiece ON일 때만 표시) -->
+      <div class="gyf-next-panel" id="next-panel" style="display:none;">
+        <div class="gyf-next-label">NEXT</div>
+        <canvas class="gyf-next-canvas" id="next-piece-canvas" width="80" height="80"></canvas>
+      </div>
+    </div>
+
+    <!-- 5버튼 조작 -->
+    <div class="gyf-controls">
+      <!-- 왼쪽 이동 -->
+      <button class="gyf-ctrl-btn gyf-ctrl-lr" id="btn-left">◀</button>
+
+      <!-- 소프트 드롭 (왼쪽) -->
+      <button class="gyf-ctrl-btn gyf-ctrl-soft" id="btn-soft-left">▼</button>
+
+      <!-- 하드 드롭 (중앙) -->
+      <button class="gyf-ctrl-btn gyf-ctrl-hard" id="btn-hard-drop">⬇⬇</button>
+
+      <!-- 소프트 드롭 (오른쪽) -->
+      <button class="gyf-ctrl-btn gyf-ctrl-soft" id="btn-soft-right">▼</button>
+
+      <!-- 오른쪽 이동 -->
+      <button class="gyf-ctrl-btn gyf-ctrl-lr" id="btn-right">▶</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       탈락 화면 (data-screen="eliminated")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen hidden" data-screen="eliminated">
+    <div class="gyf-elim-panel">
+      <div class="gyf-elim-title">💀 GAME OVER</div>
+      <p class="gyf-elim-hint">호스트 화면에서 남은 경기를 관전하세요</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       솔로 클리어 화면 (data-screen="solo-clear")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen hidden" data-screen="solo-clear">
+    <div class="gyf-clear-panel">
+      <div class="gyf-clear-title">🔥 CLEAR!</div>
+      <p class="gyf-clear-hint">레벨 100 달성! 훌륭합니다!</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       결과 화면 (data-screen="result")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-screen hidden" data-screen="result">
+    <div class="gyf-result-panel">
+      <div class="gyf-result-my-rank" id="result-my-rank">-위</div>
+      <div class="gyf-result-list" id="result-ranking-list"></div>
+      <button class="gyf-btn gyf-btn-primary" id="btn-rematch">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

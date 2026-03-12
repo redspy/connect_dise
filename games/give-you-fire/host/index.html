@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Give You Fire — Host</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board">
+
+  <!-- ══════════════════════════════════════════
+       로비 오버레이 (data-phase="lobby")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-overlay" data-phase="lobby">
+
+    <!-- 4코너 QR 컨테이너 -->
+    <div class="gyf-qr" id="qr-tl" data-corner="tl"></div>
+    <div class="gyf-qr" id="qr-tr" data-corner="tr"></div>
+    <div class="gyf-qr" id="qr-bl" data-corner="bl"></div>
+    <div class="gyf-qr" id="qr-br" data-corner="br"></div>
+
+    <!-- 로비 중앙 패널 -->
+    <div class="gyf-lobby-panel">
+      <div class="gyf-logo">
+        <span class="gyf-logo-fire">Give You</span>
+        <span class="gyf-logo-accent"> Fire</span>
+        <span class="gyf-logo-icon">🔥</span>
+      </div>
+
+      <div class="gyf-session-row">
+        방 코드: <strong id="session-code">----</strong>
+      </div>
+
+      <!-- 참가자 목록 -->
+      <div class="gyf-lobby-players" id="lobby-players">
+        <div class="gyf-waiting-hint">QR 코드를 스캔하여 참가하세요</div>
+      </div>
+
+      <!-- 준비 상태 -->
+      <div class="gyf-ready-status" id="ready-status">0 / 0 준비 완료</div>
+
+      <!-- 다음 블록 미리보기 옵션 -->
+      <label class="gyf-option-row">
+        <input type="checkbox" id="chk-next-piece">
+        <span>다음 블록 미리보기 ON</span>
+      </label>
+
+      <div class="gyf-lobby-actions">
+        <button class="gyf-btn gyf-btn-secondary" id="btn-back">← 로비</button>
+        <button class="gyf-btn gyf-btn-primary" id="btn-start" disabled>🔥 게임 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       게임 중 대시보드 (data-phase="playing")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-overlay hidden" data-phase="playing">
+    <div class="gyf-playing-header">
+      <span class="gyf-game-title">🔥 Give You Fire</span>
+      <span class="gyf-elapsed" id="game-elapsed">00:00</span>
+      <button class="gyf-btn gyf-btn-danger-sm" id="btn-restart-game">리셋</button>
+    </div>
+
+    <!-- 플레이어 카드 그리드 (최대 4개, 2×2) -->
+    <div class="gyf-dashboard-grid" id="dashboard-grid"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       결과 오버레이 (data-phase="result")
+  ══════════════════════════════════════════ -->
+  <div class="gyf-overlay hidden" data-phase="result">
+    <div class="gyf-result-panel">
+      <div class="gyf-result-title">🏆 최종 결과</div>
+      <div class="gyf-rankings" id="result-rankings"></div>
+      <button class="gyf-btn gyf-btn-primary" id="btn-restart-result">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+/* ================================================================
+   Give You Fire — Host Style
+   접두사: gyf-
+   테마: 다크 네이비 베이스 / 파이어 오렌지 포인트 / 민트 대비
+================================================================ */
+
+:root {
+  --gyf-bg:        #080c14;
+  --gyf-panel:     #0f1923;
+  --gyf-panel2:    #162030;
+  --gyf-border:    #1e3352;
+  --gyf-fire:      #ff6a00;
+  --gyf-fire2:     #ff4d00;
+  --gyf-mint:      #00ffb3;
+  --gyf-text:      #dff0ff;
+  --gyf-sub:       #5a80a0;
+  --gyf-danger:    #ff2244;
+}
+
+/* 전체 배경 */
+body.host-board {
+  background: var(--gyf-bg);
+  color: var(--gyf-text);
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── 오버레이 전환 ──────────────────────────────────────────────── */
+.gyf-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gyf-overlay.hidden { display: none; }
+
+/* ─── 4코너 QR ───────────────────────────────────────────────────── */
+.gyf-qr {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gyf-qr[data-corner="tl"] { top: 20px; left: 20px; }
+.gyf-qr[data-corner="tr"] { top: 20px; right: 20px; }
+.gyf-qr[data-corner="bl"] { bottom: 20px; left: 20px; }
+.gyf-qr[data-corner="br"] { bottom: 20px; right: 20px; }
+
+/* ─── 로비 패널 ─────────────────────────────────────────────────── */
+.gyf-lobby-panel {
+  background: var(--gyf-panel);
+  border: 1px solid var(--gyf-border);
+  border-radius: 16px;
+  padding: 36px 48px;
+  min-width: 360px;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 0 40px rgba(255, 106, 0, 0.12);
+}
+
+.gyf-logo {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.gyf-logo-fire   { color: var(--gyf-fire); }
+.gyf-logo-accent { color: var(--gyf-mint); }
+.gyf-logo-icon   { margin-left: 6px; }
+
+.gyf-session-row {
+  font-size: 0.9rem;
+  color: var(--gyf-sub);
+}
+.gyf-session-row strong {
+  color: var(--gyf-mint);
+  font-size: 1.1rem;
+  font-family: monospace;
+}
+
+.gyf-lobby-players {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.gyf-lobby-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gyf-panel2);
+  border: 1px solid var(--gyf-border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+}
+.gyf-lobby-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gyf-waiting-hint {
+  color: var(--gyf-sub);
+  font-size: 0.85rem;
+  text-align: center;
+  width: 100%;
+  padding: 10px 0;
+}
+
+.gyf-ready-status {
+  font-size: 0.9rem;
+  color: var(--gyf-sub);
+}
+
+.gyf-option-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--gyf-sub);
+}
+.gyf-option-row input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gyf-mint);
+}
+.gyf-option-row:hover { color: var(--gyf-text); }
+
+.gyf-lobby-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ─── 버튼 ──────────────────────────────────────────────────────── */
+.gyf-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  flex: 1;
+}
+.gyf-btn:disabled { opacity: .4; cursor: not-allowed; }
+.gyf-btn:not(:disabled):active { transform: scale(.96); }
+
+.gyf-btn-primary {
+  background: linear-gradient(135deg, var(--gyf-fire2), var(--gyf-fire));
+  color: #fff;
+}
+.gyf-btn-primary:not(:disabled):hover { opacity: .88; }
+
+.gyf-btn-secondary {
+  background: var(--gyf-panel2);
+  color: var(--gyf-text);
+  border: 1px solid var(--gyf-border);
+}
+.gyf-btn-secondary:hover { background: var(--gyf-border); }
+
+.gyf-btn-danger-sm {
+  background: transparent;
+  color: var(--gyf-danger);
+  border: 1px solid var(--gyf-danger);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.gyf-btn-danger-sm:hover { background: rgba(255,34,68,.15); }
+
+/* ─── 게임 중 대시보드 ───────────────────────────────────────────── */
+[data-phase="playing"] {
+  align-items: stretch;
+  padding: 0;
+  overflow: hidden;
+}
+
+.gyf-playing-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--gyf-panel);
+  border-bottom: 1px solid var(--gyf-border);
+  flex-shrink: 0;
+}
+.gyf-game-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gyf-fire);
+}
+.gyf-elapsed {
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--gyf-mint);
+}
+
+.gyf-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ─── 플레이어 카드 ─────────────────────────────────────────────── */
+.gyf-player-card {
+  background: var(--gyf-panel);
+  border: 1px solid var(--gyf-border);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: opacity .3s;
+}
+.gyf-player-card.gyf-card-dead {
+  opacity: 0.5;
+}
+
+.gyf-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.gyf-card-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gyf-card-nick {
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gyf-card-level {
+  font-size: 0.8rem;
+  color: var(--gyf-mint);
+  font-family: monospace;
+  font-weight: 700;
+}
+
+/* 레벨 프로그래스 바 */
+.gyf-card-bar-wrap {
+  width: 100%;
+  height: 6px;
+  background: var(--gyf-panel2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.gyf-card-bar {
+  height: 100%;
+  width: 1%;
+  min-width: 2px;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* 미니 보드 캔버스 */
+.gyf-mini-board {
+  width: 100%;
+  max-width: 120px;
+  height: auto;
+  border-radius: 4px;
+  flex: 1;
+  min-height: 0;
+  display: block;
+}
+
+.gyf-card-status {
+  font-size: 0.75rem;
+  color: var(--gyf-sub);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.gyf-card-status.gyf-eliminated {
+  color: var(--gyf-danger);
+}
+
+/* ─── 결과 패널 ─────────────────────────────────────────────────── */
+.gyf-result-panel {
+  background: var(--gyf-panel);
+  border: 1px solid var(--gyf-border);
+  border-radius: 16px;
+  padding: 40px 56px;
+  min-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 0 60px rgba(0, 255, 179, 0.1);
+}
+.gyf-result-title {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--gyf-mint);
+}
+.gyf-rankings {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gyf-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--gyf-panel2);
+  border-radius: 8px;
+}
+.gyf-rank-medal  { font-size: 1.3rem; min-width: 28px; }
+.gyf-rank-dot    { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.gyf-rank-nick   { flex: 1; font-weight: 700; }
+.gyf-rank-detail { font-size: 0.8rem; color: var(--gyf-sub); }

@@ -79,6 +79,8 @@ export default defineConfig({
         nunchiMobile:     resolve(__dirname, 'games/nunchi-ten/mobile/index.html'),
         digitPuzzleHost:   resolve(__dirname, 'games/digit-puzzle/host/index.html'),
         digitPuzzleMobile: resolve(__dirname, 'games/digit-puzzle/mobile/index.html'),
+        giveYouFireHost:   resolve(__dirname, 'games/give-you-fire/host/index.html'),
+        giveYouFireMobile: resolve(__dirname, 'games/give-you-fire/mobile/index.html'),
       },
     },
   },

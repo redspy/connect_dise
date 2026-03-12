@@ -40,4 +40,14 @@ export const GAMES = [
     maxPlayers: 4,
     thumbnail: '🧩',
   },
+  {
+    id: 'give-you-fire',
+    name: 'Give You Fire',
+    description: '배틀 테트리스! 라인 클리어로 상대방을 불태워라 🔥',
+    hostPath: '/games/give-you-fire/host/',
+    mobilePath: '/games/give-you-fire/mobile/',
+    minPlayers: 1,
+    maxPlayers: 4,
+    thumbnail: '🔥',
+  },
 ];
