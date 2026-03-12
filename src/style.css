@@ -297,6 +297,7 @@ body.mobile-controller {
   justify-content: center;
   align-items: center;
   position: relative;
+  touch-action: manipulation;
 }
 
 /* 3D Dice Container */
