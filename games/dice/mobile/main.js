@@ -71,8 +71,14 @@ function initSensors() {
 
   mobile.onMotion(({ acc }) => {
     if (acc) {
-      const magnitude = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
-      if (magnitude > 5 && !visualDice.classList.contains('throwing')) {
+      // 강한 낚시대 스윙 액션 감지 (주로 Y 또는 Z축으로 큰 가속도)
+      // 이전에는 흔들기(magnitude > 5) 감지였으나, 이제는 스윙(> 20) 감지 시 바로 던지기 수행
+      const magnitude = Math.max(Math.abs(acc.x), Math.abs(acc.y), Math.abs(acc.z));
+      
+      if (magnitude > 30) {
+        triggerThrow();
+      } else if (magnitude > 5 && !visualDice.classList.contains('throwing')) {
+        // 부드럽게 흔들리는 시각적 효과 유지
         visualDice.style.transition = 'transform 0.05s ease';
         visualDice.style.transform = `translate(${Math.random() * 40 - 20}px, ${Math.random() * 40 - 20}px) rotate(${Math.random() * 360}deg) scale(${1 + Math.random() * 0.2})`;
         setTimeout(() => {
@@ -88,15 +94,10 @@ function initSensors() {
 
 // ─── Throw ────────────────────────────────────────────────────────────────────
 
-let lastTap = 0;
-diceArea.addEventListener('touchstart', (e) => {
-  const now = Date.now();
-  const timesince = now - lastTap;
-  if (timesince < 300 && timesince > 0) triggerThrow();
-  lastTap = now;
-});
-
-diceArea.addEventListener('dblclick', () => triggerThrow());
+// 터치 이벤트는 제거 (센서로만 스윙)
+// let lastTap = 0;
+// diceArea.addEventListener('touchstart', (e) => { ... });
+// diceArea.addEventListener('dblclick', () => triggerThrow());
 
 function triggerThrow() {
   const now = Date.now();
@@ -130,5 +131,8 @@ if (btnRetry) {
     setTimeout(() => btnRetry.classList.add('hidden'), 300);
     if (instructionMain) instructionMain.classList.remove('hidden');
     if (instructionSub) instructionSub.classList.remove('hidden');
+    
+    // 호스트의 UI 다시 표시
+    mobile.sendToHost('resetDice', {});
   });
 }

@@ -4,6 +4,7 @@ import DiceBox from '@3d-dice/dice-box';
 
 const host = new HostSDK({ gameId: 'dice' });
 let playerCount = 0;
+let uiRestoreTimer = null;
 
 const sessionInfo = document.getElementById('session-info');
 const playerStatus = document.getElementById('player-status');
@@ -71,8 +72,39 @@ function updatePlayerStatus() {
   }
 }
 
+function restoreUI() {
+  const centerStatus = document.querySelector('.center-status');
+  if (centerStatus) centerStatus.classList.remove('hidden');
+  
+  const qrs = document.querySelectorAll('.qr-container');
+  qrs.forEach(qr => qr.classList.remove('hidden'));
+}
+
+function hideUI() {
+  const centerStatus = document.querySelector('.center-status');
+  if (centerStatus) centerStatus.classList.add('hidden');
+  
+  const qrs = document.querySelectorAll('.qr-container');
+  qrs.forEach(qr => qr.classList.add('hidden'));
+
+  if (uiRestoreTimer) {
+    clearTimeout(uiRestoreTimer);
+  }
+  uiRestoreTimer = setTimeout(restoreUI, 10000); // 10초 후 복구
+}
+
+host.onMessage('resetDice', () => {
+  if (uiRestoreTimer) {
+    clearTimeout(uiRestoreTimer);
+    uiRestoreTimer = null;
+  }
+  restoreUI();
+});
+
 host.onMessage('throwDice', (player, { strength, color }) => {
   console.log(`Player ${player.id} threw the dice with color ${color}!`);
+
+  hideUI();
 
   playerStatus.textContent = 'Rolling dice!! 🎲';
   playerStatus.style.color = color || '#FFD700';
