@@ -111,6 +111,12 @@ body.host-board::after {
   justify-content: center;
   font-family: 'Cinzel', serif;
   text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 1px 1px 3px rgba(0, 0, 0, 0.8);
+  transition: opacity 0.5s ease;
+}
+
+.center-status.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .center-status h1 {
@@ -145,6 +151,12 @@ body.host-board::after {
     0 0 0 1px rgba(255, 215, 0, 0.1);
   z-index: 20;
   backdrop-filter: blur(4px);
+  transition: opacity 0.5s ease;
+}
+
+.qr-container.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .qr-container canvas {
