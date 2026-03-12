@@ -49,11 +49,12 @@ mobile.on('hostDisconnect', () => {
 
 btnGrant.addEventListener('click', async () => {
   const granted = await mobile.requestSensors();
+  permissionModal.classList.add('hidden'); // 항상 모달을 숨겨 더블탭은 가능하게 함
+
   if (granted) {
-    permissionModal.classList.add('hidden');
     initSensors();
   } else {
-    alert('Permission denied. You cannot play without motion sensors.');
+    console.warn('Motion sensors denied or unavailable. Fallback to double-tap.');
   }
 });
 
