@@ -24,7 +24,14 @@
     </div>
 
     <div class="dice-area" id="dice-area">
-      <div class="mobile-dice" id="visual-dice">🎲</div>
+      <div class="dice-cube" id="visual-dice">
+        <div class="dice-face front"><div class="dot"></div></div>
+        <div class="dice-face back"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="dice-face right"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="dice-face left"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        <div class="dice-face top"><div class="dot"></div><div class="dot"></div></div>
+        <div class="dice-face bottom"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>
       <p class="instruction" id="instruction-main">Shake to Roll!</p>
       <p class="instruction sub" id="instruction-sub">Swing or Double-Tap to Throw!</p>
       <button id="btn-retry" class="hidden">Retry (Get Dice Back)</button>

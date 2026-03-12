@@ -34,8 +34,9 @@ if (!mobile.getSessionId()) {
 mobile.on('join', (player) => {
   connectionStatus.classList.add('connected');
   myColor = player.color;
-  visualDice.style.color = myColor;
-  visualDice.style.textShadow = `0 10px 20px rgba(0,0,0,0.5), 0 0 30px ${myColor}, 0 0 60px ${myColor}`;
+  
+  // Apply color as a glow to the 3D dice cube instead of text color
+  visualDice.style.filter = `drop-shadow(0 0 20px ${myColor})`;
   instructionMain.style.color = myColor;
 });
 
@@ -72,15 +73,18 @@ function initSensors() {
   mobile.onMotion(({ acc }) => {
     if (acc) {
       // 강한 낚시대 스윙 액션 감지 (주로 Y 또는 Z축으로 큰 가속도)
-      // 이전에는 흔들기(magnitude > 5) 감지였으나, 이제는 스윙(> 20) 감지 시 바로 던지기 수행
+      // 이전에는 흔들기(magnitude > 5) 감지였으나, 이제는 스윙(> 15) 감지 시 바로 던지기 수행
       const magnitude = Math.max(Math.abs(acc.x), Math.abs(acc.y), Math.abs(acc.z));
       
-      if (magnitude > 30) {
+      if (magnitude > 15) {
         triggerThrow();
-      } else if (magnitude > 5 && !visualDice.classList.contains('throwing')) {
-        // 부드럽게 흔들리는 시각적 효과 유지
+      } else if (magnitude > 3 && !visualDice.classList.contains('throwing')) {
+        // 부드럽게 흔들리는 시각적 효과 유지 (3D Rotate)
         visualDice.style.transition = 'transform 0.05s ease';
-        visualDice.style.transform = `translate(${Math.random() * 40 - 20}px, ${Math.random() * 40 - 20}px) rotate(${Math.random() * 360}deg) scale(${1 + Math.random() * 0.2})`;
+        const rx = Math.random() * 40 - 20;
+        const ry = Math.random() * 40 - 20;
+        const rz = Math.random() * 20 - 10;
+        visualDice.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(1.05)`;
         setTimeout(() => {
           if (!visualDice.classList.contains('throwing')) {
             visualDice.style.transform = 'none';
