@@ -63,6 +63,14 @@ export class HostBaseGame {
     this.sdk.on('playerLeave', (playerId) => {
       this._players.delete(playerId);
       this.onPlayerLeave(playerId);
+
+      // 게임 진행 중 모든 플레이어가 퇴장하면 세션을 자동 리셋하여 로비로 복귀
+      // (로비·로딩 단계에서는 동작하지 않음)
+      if (this._players.size === 0
+          && this._phase !== 'lobby'
+          && this._phase !== 'loading') {
+        this.resetSession();
+      }
     });
 
     this.sdk.on('readyUpdate', ({ readyCount, total }) => {
