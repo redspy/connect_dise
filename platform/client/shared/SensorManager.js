@@ -5,33 +5,23 @@ export class SensorManager {
   }
 
   async requestPermission() {
-    const promises = [];
-
-    if (
-      typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function'
-    ) {
-      promises.push(DeviceOrientationEvent.requestPermission());
-    }
-
+    // On iOS 13+, requesting DeviceMotionEvent implicitly grants DeviceOrientationEvent too.
+    // iOS Safari throws a security error if we call requestPermission() twice on the same user gesture.
     if (
       typeof DeviceMotionEvent !== 'undefined' &&
       typeof DeviceMotionEvent.requestPermission === 'function'
     ) {
-      promises.push(DeviceMotionEvent.requestPermission());
+      try {
+        const state = await DeviceMotionEvent.requestPermission();
+        return state === 'granted';
+      } catch (err) {
+        console.warn('Sensor permission error:', err);
+        return false;
+      }
     }
-
-    if (promises.length === 0) {
-      return true; // Not iOS 13+ or not an HTTPS context
-    }
-
-    try {
-      const results = await Promise.all(promises);
-      return results.every(res => res === 'granted');
-    } catch (err) {
-      console.warn('Sensor permission error:', err);
-      return false;
-    }
+    
+    // For non-iOS 13+ devices, or when accessed over HTTP where the API is unavailable
+    return true;
   }
 
   onOrientation(callback) {
