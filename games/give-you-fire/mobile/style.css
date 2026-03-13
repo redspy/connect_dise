@@ -163,12 +163,11 @@ body.mobile-controller {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px;
+  gap: 8px;
+  padding: 0;           /* 여백 없이 화면 전체 활용 */
   min-height: 0;
   overflow: hidden;
   position: relative;   /* 힌트 오버레이 기준 */
-  /* 제스처 캡처 — 스크롤 방지 */
   touch-action: none;
   cursor: crosshair;
 }

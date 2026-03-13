@@ -370,15 +370,22 @@ export class TetrisMobile extends MobileBaseGame {
   _resizeCanvas() {
     const canvas = document.getElementById('game-board-canvas');
     if (!canvas) return;
-    const area = document.getElementById('gesture-area');
-    if (!area) return;
 
-    // 패딩(8px × 2) 제외한 실제 사용 가능 영역
-    const pad  = 8;
-    const maxW = area.clientWidth  - pad * 2;
-    const maxH = area.clientHeight - pad * 2;
+    // 레벨 바 높이를 제외한 실제 사용 가능한 화면 크기를 직접 측정
+    const levelBar = document.querySelector('.gyf-level-bar-wrap');
+    const levelH   = levelBar ? levelBar.offsetHeight : 34;
+    const screenW  = window.innerWidth;
+    const screenH  = window.innerHeight - levelH;
 
-    // 보드 비율 1:2 (가로:세로) 유지하면서 가로를 최대한 활용
+    // 다음 블록 미리보기가 켜져 있으면 패널 너비(80px + 간격 8px) 만큼 보드 가로 제한
+    const nextPanel = document.getElementById('next-panel');
+    const nextW     = (nextPanel && nextPanel.style.display !== 'none') ? 88 : 0;
+    const maxW      = screenW - nextW;
+    const maxH      = screenH;
+
+    // 보드 비율 1:2 (가로:세로) 유지 — 화면 방향에 따라 자동 최적화
+    // 세로형: 가로를 먼저 꽉 채우고, 세로가 초과하면 세로 기준으로 역산
+    // 가로형: 세로가 먼저 제한되므로 자연스럽게 세로 기준으로 계산됨
     let w = maxW;
     let h = w * 2;
     if (h > maxH) {
