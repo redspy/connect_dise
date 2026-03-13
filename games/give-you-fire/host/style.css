@@ -37,22 +37,15 @@ body.host-board {
 }
 .gyf-overlay.hidden { display: none; }
 
-/* ─── 4코너 QR ───────────────────────────────────────────────────── */
-.gyf-qr {
-  position: absolute;
-  width: 130px;
-  height: 130px;
+/* ─── 로비 QR ───────────────────────────────────────────────────── */
+.gyf-qr-center {
   background: #fff;
   border-radius: 8px;
   padding: 6px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-.gyf-qr[data-corner="tl"] { top: 20px; left: 20px; }
-.gyf-qr[data-corner="tr"] { top: 20px; right: 20px; }
-.gyf-qr[data-corner="bl"] { bottom: 20px; left: 20px; }
-.gyf-qr[data-corner="br"] { bottom: 20px; right: 20px; }
 
 /* ─── 로비 패널 ─────────────────────────────────────────────────── */
 .gyf-lobby-panel {

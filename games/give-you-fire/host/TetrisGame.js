@@ -43,12 +43,9 @@ export class TetrisGame extends HostBaseGame {
   async onSetup({ sessionId, qrUrl }) {
     document.getElementById('session-code').textContent = sessionId;
 
-    // 4코너 QR 렌더링 (동일 URL)
-    const corners = ['qr-tl', 'qr-tr', 'qr-bl', 'qr-br'];
-    for (const id of corners) {
-      const el = document.getElementById(id);
-      if (el) await renderQR(el, qrUrl, { width: 110 });
-    }
+    // QR 렌더링
+    const qrEl = document.getElementById('qr-container');
+    if (qrEl) await renderQR(qrEl, qrUrl, { width: 160 });
 
     // 미리보기 체크박스
     const chk = document.getElementById('chk-next-piece');

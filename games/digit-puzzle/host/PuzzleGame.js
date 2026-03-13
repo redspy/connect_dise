@@ -25,16 +25,9 @@ export class PuzzleGame extends HostBaseGame {
   async onSetup({ sessionId, qrUrl }) {
     document.getElementById('session-code').textContent = sessionId;
 
-    // 4코너 QR 렌더링
-    const qrContainers = [
-      document.getElementById('qr-top-left'),
-      document.getElementById('qr-top-right'),
-      document.getElementById('qr-bottom-left'),
-      document.getElementById('qr-bottom-right'),
-    ];
-    for (const container of qrContainers) {
-      await renderQR(container, qrUrl, { width: 120 });
-    }
+    // QR 렌더링
+    const qrEl = document.getElementById('qr-container');
+    if (qrEl) await renderQR(qrEl, qrUrl, { width: 160 });
 
     document.getElementById('btn-back').addEventListener('click', () => {
       location.href = '/';
