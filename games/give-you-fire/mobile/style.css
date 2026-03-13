@@ -173,12 +173,10 @@ body.mobile-controller {
   cursor: crosshair;
 }
 
-/* 보드 캔버스: 세로 최대한 활용 */
+/* 보드 캔버스: 크기는 JS(_resizeCanvas)가 완전히 제어 */
 .gyf-board-canvas {
-  height: 100%;
-  width: auto;
-  max-width: 50vw;  /* 가로가 너무 넓어지지 않도록 */
   display: block;
+  flex-shrink: 0;
   pointer-events: none; /* 터치 이벤트는 부모(gesture-area)에서 처리 */
 }
 

@@ -370,16 +370,24 @@ export class TetrisMobile extends MobileBaseGame {
   _resizeCanvas() {
     const canvas = document.getElementById('game-board-canvas');
     if (!canvas) return;
-    const parent = canvas.parentElement;
-    if (!parent) return;
+    const area = document.getElementById('gesture-area');
+    if (!area) return;
 
-    const maxW = parent.clientWidth;
-    const maxH = parent.clientHeight;
-    // 보드 비율 10:20 (1:2) 유지
-    const size = Math.min(maxW, maxH / 2);
+    // 패딩(8px × 2) 제외한 실제 사용 가능 영역
+    const pad  = 8;
+    const maxW = area.clientWidth  - pad * 2;
+    const maxH = area.clientHeight - pad * 2;
 
-    canvas.width  = size;
-    canvas.height = size * 2;
+    // 보드 비율 1:2 (가로:세로) 유지하면서 가로를 최대한 활용
+    let w = maxW;
+    let h = w * 2;
+    if (h > maxH) {
+      h = maxH;
+      w = h / 2;
+    }
+
+    canvas.width  = Math.round(w);
+    canvas.height = Math.round(h);
 
     this._render();
   }
