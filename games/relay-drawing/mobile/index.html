@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>그림 릴레이</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-body">
+
+  <!-- 1. 닉네임 입력 -->
+  <div class="rd-screen view" data-screen="setup">
+    <h2>그림 릴레이 🎨</h2>
+    <div class="input-group">
+      <label for="nickname">닉네임</label>
+      <input type="text" id="nickname" maxlength="8" placeholder="이름을 입력하세요" autocomplete="off">
+    </div>
+    <button id="joinBtn" class="primary-btn">참여하기</button>
+  </div>
+
+  <!-- 2. 대기 -->
+  <div class="rd-screen view" data-screen="waiting">
+    <div class="waiting-header">
+      <h2 id="myNameDisplay"></h2>
+      <p class="status-msg">다른 플레이어를 기다리는 중입니다...</p>
+    </div>
+    <div class="player-list-container">
+      <h3>참여자 (<span id="playerCount">0</span>명)</h3>
+      <ul id="playerList" class="player-list"></ul>
+    </div>
+    <button id="readyBtn" class="primary-btn">준비 완료</button>
+    <div id="readyStatus" class="ready-status hidden">준비 완료! 호스트의 시작을 기다리세요.</div>
+  </div>
+
+  <!-- 3. 그림 그리기 -->
+  <div class="rd-screen view game-view" data-screen="draw">
+    <div class="game-header">
+      <div class="timer" id="drawTimer">60</div>
+      <div class="topic-box">
+        <span class="topic-label">제시어</span>
+        <h3 id="drawTopic">제시어</h3>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="drawingCanvas"></canvas>
+    </div>
+
+    <div class="tools-container">
+      <div class="color-palette">
+        <button class="color-btn active" data-color="#000000" style="background-color:#000000;"></button>
+        <button class="color-btn" data-color="#FF3B30" style="background-color:#FF3B30;"></button>
+        <button class="color-btn" data-color="#007AFF" style="background-color:#007AFF;"></button>
+        <button class="color-btn" data-color="#34C759" style="background-color:#34C759;"></button>
+        <button class="color-btn" data-color="#FFCC00" style="background-color:#FFCC00;"></button>
+      </div>
+      <div class="extra-tools">
+        <button id="eraserBtn" class="tool-btn">지우개</button>
+        <button id="clearBtn" class="tool-btn danger">초기화</button>
+      </div>
+    </div>
+
+    <button id="submitDrawBtn" class="primary-btn submit-btn">제출하기</button>
+  </div>
+
+  <!-- 4. 단어 맞히기 -->
+  <div class="rd-screen view game-view" data-screen="word">
+    <div class="game-header">
+      <div class="timer" id="wordTimer">30</div>
+      <div class="topic-box">
+        <span class="topic-label">그림을 보고 설명해주세요!</span>
+      </div>
+    </div>
+
+    <div class="image-preview-container">
+      <img id="previousDrawing" src="" alt="이전 그림">
+    </div>
+
+    <div class="word-input-container">
+      <input type="text" id="wordGuess" maxlength="30" placeholder="무엇을 그린 걸까요?">
+      <button id="submitWordBtn" class="primary-btn submit-btn">제출하기</button>
+    </div>
+  </div>
+
+  <!-- 5. 대기 (제출 후) -->
+  <div class="rd-screen view" data-screen="standby">
+    <div class="standby-content">
+      <h2>제출 완료!</h2>
+      <p>다른 플레이어들을 기다리고 있습니다...</p>
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- 6. 결과 관람 -->
+  <div class="rd-screen view" data-screen="spectate">
+    <div class="spectate-content">
+      <h2>결과 발표! 🎬</h2>
+      <p>PC 화면을 주목해주세요.</p>
+
+      <div class="reaction-container">
+        <h3>리액션 보내기</h3>
+        <div class="reactions">
+          <button class="reaction-btn" data-emoji="😂">😂</button>
+          <button class="reaction-btn" data-emoji="👏">👏</button>
+          <button class="reaction-btn" data-emoji="❓">❓</button>
+          <button class="reaction-btn" data-emoji="😍">😍</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

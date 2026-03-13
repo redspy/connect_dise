@@ -81,6 +81,8 @@ export default defineConfig({
         digitPuzzleMobile: resolve(__dirname, 'games/digit-puzzle/mobile/index.html'),
         giveYouFireHost:   resolve(__dirname, 'games/give-you-fire/host/index.html'),
         giveYouFireMobile: resolve(__dirname, 'games/give-you-fire/mobile/index.html'),
+        relayDrawingHost:   resolve(__dirname, 'games/relay-drawing/host/index.html'),
+        relayDrawingMobile: resolve(__dirname, 'games/relay-drawing/mobile/index.html'),
       },
     },
   },

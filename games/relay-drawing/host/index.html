@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>그림 릴레이 — Host</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-body">
+
+  <!-- 1. 로비 -->
+  <div class="rd-overlay view" data-phase="lobby">
+    <div class="lobby-header">
+      <h1>그림 릴레이 🎨</h1>
+      <p>스마트폰을 스케치북 삼아 제시어를 그리고 맞히는 왁자지껄 파티 게임!</p>
+    </div>
+
+    <div class="lobby-content">
+      <div class="qr-panel panel">
+        <h2>접속하기</h2>
+        <div id="qrContainer" class="qr-container"></div>
+        <p class="qr-url" id="joinUrl"></p>
+      </div>
+
+      <div class="settings-panel panel">
+        <h2>게임 설정</h2>
+
+        <div class="setting-item">
+          <label for="roundCount">라운드 수</label>
+          <select id="roundCount">
+            <option value="auto" selected>인원수에 맞춤 (추천)</option>
+            <option value="3">3 스테이지 (짧게)</option>
+            <option value="5">5 스테이지 (보통)</option>
+          </select>
+        </div>
+
+        <div class="setting-item">
+          <label for="timeLimit">그림 제한 시간</label>
+          <select id="timeLimit">
+            <option value="45">45초 (빠르게)</option>
+            <option value="60" selected>60초 (기본)</option>
+            <option value="90">90초 (여유롭게)</option>
+          </select>
+          <small class="hint">단어 설명 시간은 그림 시간의 절반으로 설정됩니다.</small>
+        </div>
+
+        <button id="startBtn" class="primary-btn" disabled>최소 2명 이상 필요</button>
+      </div>
+    </div>
+
+    <div class="players-panel panel">
+      <div class="players-header">
+        <h2>참가자 (<span id="playerCount">0</span>/8)</h2>
+      </div>
+      <div id="playerGrid" class="player-grid"></div>
+    </div>
+  </div>
+
+  <!-- 2. 인트로 카운트다운 -->
+  <div class="rd-overlay view hidden" data-phase="intro">
+    <div class="intro-content">
+      <h1 class="bounce">준비되셨나요?</h1>
+      <div class="instructions">
+        <p>1. 각자의 <strong>스마트폰 화면</strong>을 확인하세요.</p>
+        <p>2. 화면에 나타난 <strong>제시어</strong>를 그림으로 그리거나,</p>
+        <p>3. 이전 사람이 그린 <strong>그림을 보고 단어로 설명</strong>하세요!</p>
+      </div>
+      <h2 id="introCountdown" class="massive-countdown">3</h2>
+    </div>
+  </div>
+
+  <!-- 3. 게임 진행 -->
+  <div class="rd-overlay view hidden" data-phase="game">
+    <div class="game-header">
+      <h2><span id="currentTurnDisplay">1</span>번째 릴레이 진행 중...</h2>
+      <div class="timer-container">
+        <div id="gameClock" class="clock">60</div>
+      </div>
+    </div>
+
+    <div class="game-content">
+      <div class="status-grid" id="statusGrid"></div>
+      <p class="attention-text bounce hidden" id="hurryText">시간이 얼마 남지 않았어요!</p>
+    </div>
+  </div>
+
+  <!-- 4. 결과 발표 -->
+  <div class="rd-overlay view hidden" data-phase="result">
+    <div class="result-header">
+      <h1>릴레이 결과 발표 🎬</h1>
+      <button id="nextStoryBtn" class="primary-btn">다음 이야기 보기</button>
+    </div>
+
+    <div class="presentation-stage">
+      <div id="reactionOverlay" class="reaction-overlay"></div>
+      <div class="story-board-container">
+        <h2 id="storyOwnerName" class="story-owner"></h2>
+        <div id="storySteps" class="story-steps"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 최종 -->
+  <div class="rd-overlay view hidden" data-phase="final">
+    <div class="final-content">
+      <h1>모든 릴레이가 끝났습니다! 🎉</h1>
+      <button id="restartBtn" class="primary-btn">로비로 돌아가기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
