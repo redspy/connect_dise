@@ -50,4 +50,14 @@ export const GAMES = [
     maxPlayers: 4,
     thumbnail: '🔥',
   },
+  {
+    id: 'relay-drawing',
+    name: '그림 릴레이',
+    description: '스마트폰을 스케치북 삼아 제시어를 그리고 맞히는 왁자지껄 파티 게임 🎨',
+    hostPath: '/games/relay-drawing/host/',
+    mobilePath: '/games/relay-drawing/mobile/',
+    minPlayers: 2,
+    maxPlayers: 8,
+    thumbnail: '🎨',
+  },
 ];
