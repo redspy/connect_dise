@@ -14,6 +14,7 @@ const httpServer = createServer(app);
 app.use(express.static(join(__dirname, '..', 'dist')));
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
+  maxHttpBufferSize: 5e6, // 5MB — 그림 릴레이 base64 이미지 전송 허용
 });
 
 const sm = new SessionManager();

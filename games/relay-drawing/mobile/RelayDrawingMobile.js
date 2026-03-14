@@ -196,7 +196,14 @@ export class RelayDrawingMobile extends MobileBaseGame {
     document.getElementById('submitDrawBtn').disabled = true;
 
     const canvas = document.getElementById('drawingCanvas');
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+    // 전송 크기 축소: 고정 해상도(480×360) 오프스크린 캔버스로 리샘플
+    const offscreen = document.createElement('canvas');
+    offscreen.width  = 480;
+    offscreen.height = 360;
+    offscreen.getContext('2d').drawImage(canvas, 0, 0, 480, 360);
+    const dataUrl = offscreen.toDataURL('image/jpeg', 0.6);
+
     this.sendToHost('submitTurn', { type: 'draw', content: dataUrl });
     this.showScreen('standby');
   }
