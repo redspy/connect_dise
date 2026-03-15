@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client';
 import { SensorManager } from './shared/SensorManager.js';
 import { QRScanner } from './shared/QRScanner.js';
+import { P2PManager } from './P2PManager.js';
 
 const RECONNECT_KEY = (sessionId) => `_sdk_reconnect_${sessionId}`;
 
@@ -13,6 +14,7 @@ export class MobileSDK extends EventTarget {
     this._socket = io();
     this._messageHandlers = new Map();
     this._sensorManager = new SensorManager();
+    this._p2p = null;
     this._setup();
 
     // 연결 전(빨간 상태)에는 항상 스캔 버튼 표시
@@ -42,6 +44,18 @@ export class MobileSDK extends EventTarget {
       } else {
         this._emit('join', player);
       }
+
+      // P2P 초기화 (호스트의 offer를 대기)
+      this._initP2P();
+    });
+
+    // P2P 시그널링 이벤트
+    socket.on('p2p:offer', ({ sdp }) => {
+      this._p2p?.acceptOffer('host', this._sessionId, sdp);
+    });
+
+    socket.on('p2p:ice', ({ candidate }) => {
+      this._p2p?.addIceCandidate('host', candidate);
     });
 
     socket.on('platform:allReady', () => {
@@ -62,6 +76,7 @@ export class MobileSDK extends EventTarget {
 
     socket.on('hostDisconnected', () => {
       sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
+      this._p2p?.closeAll();
       this._emit('hostDisconnect', {});
       this._showScanBtn();
     });
@@ -91,10 +106,29 @@ export class MobileSDK extends EventTarget {
   }
 
   sendToHost(type, payload) {
-    this._socket.emit('game:toHost', {
-      sessionId: this._sessionId,
-      type,
-      payload,
+    if (!this._p2p?.send('host', type, payload)) {
+      this._socket.emit('game:toHost', {
+        sessionId: this._sessionId,
+        type,
+        payload,
+      });
+    }
+  }
+
+  _initP2P() {
+    if (!P2PManager.isSupported()) return;
+    this._p2p?.closeAll();
+    this._p2p = new P2PManager(this._socket, {
+      onMessage: (peerId, type, payload) => {
+        const handler = this._messageHandlers.get(type);
+        if (handler) handler(payload);
+      },
+      onChannelOpen: () => {
+        console.log('[P2P] 호스트와 직접 연결됨');
+      },
+      onChannelClose: () => {
+        console.log('[P2P] 호스트 연결 끊김 → Socket.io fallback');
+      },
     });
   }
 

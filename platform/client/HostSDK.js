@@ -1,4 +1,5 @@
 import { io } from 'socket.io-client';
+import { P2PManager } from './P2PManager.js';
 
 export class HostSDK extends EventTarget {
   constructor({ gameId }) {
@@ -9,6 +10,7 @@ export class HostSDK extends EventTarget {
     this._qrUrl = null;
     this._socket = io();
     this._messageHandlers = new Map();
+    this._p2p = null;
     this._setup();
   }
 
@@ -26,15 +28,18 @@ export class HostSDK extends EventTarget {
       const host = window.location.hostname;
       this._qrUrl = `${scheme}//${host}${port}/games/${this.gameId}/mobile/?session=${sessionId}`;
       this._emit('sessionReady', { sessionId, qrUrl: this._qrUrl });
+      this._initP2P();
     });
 
     socket.on('platform:playerJoined', ({ player }) => {
       this._players.set(player.id, player);
       this._emit('playerJoin', player);
+      this._p2p?.initiateConnection(player.id, this._sessionId);
     });
 
     socket.on('platform:playerLeft', ({ playerId }) => {
       this._players.delete(playerId);
+      this._p2p?.closeConnection(playerId);
       this._emit('playerLeave', playerId);
     });
 
@@ -42,6 +47,18 @@ export class HostSDK extends EventTarget {
     socket.on('platform:playerRejoined', ({ player }) => {
       this._players.set(player.id, player);
       this._emit('playerRejoin', player);
+      // P2P 재수립
+      this._p2p?.closeConnection(player.id);
+      this._p2p?.initiateConnection(player.id, this._sessionId);
+    });
+
+    // P2P 시그널링 이벤트
+    socket.on('p2p:answer', ({ from, sdp }) => {
+      this._p2p?.setRemoteAnswer(from, sdp);
+    });
+
+    socket.on('p2p:ice', ({ from, candidate }) => {
+      this._p2p?.addIceCandidate(from, candidate);
     });
 
     socket.on('platform:readyUpdate', ({ readyCount, totalCount }) => {
@@ -84,19 +101,43 @@ export class HostSDK extends EventTarget {
   }
 
   sendToPlayer(playerId, type, payload) {
-    this._socket.emit('game:toPlayer', {
-      sessionId: this._sessionId,
-      to: playerId,
-      type,
-      payload,
-    });
+    if (!this._p2p?.send(playerId, type, payload)) {
+      this._socket.emit('game:toPlayer', {
+        sessionId: this._sessionId,
+        to: playerId,
+        type,
+        payload,
+      });
+    }
   }
 
   broadcast(type, payload) {
-    this._socket.emit('game:broadcast', {
-      sessionId: this._sessionId,
-      type,
-      payload,
+    for (const player of this._players.values()) {
+      if (!this._p2p?.send(player.id, type, payload)) {
+        this._socket.emit('game:toPlayer', {
+          sessionId: this._sessionId,
+          to: player.id,
+          type,
+          payload,
+        });
+      }
+    }
+  }
+
+  _initP2P() {
+    if (!P2PManager.isSupported()) return;
+    this._p2p = new P2PManager(this._socket, {
+      onMessage: (peerId, type, payload) => {
+        const player = this._players.get(peerId) || { id: peerId };
+        const handler = this._messageHandlers.get(type);
+        if (handler) handler(player, payload);
+      },
+      onChannelOpen: (peerId) => {
+        console.log(`[P2P] 플레이어 ${peerId} 직접 연결됨`);
+      },
+      onChannelClose: (peerId) => {
+        console.log(`[P2P] 플레이어 ${peerId} 연결 끊김 → Socket.io fallback`);
+      },
     });
   }
 
