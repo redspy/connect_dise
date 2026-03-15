@@ -1,3 +1,5 @@
+import { OmokAI } from './ai.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     const BOARD_SIZE = 13;
     const boardElement = document.getElementById('board');

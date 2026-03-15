@@ -1,4 +1,4 @@
-class OmokAI {
+export class OmokAI {
     constructor(boardSize) {
         this.size = boardSize;
         this.directions = [
