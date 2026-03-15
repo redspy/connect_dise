@@ -1,5 +1,6 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
+import { audioManager } from '../shared/AudioManager.js';
 
 const STARTER_PROMPTS = [
   '로봇 청소기를 타는 고양이', '치킨을 훔쳐먹는 외계인', '번지점프를 하는 코끼리',
@@ -12,7 +13,7 @@ export class RelayDrawingGame extends HostBaseGame {
   constructor(sdk) {
     super(sdk, { overlayClass: 'rd-overlay', qrContainerId: null });
 
-    this._profiles        = new Map(); // id → { nickname }
+    this._profiles        = new Map(); // id → { nickname, avatar }
     this._storyChains     = [];
     this._currentRound    = 0;
     this._totalRounds     = 0;
@@ -44,6 +45,7 @@ export class RelayDrawingGame extends HostBaseGame {
     });
 
     this.setPhase('lobby');
+    audioManager.playBGM('https://actions.google.com/static/audio/test/Lobby-Time.mp3');
   }
 
   onPlayerJoin() {
@@ -76,8 +78,11 @@ export class RelayDrawingGame extends HostBaseGame {
   // ─── 메시지 핸들러 ────────────────────────────────────────────────────────
 
   _wireGameMessages() {
-    this.onMessage('setProfile', (player, { nickname }) => {
-      this._profiles.set(player.id, { nickname: nickname.trim() || '익명' });
+    this.onMessage('setProfile', (player, { nickname, avatar }) => {
+      this._profiles.set(player.id, {
+        nickname: nickname.trim() || '익명',
+        avatar: avatar || null
+      });
       this._updateLobbyPlayers();
       this._broadcastPlayerList();
     });
@@ -88,7 +93,10 @@ export class RelayDrawingGame extends HostBaseGame {
     });
 
     this.onMessage('sendReaction', (player, { emoji }) => {
-      if (this.phase === 'result') this._showReaction(emoji);
+      if (this.phase === 'result') {
+        this._showReaction(emoji);
+        audioManager.playSFX('https://actions.google.com/static/audio/test/Pop.mp3', 0.5);
+      }
     });
   }
 
@@ -103,11 +111,18 @@ export class RelayDrawingGame extends HostBaseGame {
     grid.innerHTML = '';
 
     this.players.forEach(p => {
+      const profile = this._profiles.get(p.id);
       const el = document.createElement('div');
       el.className = 'player-card';
+
+      let avatarHtml = `<div class="avatar-dot" style="background:${p.color};"></div>`;
+      if (profile?.avatar) {
+        avatarHtml = `<img src="${profile.avatar}" class="avatar-img" style="border-color:${p.color};">`;
+      }
+
       el.innerHTML = `
-        <div style="width:20px;height:20px;border-radius:50%;background:${p.color};flex-shrink:0;"></div>
-        <div class="name">${this._profiles.get(p.id)?.nickname ?? '대기 중...'}</div>
+        ${avatarHtml}
+        <div class="name">${profile?.nickname ?? '대기 중...'}</div>
       `;
       grid.appendChild(el);
     });
@@ -142,6 +157,7 @@ export class RelayDrawingGame extends HostBaseGame {
     this._setupRoundParameters();
     this._initializeStoryChains();
     this.broadcast('gameStarting', {});
+    audioManager.playSFX('https://actions.google.com/static/audio/test/3-sec-countdown.mp3');
 
     this.setPhase('intro');
     let count = 3;
@@ -213,6 +229,11 @@ export class RelayDrawingGame extends HostBaseGame {
 
     this.broadcast('roundAssignments', { assignments, timeLimit });
     this._startRoundTimer(timeLimit);
+    
+    if (roundNumber === 1) {
+      audioManager.playBGM('https://actions.google.com/static/audio/test/Game-Start.mp3');
+    }
+    audioManager.playSFX('https://actions.google.com/static/audio/test/Tones_2.mp3');
   }
 
   _setupGameStatusGrid(isDrawTurn) {
@@ -249,6 +270,7 @@ export class RelayDrawingGame extends HostBaseGame {
       if (timeLeft === 10) {
         if (clockEl) clockEl.classList.add('warning');
         if (hurryEl) hurryEl.classList.remove('hidden');
+        audioManager.playSFX('https://actions.google.com/static/audio/test/Clock-Ticking.mp3');
       }
       if (timeLeft <= 0) {
         clearInterval(this._timerInterval);
@@ -331,6 +353,7 @@ export class RelayDrawingGame extends HostBaseGame {
 
   _finishRound() {
     if (this._currentRound >= this._totalRounds) {
+      audioManager.playSFX('https://actions.google.com/static/audio/test/Celebration-Fanfare.mp3');
       setTimeout(() => this._startResultPresentation(), 1500);
     } else {
       this._rotateStoryChains();
@@ -354,6 +377,7 @@ export class RelayDrawingGame extends HostBaseGame {
 
   _startResultPresentation() {
     this.setPhase('result');
+    audioManager.playBGM('https://actions.google.com/static/audio/test/Story-Presentation.mp3');
     this.broadcast('showResults', {});
     this._currentStoryIndex = 0;
     this._presentNextStory();
@@ -381,8 +405,10 @@ export class RelayDrawingGame extends HostBaseGame {
 
     let delay = 1000;
     chain.steps.forEach(step => {
-      const authorName = this._profiles.get(step.authorId)?.nickname ?? '?';
-      setTimeout(() => this._addStoryStep(step, authorName), delay);
+      const profile = this._profiles.get(step.authorId);
+      const authorName = profile?.nickname ?? '?';
+      const authorAvatar = profile?.avatar;
+      setTimeout(() => this._addStoryStep(step, authorName, authorAvatar), delay);
       delay += 2500;
     });
 
@@ -397,15 +423,24 @@ export class RelayDrawingGame extends HostBaseGame {
     }, delay);
   }
 
-  _addStoryStep(step, authorName) {
+  _addStoryStep(step, authorName, authorAvatar) {
     const el = document.createElement('div');
     el.className = `story-item ${step.type}`;
 
     const authorEl = document.createElement('div');
     authorEl.className = 'author';
-    authorEl.textContent = step.authorId === 'system'
-      ? '시작 단어'
-      : `${authorName}의 ${step.type === 'word' ? '단어' : '그림'}`;
+    
+    let avatarHtml = '';
+    if (authorAvatar) {
+      avatarHtml = `<img src="${authorAvatar}" class="author-avatar">`;
+    } else if (step.authorId !== 'system') {
+      avatarHtml = `<div class="author-avatar-placeholder"></div>`;
+    }
+
+    authorEl.innerHTML = `
+      ${avatarHtml}
+      <span>${step.authorId === 'system' ? '시작 단어' : `${authorName}의 ${step.type === 'word' ? '단어' : '그림'}`}</span>
+    `;
     el.appendChild(authorEl);
 
     if (step.type === 'word') {
@@ -418,8 +453,17 @@ export class RelayDrawingGame extends HostBaseGame {
       el.appendChild(img);
     }
 
-    document.getElementById('storySteps')?.appendChild(el);
-    setTimeout(() => el.classList.add('visible'), 50);
+    const container = document.getElementById('storySteps');
+    if (container) {
+      container.appendChild(el);
+      // 부드러운 스크롤 추적
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
+    
+    setTimeout(() => {
+      el.classList.add('visible');
+      audioManager.playSFX('https://actions.google.com/static/audio/test/Slide-In.mp3', 0.3);
+    }, 50);
   }
 
   _showReaction(emoji) {

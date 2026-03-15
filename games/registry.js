@@ -9,6 +9,7 @@ export const GAMES = [
     maxPlayers: 6,
     thumbnail: '🃏',
     thumbnailImg: '/games/nunchi-ten/assets/thumbnail.png',
+    group: 'multi',
   },
   {
     id: 'spin-battle',
@@ -19,6 +20,7 @@ export const GAMES = [
     minPlayers: 2,
     maxPlayers: 6,
     thumbnail: '🌀',
+    group: 'multi',
   },
   {
     id: 'dice',
@@ -29,6 +31,7 @@ export const GAMES = [
     minPlayers: 1,
     maxPlayers: 6,
     thumbnail: '🎲',
+    group: 'multi',
   },
   {
     id: 'digit-puzzle',
@@ -39,6 +42,7 @@ export const GAMES = [
     minPlayers: 2,
     maxPlayers: 4,
     thumbnail: '🧩',
+    group: 'multi',
   },
   {
     id: 'give-you-fire',
@@ -49,6 +53,7 @@ export const GAMES = [
     minPlayers: 1,
     maxPlayers: 4,
     thumbnail: '🔥',
+    group: 'multi',
   },
   {
     id: 'relay-drawing',
@@ -59,5 +64,14 @@ export const GAMES = [
     minPlayers: 2,
     maxPlayers: 8,
     thumbnail: '🎨',
+    group: 'multi',
+  },
+  {
+    id: 'omok',
+    name: '오목',
+    description: 'AI와 1:1 오목 대결! 13×13 바둑판에서 먼저 5개를 연결하면 승리',
+    hostPath: '/games/omok/',
+    thumbnail: '⚫',
+    group: 'solo',
   },
 ];

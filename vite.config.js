@@ -83,6 +83,7 @@ export default defineConfig({
         giveYouFireMobile: resolve(__dirname, 'games/give-you-fire/mobile/index.html'),
         relayDrawingHost:   resolve(__dirname, 'games/relay-drawing/host/index.html'),
         relayDrawingMobile: resolve(__dirname, 'games/relay-drawing/mobile/index.html'),
+        omok:               resolve(__dirname, 'games/omok/index.html'),
       },
     },
   },

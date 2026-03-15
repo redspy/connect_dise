@@ -12,9 +12,17 @@
   <!-- 1. 닉네임 입력 -->
   <div class="rd-screen view" data-screen="setup">
     <h2>그림 릴레이 🎨</h2>
-    <div class="input-group">
-      <label for="nickname">닉네임</label>
-      <input type="text" id="nickname" maxlength="8" placeholder="이름을 입력하세요" autocomplete="off">
+    <div class="setup-content">
+      <div class="input-group">
+        <label for="nickname">닉네임</label>
+        <input type="text" id="nickname" maxlength="8" placeholder="이름을 입력하세요" autocomplete="off">
+      </div>
+      <div class="avatar-setup">
+        <label>나만의 아바타 그리기</label>
+        <div class="avatar-canvas-wrapper">
+          <canvas id="profileCanvas"></canvas>
+        </div>
+      </div>
     </div>
     <button id="joinBtn" class="primary-btn">참여하기</button>
   </div>

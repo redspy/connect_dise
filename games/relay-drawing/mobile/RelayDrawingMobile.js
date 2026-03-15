@@ -13,6 +13,11 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._lastX        = 0;
     this._lastY        = 0;
 
+    // 프로필 캔버스 상태
+    this._profileCtx   = null;
+    this._profileLastX = 0;
+    this._profileLastY = 0;
+
     this._timerInterval = null;
     this._hasSubmitted  = false;
 
@@ -48,7 +53,11 @@ export class RelayDrawingMobile extends MobileBaseGame {
       if (!nickname) { alert('닉네임을 입력해주세요.'); return; }
       localStorage.setItem('rd_nickname', nickname);
       document.getElementById('myNameDisplay').textContent = nickname;
-      this.sendToHost('setProfile', { nickname });
+
+      // 프로필 이미지 캡처
+      const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+
+      this.sendToHost('setProfile', { nickname, avatar });
       this.showScreen('waiting');
     });
 
@@ -106,9 +115,67 @@ export class RelayDrawingMobile extends MobileBaseGame {
       img.onload = () => this._ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
       img.src = temp;
     });
+
+    this._initProfileCanvas();
   }
 
   // ─── 캔버스 초기화 ────────────────────────────────────────────────────────
+
+  _initProfileCanvas() {
+    const canvas = document.getElementById('profileCanvas');
+    if (!canvas) return;
+    this._profileCtx = canvas.getContext('2d');
+
+    // 고정 크기
+    canvas.width = 120;
+    canvas.height = 120;
+
+    this._profileCtx.fillStyle = '#FFFFFF';
+    this._profileCtx.fillRect(0, 0, 120, 120);
+
+    const start = (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      this._profileLastX = clientX - rect.left;
+      this._profileLastY = clientY - rect.top;
+      this._drawProfilePoint(this._profileLastX, this._profileLastY);
+    };
+
+    const move = (e) => {
+      if (e.buttons !== 1 && !e.touches) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      this._profileCtx.beginPath();
+      this._profileCtx.moveTo(this._profileLastX, this._profileLastY);
+      this._profileCtx.lineTo(x, y);
+      this._profileCtx.strokeStyle = '#000000';
+      this._profileCtx.lineWidth = 4;
+      this._profileCtx.lineCap = 'round';
+      this._profileCtx.stroke();
+
+      this._profileLastX = x;
+      this._profileLastY = y;
+    };
+
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+  }
+
+  _drawProfilePoint(x, y) {
+    this._profileCtx.beginPath();
+    this._profileCtx.arc(x, y, 2, 0, Math.PI * 2);
+    this._profileCtx.fillStyle = '#000000';
+    this._profileCtx.fill();
+  }
 
   _initCanvas() {
     const canvas = document.getElementById('drawingCanvas');
