@@ -6,6 +6,7 @@
   <title>게임 로비</title>
   <link rel="stylesheet" href="/src/style.css">
   <style>
+    /* ── 로비 레이아웃 ──────────────────────────────────────────────── */
     body.host-board {
       overflow: auto;
       display: flex;
@@ -13,43 +14,56 @@
       align-items: center;
       justify-content: flex-start;
       min-height: 100vh;
-      padding: 40px 20px 60px;
+      padding: clamp(20px, 4vh, 48px) clamp(12px, 3vw, 32px) clamp(32px, 5vh, 64px);
+      box-sizing: border-box;
     }
 
+    /* 카지노 테이블 oval을 viewport에 고정 — 스크롤해도 배경 유지 */
+    body.host-board::before,
+    body.host-board::after {
+      position: fixed;
+    }
+
+    /* ── 타이틀 ─────────────────────────────────────────────────────── */
     .lobby-title {
       position: relative;
       z-index: 10;
       font-family: 'Cinzel', serif;
-      font-size: 2.8rem;
-      margin-bottom: 24px;
+      font-size: clamp(1.6rem, 4vw, 2.8rem);
+      margin-bottom: clamp(14px, 2.5vh, 24px);
       background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       text-shadow: none;
-      letter-spacing: 4px;
+      letter-spacing: clamp(1px, 0.5vw, 4px);
+      text-align: center;
     }
 
+    /* ── 탭 바 ──────────────────────────────────────────────────────── */
     .tab-bar {
       display: flex;
       gap: 8px;
-      margin-bottom: 32px;
+      margin-bottom: clamp(16px, 3vh, 32px);
       position: relative;
       z-index: 10;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .tab-btn {
-      padding: 10px 28px;
+      padding: clamp(7px, 1.2vh, 10px) clamp(14px, 2.5vw, 28px);
       border-radius: 30px;
       border: 2px solid rgba(255, 215, 0, 0.3);
       background: transparent;
       color: rgba(255, 215, 0, 0.5);
       font-family: 'Cinzel', serif;
-      font-size: 1rem;
+      font-size: clamp(0.78rem, 1.3vw, 1rem);
       font-weight: bold;
       cursor: pointer;
       letter-spacing: 1px;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     .tab-btn:hover {
@@ -64,28 +78,33 @@
       box-shadow: 0 0 16px rgba(255, 215, 0, 0.2);
     }
 
+    /* ── 게임 리스트 ─────────────────────────────────────────────────── */
     .game-list {
       display: flex;
-      gap: 32px;
+      gap: clamp(12px, 2.5vw, 32px);
       flex-wrap: wrap;
       justify-content: center;
       z-index: 10;
       position: relative;
+      width: 100%;
+      max-width: min(1200px, 100%);
     }
 
     .game-list.hidden {
       display: none !important;
     }
 
+    /* ── 게임 카드 ───────────────────────────────────────────────────── */
     .game-card {
       background: linear-gradient(160deg, #1a2e1a 0%, #0d1a0d 100%);
       border: 2px solid rgba(255, 215, 0, 0.4);
       border-radius: 20px;
-      padding: 24px 24px 28px;
+      padding: clamp(16px, 2vw, 24px) clamp(16px, 2vw, 24px) clamp(20px, 2.5vw, 28px);
       text-align: center;
       color: #f0f0f0;
       cursor: pointer;
-      width: 260px;
+      /* 3열 기준 최대 260px, 화면이 좁으면 자동 축소 */
+      width: min(260px, calc(100vw - 32px));
       display: flex;
       flex-direction: column;
       box-shadow:
@@ -103,8 +122,8 @@
     }
 
     .game-thumbnail {
-      font-size: 4rem;
-      height: 146px;
+      font-size: clamp(2.4rem, 4.5vw, 4rem);
+      height: clamp(72px, 11vw, 146px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -113,7 +132,7 @@
 
     .game-thumbnail-img-wrap {
       width: 100%;
-      height: 146px;
+      height: clamp(72px, 11vw, 146px);
       margin-bottom: 14px;
       border-radius: 12px;
       overflow: hidden;
@@ -129,7 +148,7 @@
 
     .game-card h2 {
       margin: 0 0 8px;
-      font-size: 1.5rem;
+      font-size: clamp(1rem, 1.8vw, 1.5rem);
       font-family: 'Cinzel', serif;
       background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
       -webkit-background-clip: text;
@@ -140,13 +159,44 @@
     .game-card p {
       margin: 4px 0;
       color: rgba(200, 200, 200, 0.8);
-      font-size: 0.95rem;
+      font-size: clamp(0.76rem, 1.1vw, 0.95rem);
     }
 
     .game-meta {
-      font-size: 0.8rem !important;
+      font-size: clamp(0.68rem, 0.9vw, 0.8rem) !important;
       color: rgba(255, 215, 0, 0.6) !important;
       margin-top: 12px !important;
+    }
+
+    /* ── 중형 화면: 카드 2열 유지 ─────────────────────────────────── */
+    @media (max-width: 840px) {
+      .game-card {
+        width: min(calc(50% - 8px), 260px);
+        min-width: 140px;
+      }
+    }
+
+    /* ── 소형 화면: 카드 1열 + 배경 단순화 ─────────────────────────── */
+    @media (max-width: 480px) {
+      body.host-board {
+        padding: 20px 12px 40px;
+      }
+
+      /* 좁은 화면에서 oval 테두리 제거 → 심플한 배경만 */
+      body.host-board::before {
+        inset: 0;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+
+      body.host-board::after {
+        display: none;
+      }
+
+      .game-card {
+        width: min(100%, 320px);
+      }
     }
   </style>
 </head>
