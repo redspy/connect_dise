@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dobble</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="db-mobile">
+
+  <!-- ── 닉네임 설정 ─────────────────────────────────────────── -->
+  <div class="db-screen" data-screen="setup">
+    <div class="db-setup-wrap">
+      <h1 class="db-mobile-title">🎯 Dobble</h1>
+      <p class="db-mobile-sub">일치하는 심볼을 먼저 찾아라!</p>
+      <input
+        id="nickname-input"
+        class="db-nickname-input"
+        type="text"
+        maxlength="8"
+        placeholder="닉네임 (최대 8자)"
+        autocomplete="off"
+      >
+      <button id="btn-join" class="db-btn-primary">참여하기</button>
+    </div>
+  </div>
+
+  <!-- ── 대기 화면 ────────────────────────────────────────────── -->
+  <div class="db-screen hidden" data-screen="waiting">
+    <div class="db-waiting-wrap">
+      <div id="waiting-nickname" class="db-waiting-nickname"></div>
+      <div class="db-waiting-hint">게임 시작을 기다리는 중...</div>
+      <div id="waiting-players" class="db-waiting-players"></div>
+      <button id="btn-ready" class="db-btn-primary">준비하기</button>
+    </div>
+  </div>
+
+  <!-- ── 게임 화면 ────────────────────────────────────────────── -->
+  <div class="db-screen hidden" data-screen="game">
+    <div class="db-game-wrap">
+      <div class="db-game-header">
+        <div id="game-score" class="db-game-score">0점</div>
+        <div id="game-freeze-msg" class="db-freeze-msg hidden">
+          ❄️ <span id="freeze-countdown">3</span>초 패널티
+        </div>
+      </div>
+
+      <!-- 피드백 플래시 -->
+      <div id="tap-feedback" class="db-tap-feedback hidden"></div>
+
+      <!-- 내 카드 (2×4) -->
+      <div id="my-card" class="db-my-card"></div>
+    </div>
+  </div>
+
+  <!-- ── 결과 화면 ────────────────────────────────────────────── -->
+  <div class="db-screen hidden" data-screen="result">
+    <div class="db-result-wrap">
+      <div id="result-icon" class="db-result-icon">🎮</div>
+      <div id="result-status" class="db-result-status"></div>
+      <div id="result-rankings" class="db-result-rankings"></div>
+      <button id="btn-rematch" class="db-btn-primary">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -67,6 +67,17 @@ export const GAMES = [
     group: 'multi',
   },
   {
+    id: 'dobble',
+    name: 'Dobble',
+    description: '중앙 카드와 내 카드의 같은 심볼을 먼저 찾아 탭! 2~6인 스피드 게임',
+    hostPath: '/games/dobble/host/',
+    mobilePath: '/games/dobble/mobile/',
+    minPlayers: 2,
+    maxPlayers: 6,
+    thumbnail: '🎯',
+    group: 'multi',
+  },
+  {
     id: 'omok',
     name: '오목',
     description: 'AI와 1:1 오목 대결! 13×13 바둑판에서 먼저 5개를 연결하면 승리',

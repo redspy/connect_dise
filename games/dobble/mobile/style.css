@@ -1,0 +1,363 @@
+/* ── Dobble 모바일 스타일 ─────────────────────────────────────────── */
+
+:root {
+  --db-bg:       #0c1a0e;
+  --db-panel:    #122016;
+  --db-panel2:   #1a2e1e;
+  --db-border:   #2a4a2e;
+  --db-gold:     #f59e0b;
+  --db-gold-dim: rgba(245, 158, 11, 0.12);
+  --db-green:    #22c55e;
+  --db-red:      #ef4444;
+  --db-blue:     #3b82f6;
+  --db-text:     #e8f5e9;
+  --db-sub:      #7faa84;
+}
+
+body.db-mobile {
+  background: var(--db-bg);
+  color: var(--db-text);
+  font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  margin: 0;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ── 화면 전환 ──────────────────────────────────────────────────── */
+
+.db-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.db-screen.hidden {
+  display: none;
+}
+
+/* ── 공통 컴포넌트 ───────────────────────────────────────────────── */
+
+.db-mobile-title {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--db-gold);
+  letter-spacing: 2px;
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.db-mobile-sub {
+  font-size: 0.88rem;
+  color: var(--db-sub);
+  margin: 0 0 24px;
+  text-align: center;
+}
+
+.db-btn-primary {
+  background: var(--db-gold);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 36px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  letter-spacing: 0.5px;
+}
+
+.db-btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.db-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 설정 화면 ──────────────────────────────────────────────────── */
+
+.db-setup-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.db-nickname-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--db-panel2);
+  border: 1px solid var(--db-border);
+  color: var(--db-text);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  outline: none;
+  text-align: center;
+}
+
+.db-nickname-input:focus {
+  border-color: var(--db-gold);
+}
+
+/* ── 대기 화면 ──────────────────────────────────────────────────── */
+
+.db-waiting-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.db-waiting-nickname {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--db-text);
+}
+
+.db-waiting-hint {
+  font-size: 0.88rem;
+  color: var(--db-sub);
+}
+
+.db-waiting-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.db-waiting-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--db-panel2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.88rem;
+}
+
+.db-wp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── 게임 화면 ──────────────────────────────────────────────────── */
+
+.db-game-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 10px;
+  padding: env(safe-area-inset-top, 8px) 16px 16px;
+  box-sizing: border-box;
+}
+
+.db-game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.db-game-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--db-gold);
+}
+
+.db-freeze-msg {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--db-blue);
+  animation: freeze-pulse 1s ease-in-out infinite;
+}
+
+.db-freeze-msg.hidden {
+  display: none;
+}
+
+@keyframes freeze-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── 피드백 ─────────────────────────────────────────────────────── */
+
+.db-tap-feedback {
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 16px;
+  border-radius: 10px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.db-tap-feedback.hidden {
+  visibility: hidden;
+}
+
+.db-tap-feedback.correct {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--db-green);
+}
+
+.db-tap-feedback.wrong {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--db-red);
+}
+
+/* ── 내 카드 (2×4 그리드) ────────────────────────────────────────── */
+
+.db-my-card {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+  flex: 1;
+  min-height: 0;
+}
+
+.db-symbol-cell {
+  background: var(--db-panel);
+  border: 2px solid var(--db-border);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.db-symbol-cell:active {
+  transform: scale(0.91);
+  border-color: var(--db-gold);
+  background: var(--db-panel2);
+}
+
+.db-my-card.frozen .db-symbol-cell {
+  pointer-events: none;
+  opacity: 0.45;
+  border-color: var(--db-blue);
+}
+
+.db-symbol-img-m {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+.db-symbol-text-m {
+  font-size: clamp(2rem, 10vw, 3.6rem);
+  font-weight: 700;
+  color: var(--db-text);
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ── 결과 화면 ──────────────────────────────────────────────────── */
+
+.db-result-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.db-result-icon {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.db-result-status {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--db-gold);
+}
+
+.db-result-rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.db-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--db-panel2);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.db-result-row.me {
+  background: var(--db-gold-dim);
+  border: 1px solid var(--db-gold);
+}
+
+.db-result-medal {
+  font-size: 1.3rem;
+  width: 2rem;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.db-result-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.db-result-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.db-result-score {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--db-gold);
+}
