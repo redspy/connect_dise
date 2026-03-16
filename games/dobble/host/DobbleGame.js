@@ -26,6 +26,7 @@ export class DobbleGame extends HostBaseGame {
     this._roundLock  = false;
     this._gameStarted = false;
     this._readyCount = 0;
+    this._flashTimer = null;
 
     this._wireMessages();
   }
@@ -87,6 +88,10 @@ export class DobbleGame extends HostBaseGame {
   }
 
   onReset() {
+    clearTimeout(this._flashTimer);
+    this._flashTimer = null;
+    const flash = document.getElementById('round-flash');
+    if (flash) flash.classList.add('hidden');
     for (const t of this._freezeTimers.values()) clearTimeout(t);
     this._profiles.clear();
     this._scores.clear();
@@ -242,6 +247,7 @@ export class DobbleGame extends HostBaseGame {
     // 호스트 화면 갱신
     this._renderCenterCard();
     this._renderScoreCards();
+    this._showRoundFlash(id, newScore);
 
     // 승리 체크
     if (newScore >= this._winScore) {
@@ -318,6 +324,7 @@ export class DobbleGame extends HostBaseGame {
 
       const card = document.createElement('div');
       card.className = `db-score-card${frozen ? ' frozen' : ''}`;
+      card.dataset.playerId = id;
       card.innerHTML = `
         <div class="db-sc-top">
           <div class="db-sc-dot" style="background:${player.color}"></div>
@@ -345,6 +352,40 @@ export class DobbleGame extends HostBaseGame {
         <span class="db-rank-score">${p.score}점</span>
       </div>
     `).join('');
+  }
+
+  _showRoundFlash(id, newScore) {
+    const player   = this.players.get(id);
+    const nickname = this._profiles.get(id)?.nickname ?? '익명';
+    const color    = player?.color ?? '#fff';
+
+    const el = document.getElementById('round-flash');
+    if (!el) return;
+
+    el.querySelector('.db-flash-dot').style.background = color;
+    el.querySelector('.db-flash-name').textContent     = nickname;
+    el.querySelector('.db-flash-points').textContent   = `+1점 → ${newScore} / ${this._winScore}점`;
+
+    el.classList.remove('hidden', 'flash-out');
+    el.classList.add('flash-in');
+
+    // 정답자 점수 카드 pulse
+    const cards = document.querySelectorAll('.db-score-card');
+    cards.forEach(c => {
+      if (c.dataset.playerId === id) {
+        c.classList.remove('just-scored');
+        void c.offsetWidth;
+        c.classList.add('just-scored');
+        setTimeout(() => c.classList.remove('just-scored'), 600);
+      }
+    });
+
+    clearTimeout(this._flashTimer);
+    this._flashTimer = setTimeout(() => {
+      el.classList.remove('flash-in');
+      el.classList.add('flash-out');
+      setTimeout(() => el.classList.add('hidden'), 400);
+    }, 1600);
   }
 
   _makeSymbolContent(symbolIdx, withRotation = true) {

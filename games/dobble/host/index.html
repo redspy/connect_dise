@@ -21,14 +21,24 @@
       </div>
     </header>
 
+    <!-- 점수 현황판 (항상 표시) -->
+    <div id="score-cards" class="db-score-cards"></div>
+
     <!-- 중앙 카드 -->
     <div class="db-center-area">
       <div class="db-center-label">중앙 카드</div>
       <div id="center-card" class="db-center-card"></div>
-    </div>
 
-    <!-- 플레이어 점수 카드 -->
-    <div id="score-cards" class="db-score-cards"></div>
+      <!-- 정답 리액션 플래시 -->
+      <div id="round-flash" class="db-round-flash hidden">
+        <span class="db-flash-check">✓</span>
+        <span class="db-flash-dot"></span>
+        <div class="db-flash-body">
+          <span class="db-flash-name"></span>
+          <span class="db-flash-points"></span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ── 로비 오버레이 ───────────────────────────────────────────── -->

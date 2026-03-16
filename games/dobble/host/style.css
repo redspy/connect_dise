@@ -80,11 +80,14 @@ body.host-board {
 /* ── 중앙 카드 영역 ──────────────────────────────────────────────────── */
 
 .db-center-area {
-  flex-shrink: 0;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  min-height: 0;
 }
 
 .db-center-label {
@@ -103,9 +106,82 @@ body.host-board {
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 10px;
-  width: min(500px, 52vw);
+  width: min(540px, 58vw);
   aspect-ratio: 4 / 2;
   box-sizing: border-box;
+}
+
+/* ── 라운드 플래시 ────────────────────────────────────────────────────── */
+
+.db-round-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(14, 60, 28, 0.96);
+  border: 2px solid var(--db-green);
+  border-radius: 20px;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 48px rgba(34, 197, 94, 0.3);
+  pointer-events: none;
+}
+
+.db-round-flash.hidden {
+  display: none;
+}
+
+.db-round-flash.flash-in {
+  animation: flash-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.db-round-flash.flash-out {
+  animation: flash-fade 0.4s ease both;
+}
+
+@keyframes flash-pop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1);   }
+}
+
+@keyframes flash-fade {
+  to { opacity: 0; transform: translate(-50%, -58%); }
+}
+
+.db-flash-check {
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--db-green);
+}
+
+.db-flash-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.db-flash-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-flash-name {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--db-text);
+  line-height: 1;
+}
+
+.db-flash-points {
+  font-size: 0.88rem;
+  color: var(--db-green);
+  font-weight: 600;
 }
 
 .db-symbol-wrap {
@@ -140,51 +216,61 @@ body.host-board {
   text-align: center;
 }
 
-/* ── 점수 카드 ───────────────────────────────────────────────────────── */
+/* ── 점수 현황판 (수평 스트립) ──────────────────────────────────────── */
 
 .db-score-cards {
-  flex: 1;
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-content: flex-start;
+  gap: 8px;
   justify-content: center;
-  overflow-y: auto;
-  padding: 4px;
+  padding: 2px 4px;
 }
 
 .db-score-card {
   background: var(--db-panel);
   border: 2px solid var(--db-border);
-  border-radius: 16px;
-  padding: 14px 18px;
-  min-width: 150px;
-  flex: 0 1 190px;
-  transition: border-color 0.3s, opacity 0.3s;
+  border-radius: 12px;
+  padding: 10px 16px;
+  min-width: 130px;
+  flex: 0 1 170px;
+  transition: border-color 0.3s, opacity 0.3s, box-shadow 0.3s;
 }
 
 .db-score-card.frozen {
   border-color: var(--db-blue);
-  opacity: 0.72;
+  opacity: 0.65;
+}
+
+.db-score-card.just-scored {
+  border-color: var(--db-green);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.25);
+  animation: score-pulse 0.5s ease;
+}
+
+@keyframes score-pulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.04); }
+  100% { transform: scale(1); }
 }
 
 .db-sc-top {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 7px;
+  margin-bottom: 7px;
 }
 
 .db-sc-dot {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .db-sc-name {
   flex: 1;
-  font-size: 0.93rem;
+  font-size: 0.88rem;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,15 +278,15 @@ body.host-board {
 }
 
 .db-sc-freeze {
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .db-sc-bar-bg {
-  height: 6px;
+  height: 5px;
   background: var(--db-border);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .db-sc-bar {
@@ -210,8 +296,9 @@ body.host-board {
 }
 
 .db-sc-score {
-  font-size: 0.8rem;
-  color: var(--db-sub);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--db-text);
   text-align: right;
 }
 
