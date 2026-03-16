@@ -21,6 +21,7 @@ export class RelayDrawingGame extends HostBaseGame {
     this._timeLimitText   = 30;
     this._timerInterval   = null;
     this._currentStoryIndex = 0;
+    this._presentationTimeouts = [];
 
     this._wireGameMessages();
   }
@@ -34,15 +35,22 @@ export class RelayDrawingGame extends HostBaseGame {
     const joinUrlEl = document.getElementById('joinUrl');
     if (joinUrlEl) joinUrlEl.textContent = qrUrl;
 
-    document.getElementById('startBtn').addEventListener('click', () => {
-      if (this.playerCount >= 2) this._startGame();
-    });
-    document.getElementById('nextStoryBtn').addEventListener('click', () => {
-      this._presentNextStory();
-    });
-    document.getElementById('restartBtn').addEventListener('click', () => {
-      this.resetSession();
-    });
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) {
+      startBtn.onclick = () => {
+        if (this.playerCount >= 2) this._startGame();
+      };
+    }
+
+    const nextStoryBtn = document.getElementById('nextStoryBtn');
+    if (nextStoryBtn) {
+      nextStoryBtn.onclick = () => this._presentNextStory();
+    }
+
+    const restartBtn = document.getElementById('restartBtn');
+    if (restartBtn) {
+      restartBtn.onclick = () => this.resetSession();
+    }
 
     this.setPhase('lobby');
     audioManager.playBGM('https://actions.google.com/static/audio/test/Lobby-Time.mp3');
@@ -280,6 +288,9 @@ export class RelayDrawingGame extends HostBaseGame {
   }
 
   _handlePlayerSubmission(playerId, payload) {
+    const p = this.players.get(playerId);
+    if (!p || p._hasSubmitted) return; // Guard: Only one submission per round
+
     const chain = this._storyChains.find(c => c.currentHolderId === playerId);
     if (!chain) return;
 
@@ -290,11 +301,8 @@ export class RelayDrawingGame extends HostBaseGame {
       roundNumber: this._currentRound,
     });
 
-    const p = this.players.get(playerId);
-    if (p) {
-      p._hasSubmitted = true;
-      this._updatePlayerStatusCard(playerId, true);
-    }
+    p._hasSubmitted = true;
+    this._updatePlayerStatusCard(playerId, true);
 
     this._checkTurnCompletion();
   }
@@ -376,6 +384,7 @@ export class RelayDrawingGame extends HostBaseGame {
   // ─── 결과 발표 ────────────────────────────────────────────────────────────
 
   _startResultPresentation() {
+    this._clearPresentationTimeouts();
     this.setPhase('result');
     audioManager.playBGM('https://actions.google.com/static/audio/test/Story-Presentation.mp3');
     this.broadcast('showResults', {});
@@ -391,10 +400,9 @@ export class RelayDrawingGame extends HostBaseGame {
 
     const chain = this._storyChains[this._currentStoryIndex];
 
-    const ownerEl = document.getElementById('storyOwnerName');
-    if (ownerEl) ownerEl.textContent =
       `${this._profiles.get(chain.originalAuthorId)?.nickname ?? '?'}의 이야기`;
 
+    this._clearPresentationTimeouts(); 
     const stepsEl = document.getElementById('storySteps');
     if (stepsEl) stepsEl.innerHTML = '';
 
@@ -408,11 +416,12 @@ export class RelayDrawingGame extends HostBaseGame {
       const profile = this._profiles.get(step.authorId);
       const authorName = profile?.nickname ?? '?';
       const authorAvatar = profile?.avatar;
-      setTimeout(() => this._addStoryStep(step, authorName, authorAvatar), delay);
+      const t = setTimeout(() => this._addStoryStep(step, authorName, authorAvatar), delay);
+      this._presentationTimeouts.push(t);
       delay += 2500;
     });
 
-    setTimeout(() => {
+    const finalT = setTimeout(() => {
       if (nextBtn) {
         nextBtn.disabled = false;
         nextBtn.textContent = this._currentStoryIndex === this._storyChains.length - 1
@@ -421,6 +430,12 @@ export class RelayDrawingGame extends HostBaseGame {
       }
       this._currentStoryIndex++;
     }, delay);
+    this._presentationTimeouts.push(finalT);
+  }
+
+  _clearPresentationTimeouts() {
+    this._presentationTimeouts.forEach(t => clearTimeout(t));
+    this._presentationTimeouts = [];
   }
 
   _addStoryStep(step, authorName, authorAvatar) {
