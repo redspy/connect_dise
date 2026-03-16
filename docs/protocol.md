@@ -31,4 +31,4 @@
 - 팽이 배틀: `launchSpin`, `tiltInput`, `battleStart`, `eliminated`, `gameOver`, `requestReset`
 - 주사위: `throwDice`, `resetDice`, `gyroData`
 - Give You Fire: `setProfile`, `boardUpdate`, `linesCleared`, `levelUp`, `gameOver`, `soloClear`, `gameStarted`, `gameFinished`, `requestRematch`
-- 그림 릴레이: `setProfile`, `roundAssignments`, `submitTurn`, `showResults`, `sendReaction`, `requestRematch`
+- 그림 릴레이: `setProfile`, `submitTurn`, `sendReaction`, `playerListUpdated`, `gameStarting`, `roundAssignments`, `showResults`

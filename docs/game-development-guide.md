@@ -1,12 +1,20 @@
 # 새 게임 추가 가이드 (구현 기준)
 
 ## 1. 디렉토리
+
+**멀티플레이어 게임** (호스트 + 모바일)
 - `games/<game-id>/host/`
 - `games/<game-id>/mobile/`
 - 선택: `games/<game-id>/assets/`
 
+**솔로 게임** (단일 페이지, SDK 불필요)
+- `games/<game-id>/` (index.html, style.css, *.js 직접 배치)
+- 예: `games/omok/`
+
 ## 2. 등록
-1. `games/registry.js`에 게임 추가
+1. `games/registry.js`에 게임 추가 — `group` 필드 필수
+   - 멀티: `group: 'multi'`, `hostPath`, `mobilePath`, `minPlayers`, `maxPlayers`
+   - 솔로: `group: 'solo'`, `hostPath`만 지정 (mobilePath 불필요)
 2. `vite.config.js` `build.rollupOptions.input`에 엔트리 추가
 
 ## 3. 권장 패턴
