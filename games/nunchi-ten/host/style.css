@@ -79,6 +79,12 @@ body.nunchi-host {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+
+  /* AppBar 테마 변수 */
+  --appbar-border: var(--nunchi-border);
+  --appbar-title-color: var(--nunchi-gold);
+  --appbar-btn-color: var(--nunchi-sub);
+  --appbar-btn-border: var(--nunchi-border);
 }
 
 /* ── 게임 보드 (항상 노출) ─────────────────────────────────────────────────── */
@@ -88,46 +94,6 @@ body.nunchi-host {
   height: 100vh;
   padding: 20px 28px 0;
   box-sizing: border-box;
-}
-
-.board-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--nunchi-border);
-  padding-bottom: 12px;
-}
-
-.board-header-left,
-.board-header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.btn-header {
-  background: transparent;
-  border: 1px solid var(--nunchi-border);
-  color: var(--nunchi-sub);
-  border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-  letter-spacing: 0.5px;
-}
-
-.btn-header:hover {
-  border-color: var(--nunchi-gold);
-  color: var(--nunchi-gold);
-}
-
-.board-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--nunchi-gold);
-  letter-spacing: 2px;
 }
 
 .round-display {

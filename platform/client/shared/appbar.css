@@ -1,0 +1,71 @@
+/* ── 플랫폼 공통 AppBar 스타일 ──────────────────────────────────────────── */
+/*
+ * 게임별 테마는 CSS 변수로 제어합니다.
+ * 각 게임의 body 클래스 또는 :root에 아래 변수를 정의해 적용합니다.
+ *
+ * 사용 가능한 CSS 변수:
+ *   --appbar-border           구분선 색상    (기본: rgba(255,255,255,0.1))
+ *   --appbar-title-color      타이틀 색상    (기본: #f59e0b)
+ *   --appbar-btn-color        버튼 텍스트    (기본: #94a3b8)
+ *   --appbar-btn-border       버튼 테두리    (기본: rgba(255,255,255,0.15))
+ *   --appbar-btn-hover-border 호버 테두리    (기본: --appbar-title-color)
+ *   --appbar-btn-hover-color  호버 텍스트    (기본: --appbar-title-color)
+ *
+ * 눈치 10단 예시:
+ *   body.nunchi-host {
+ *     --appbar-border: var(--nunchi-border);
+ *     --appbar-title-color: var(--nunchi-gold);
+ *     --appbar-btn-color: var(--nunchi-sub);
+ *     --appbar-btn-border: var(--nunchi-border);
+ *   }
+ */
+
+.platform-appbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--appbar-border, rgba(255, 255, 255, 0.1));
+  padding-bottom: 12px;
+}
+
+.appbar-left,
+.appbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ── 타이틀 ─────────────────────────────────────────────────────────────── */
+
+.appbar-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--appbar-title-color, #f59e0b);
+  letter-spacing: 2px;
+}
+
+/* ── 버튼 (뒤로가기 / 다시하기) ─────────────────────────────────────────── */
+
+.appbar-btn {
+  background: transparent;
+  border: 1px solid var(--appbar-btn-border, rgba(255, 255, 255, 0.15));
+  color: var(--appbar-btn-color, #94a3b8);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  letter-spacing: 0.5px;
+  /* <a> 태그도 버튼처럼 보이도록 */
+  text-decoration: none;
+  font-family: inherit;
+  line-height: normal;
+  display: inline-flex;
+  align-items: center;
+}
+
+.appbar-btn:hover {
+  border-color: var(--appbar-btn-hover-border, var(--appbar-title-color, #f59e0b));
+  color: var(--appbar-btn-hover-color, var(--appbar-title-color, #f59e0b));
+}

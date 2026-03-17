@@ -1,4 +1,5 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+import { AppBar } from '../../../platform/client/shared/AppBar.js';
 
 const _chooseNumberAudio = new Audio('/games/nunchi-ten/assets/choose_number.mp3');
 function _playChooseNumber() {
@@ -47,13 +48,24 @@ export class NunchiGame extends HostBaseGame {
   // ─── HostBaseGame hooks ──────────────────────────────────────────────────
 
   async onSetup({ sessionId, qrUrl }) {
+    // AppBar 초기화
+    this._appbar = new AppBar('game-appbar', {
+      title: '눈치 10단',
+      backUrl: '/',
+      onRestart: () => this.resetSession(),
+    });
+
+    // 라운드 표시 요소를 AppBar 오른쪽 슬롯에 삽입
+    const roundEl = document.createElement('div');
+    roundEl.id = 'round-display';
+    roundEl.className = 'round-display';
+    roundEl.textContent = 'Round - / 10';
+    this._appbar.prependRight(roundEl);
+
     document.getElementById('session-code').textContent = sessionId;
     document.getElementById('qr-url-display').textContent = qrUrl;
     document.getElementById('btn-start').addEventListener('click', () => {
       if (this._canStart()) this._startGame();
-    });
-    document.getElementById('btn-restart-game').addEventListener('click', () => {
-      this.resetSession();
     });
     document.getElementById('btn-restart').addEventListener('click', () => {
       this.resetSession();

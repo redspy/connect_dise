@@ -5,22 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>눈치 10단</title>
   <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/platform/client/shared/appbar.css" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body class="nunchi-host">
 
-  <!-- ── 항상 보이는 게임 보드 ─────────────────────────────────── -->
+  <!-- 항상 보이는 게임 보드 -->
   <div id="game-board">
-    <header class="board-header">
-      <div class="board-header-left">
-        <button id="btn-back" class="btn-header" onclick="location.href='/'">← 로비</button>
-        <div class="board-title">눈치 10단</div>
-      </div>
-      <div class="board-header-right">
-        <div id="round-display" class="round-display">Round - / 10</div>
-        <button id="btn-restart-game" class="btn-header">다시하기</button>
-      </div>
-    </header>
+    <header id="game-appbar"></header>
 
     <!-- 게임 메시지 영역 -->
     <div id="game-message" class="game-message"></div>
@@ -29,11 +21,11 @@
     <div id="player-status-grid" class="player-status-grid"></div>
   </div>
 
-  <!-- ── 로비 오버레이 ──────────────────────────────────────────── -->
+  <!-- 로비 오버레이 -->
   <div class="n-overlay" data-phase="lobby">
     <div class="lobby-panel">
       <div class="lobby-panel-top">
-        <button class="btn-header" onclick="location.href='/'">← 게임 선택</button>
+        <a href="/" class="appbar-btn">← 게임 선택</a>
       </div>
       <div class="lobby-main-img-wrap">
         <img src="/games/nunchi-ten/assets/main.png" alt="눈치 10단" class="lobby-main-img">
@@ -76,7 +68,7 @@
     </div>
   </div>
 
-  <!-- ── 공개 오버레이 ──────────────────────────────────────────── -->
+  <!-- 공개 오버레이 -->
   <div class="n-overlay hidden" data-phase="round_reveal">
     <div class="reveal-panel">
       <h2 id="reveal-round-title" class="reveal-title">Round ? 결과</h2>
@@ -84,7 +76,7 @@
     </div>
   </div>
 
-  <!-- ── 최종 결과 오버레이 ─────────────────────────────────────── -->
+  <!-- 최종 결과 오버레이 -->
   <div class="n-overlay hidden" data-phase="game_result">
     <div class="result-panel">
       <h2 class="result-title">🏆 게임 종료!</h2>

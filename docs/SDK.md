@@ -13,6 +13,7 @@
 4. [MobileBaseGame](#mobilebasegame)
 5. [P2PManager](#p2pmanager)
 6. [공유 컴포넌트](#공유-컴포넌트)
+   - [AppBar](#appbar)
    - [QRDisplay](#qrdisplay)
    - [QRScanner](#qrscanner)
    - [SensorManager](#sensormanager)
@@ -477,6 +478,73 @@ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 ---
 
 ## 공유 컴포넌트
+
+### AppBar
+
+`platform/client/shared/AppBar.js`
+`platform/client/shared/appbar.css`
+
+게임 호스트 화면의 공통 상단 바 컴포넌트. 모든 게임이 공유하는 뒤로가기·타이틀·다시하기 UI를 제공합니다.
+
+#### HTML 설정
+
+```html
+<!-- head에 CSS 로드 -->
+<link rel="stylesheet" href="/platform/client/shared/appbar.css" />
+
+<!-- body에 AppBar 컨테이너 배치 -->
+<header id="game-appbar"></header>
+```
+
+#### 초기화
+
+```js
+import { AppBar } from '../../../platform/client/shared/AppBar.js';
+
+const appbar = new AppBar('game-appbar', {
+  title: '눈치 10단',   // 게임 타이틀
+  backUrl: '/',         // 뒤로가기 URL (기본값: '/')
+  backLabel: '← 로비', // 뒤로가기 버튼 텍스트 (기본값: '← 로비')
+  onRestart: () => game.resetSession(), // 다시하기 콜백 (미제공 시 버튼 숨김)
+});
+```
+
+#### 오른쪽 슬롯 활용 (게임별 정보 추가)
+
+```js
+// 게임별 커스텀 요소를 AppBar 오른쪽에 삽입
+const roundEl = document.createElement('div');
+roundEl.id = 'round-display';
+roundEl.className = 'round-display';
+roundEl.textContent = 'Round - / 10';
+appbar.prependRight(roundEl);
+// 이후 document.getElementById('round-display').textContent = ... 로 업데이트
+```
+
+#### 메서드 / 프로퍼티
+
+| 멤버 | 타입 | 설명 |
+|------|------|------|
+| `setTitle(text)` | `void` | 타이틀 텍스트 변경 |
+| `prependRight(el)` | `void` | 오른쪽 슬롯 맨 앞에 요소 삽입 (다시하기 버튼 왼쪽) |
+| `restartBtn` | `HTMLButtonElement \| null` | 다시하기 버튼 참조 (onRestart 미사용 시 null) |
+| `rightSlot` | `HTMLDivElement` | 오른쪽 슬롯 div 직접 참조 |
+
+#### 테마 CSS 변수
+
+각 게임의 `body` 클래스에 아래 변수를 정의하면 AppBar 스타일이 게임 테마에 맞게 적용됩니다.
+
+```css
+body.my-game-host {
+  --appbar-border: #2a3654;           /* 구분선 색상 */
+  --appbar-title-color: #f59e0b;      /* 타이틀 색상 */
+  --appbar-btn-color: #94a3b8;        /* 버튼 기본 색상 */
+  --appbar-btn-border: #2a3654;       /* 버튼 테두리 */
+  /* 호버 색상은 기본적으로 --appbar-title-color 값 사용 */
+}
+```
+
+---
 
 ### QRDisplay
 
