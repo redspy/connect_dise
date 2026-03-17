@@ -1,4 +1,5 @@
 import { renderQR } from './shared/QRDisplay.js';
+import './shared/AppBar.js';
 
 /**
  * HostBaseGame – 호스트 화면 게임의 베이스 클래스.

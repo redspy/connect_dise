@@ -1,5 +1,4 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { AppBar } from '../../../platform/client/shared/AppBar.js';
 
 const _chooseNumberAudio = new Audio('/games/nunchi-ten/assets/choose_number.mp3');
 function _playChooseNumber() {
@@ -49,11 +48,8 @@ export class NunchiGame extends HostBaseGame {
 
   async onSetup({ sessionId, qrUrl }) {
     // AppBar 초기화
-    this._appbar = new AppBar('game-appbar', {
-      title: '눈치 10단',
-      backUrl: '/',
-      onRestart: () => this.resetSession(),
-    });
+    this._appbar = document.querySelector('game-appbar');
+    this._appbar.onRestart = () => this.resetSession();
 
     // 라운드 표시 요소를 AppBar 오른쪽 슬롯에 삽입
     const roundEl = document.createElement('div');

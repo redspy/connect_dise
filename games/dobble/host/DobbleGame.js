@@ -46,12 +46,7 @@ export class DobbleGame extends HostBaseGame {
     document.getElementById('btn-start')?.addEventListener('click', () => {
       if (this._canStart()) this._startGame();
     });
-    document.getElementById('btn-restart')?.addEventListener('click', () => {
-      this.resetSession();
-    });
-    document.getElementById('btn-back-lobby')?.addEventListener('click', () => {
-      location.href = '/';
-    });
+    document.querySelector('game-appbar').onRestart = () => this.resetSession();
 
     this.setPhase('lobby');
   }

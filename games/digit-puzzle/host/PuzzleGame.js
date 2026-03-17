@@ -29,12 +29,15 @@ export class PuzzleGame extends HostBaseGame {
     const qrEl = document.getElementById('qr-container');
     if (qrEl) await renderQR(qrEl, qrUrl, { width: 160 });
 
-    document.getElementById('btn-back').addEventListener('click', () => {
-      location.href = '/';
-    });
-    document.getElementById('btn-restart-game').addEventListener('click', () => {
-      this.resetSession();
-    });
+    const appbar = document.querySelector('game-appbar');
+    appbar.onRestart = () => this.resetSession();
+
+    const timerEl = document.createElement('span');
+    timerEl.id = 'dashboard-timer';
+    timerEl.className = 'dp-timer';
+    timerEl.textContent = '00:00';
+    appbar.prependRight(timerEl);
+
     document.getElementById('btn-restart-result').addEventListener('click', () => {
       this.resetSession();
     });
