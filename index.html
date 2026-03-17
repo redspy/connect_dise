@@ -8,13 +8,14 @@
   <style>
     /* ── 로비 레이아웃 ──────────────────────────────────────────────── */
     body.host-board {
-      overflow: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-      padding: clamp(20px, 4vh, 48px) clamp(12px, 3vw, 32px) clamp(32px, 5vh, 64px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: flex-start !important; /* Ensure top is always reachable */
+      min-height: 100vh !important;
+      padding: clamp(40px, 8vh, 100px) 20px 80px !important; 
       box-sizing: border-box;
     }
 
@@ -22,6 +23,7 @@
     body.host-board::before,
     body.host-board::after {
       position: fixed;
+      pointer-events: none;
     }
 
     /* ── 타이틀 ─────────────────────────────────────────────────────── */
@@ -29,22 +31,22 @@
       position: relative;
       z-index: 10;
       font-family: 'Cinzel', serif;
-      font-size: clamp(1.6rem, 4vw, 2.8rem);
-      margin-bottom: clamp(14px, 2.5vh, 24px);
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      margin: 0 0 clamp(20px, 4vh, 40px);
       background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-shadow: none;
-      letter-spacing: clamp(1px, 0.5vw, 4px);
+      letter-spacing: clamp(2px, 1vw, 6px);
       text-align: center;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
 
     /* ── 탭 바 ──────────────────────────────────────────────────────── */
     .tab-bar {
       display: flex;
-      gap: 8px;
-      margin-bottom: clamp(16px, 3vh, 32px);
+      gap: 12px;
+      margin-bottom: clamp(24px, 5vh, 48px);
       position: relative;
       z-index: 10;
       flex-wrap: wrap;
@@ -52,42 +54,45 @@
     }
 
     .tab-btn {
-      padding: clamp(7px, 1.2vh, 10px) clamp(14px, 2.5vw, 28px);
+      padding: 10px 24px;
       border-radius: 30px;
       border: 2px solid rgba(255, 215, 0, 0.3);
-      background: transparent;
-      color: rgba(255, 215, 0, 0.5);
+      background: rgba(0, 0, 0, 0.2);
+      color: rgba(255, 215, 0, 0.6);
       font-family: 'Cinzel', serif;
-      font-size: clamp(0.78rem, 1.3vw, 1rem);
+      font-size: clamp(0.85rem, 1.2vw, 1.1rem);
       font-weight: bold;
       cursor: pointer;
       letter-spacing: 1px;
-      transition: all 0.2s ease;
+      transition: all 0.25s ease;
       white-space: nowrap;
     }
 
     .tab-btn:hover {
-      border-color: rgba(255, 215, 0, 0.6);
-      color: rgba(255, 215, 0, 0.8);
+      border-color: rgba(255, 215, 0, 0.7);
+      color: rgba(255, 215, 0, 0.9);
+      background: rgba(255, 215, 0, 0.05);
     }
 
     .tab-btn.active {
-      background: rgba(255, 215, 0, 0.15);
-      border-color: rgba(255, 215, 0, 0.8);
+      background: rgba(255, 215, 0, 0.2);
+      border-color: #ffe566;
       color: #ffe566;
-      box-shadow: 0 0 16px rgba(255, 215, 0, 0.2);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     }
 
     /* ── 게임 리스트 ─────────────────────────────────────────────────── */
     .game-list {
       display: flex;
-      gap: clamp(12px, 2.5vw, 32px);
+      gap: clamp(16px, 3vw, 40px);
       flex-wrap: wrap;
       justify-content: center;
       z-index: 10;
       position: relative;
       width: 100%;
-      max-width: min(1200px, 100%);
+      max-width: 1300px;
+      padding: 0 10px;
+      box-sizing: border-box;
     }
 
     .game-list.hidden {
@@ -98,32 +103,31 @@
     .game-card {
       background: linear-gradient(160deg, #1a2e1a 0%, #0d1a0d 100%);
       border: 2px solid rgba(255, 215, 0, 0.4);
-      border-radius: 20px;
-      padding: clamp(16px, 2vw, 24px) clamp(16px, 2vw, 24px) clamp(20px, 2.5vw, 28px);
+      border-radius: 24px;
+      padding: 24px;
       text-align: center;
       color: #f0f0f0;
       cursor: pointer;
-      /* 3열 기준 최대 260px, 화면이 좁으면 자동 축소 */
-      width: min(260px, calc(100vw - 32px));
+      width: clamp(240px, 20vw, 300px);
       display: flex;
       flex-direction: column;
       box-shadow:
-        0 0 40px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(255, 215, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        0 15px 35px rgba(0, 0, 0, 0.5),
+        inset 0 0 20px rgba(255, 215, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .game-card:hover {
-      transform: translateY(-6px);
-      border-color: rgba(255, 215, 0, 0.8);
+      transform: translateY(-10px) scale(1.02);
+      border-color: rgba(255, 215, 0, 0.9);
       box-shadow:
-        0 8px 40px rgba(0, 0, 0, 0.7),
-        0 0 0 1px rgba(255, 215, 0, 0.3);
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 20px rgba(255, 215, 0, 0.2);
     }
 
     .game-thumbnail {
-      font-size: clamp(2.4rem, 4.5vw, 4rem);
-      height: clamp(72px, 11vw, 146px);
+      font-size: 4rem;
+      height: 120px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -132,11 +136,13 @@
 
     .game-thumbnail-img-wrap {
       width: 100%;
-      height: clamp(72px, 11vw, 146px);
-      margin-bottom: 14px;
-      border-radius: 12px;
+      aspect-ratio: 16/10;
+      margin-bottom: 16px;
+      border-radius: 14px;
       overflow: hidden;
       flex-shrink: 0;
+      background: #000;
+      border: 1px solid rgba(255, 215, 0, 0.1);
     }
 
     .game-thumbnail-img {
@@ -144,11 +150,16 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      transition: transform 0.5s ease;
+    }
+    
+    .game-card:hover .game-thumbnail-img {
+      transform: scale(1.1);
     }
 
     .game-card h2 {
-      margin: 0 0 8px;
-      font-size: clamp(1rem, 1.8vw, 1.5rem);
+      margin: 0 0 10px;
+      font-size: clamp(1.2rem, 1.8vw, 1.6rem);
       font-family: 'Cinzel', serif;
       background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
       -webkit-background-clip: text;
@@ -158,44 +169,63 @@
 
     .game-card p {
       margin: 4px 0;
-      color: rgba(200, 200, 200, 0.8);
-      font-size: clamp(0.76rem, 1.1vw, 0.95rem);
+      color: rgba(220, 220, 220, 0.9);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
 
     .game-meta {
-      font-size: clamp(0.68rem, 0.9vw, 0.8rem) !important;
-      color: rgba(255, 215, 0, 0.6) !important;
-      margin-top: 12px !important;
+      font-size: 0.85rem !important;
+      color: rgba(255, 215, 0, 0.7) !important;
+      margin-top: auto !important;
+      padding-top: 16px;
+      font-weight: bold;
     }
 
-    /* ── 중형 화면: 카드 2열 유지 ─────────────────────────────────── */
-    @media (max-width: 840px) {
+    /* ── Responsive Background (Oval) ── */
+    body.host-board::before {
+      /* Dynamic inset based on aspect ratio */
+      inset: clamp(10px, 3vw, 40px);
+      border-radius: clamp(30px, 10vw, 120px);
+    }
+    
+    body.host-board::after {
+      inset: clamp(20px, 6vw, 90px);
+      border-radius: clamp(25px, 8vw, 100px);
+    }
+
+    /* ── Tablet / Large Phone ── */
+    @media (max-width: 900px) {
       .game-card {
-        width: min(calc(50% - 8px), 260px);
-        min-width: 140px;
+        width: calc(50% - 20px);
+        min-width: 280px;
       }
     }
 
-    /* ── 소형 화면: 카드 1열 + 배경 단순화 ─────────────────────────── */
-    @media (max-width: 480px) {
+    /* ── Phone (Narrow) ── */
+    @media (max-width: 600px) {
       body.host-board {
-        padding: 20px 12px 40px;
+        padding: 60px 20px 80px;
       }
-
-      /* 좁은 화면에서 oval 테두리 제거 → 심플한 배경만 */
+      
+      .game-card {
+        width: 100%;
+        max-width: 340px;
+      }
+      
+      /* Simplify background on very narrow screens to avoid "tube" effect */
       body.host-board::before {
-        inset: 0;
-        border-radius: 0;
-        border: none;
-        box-shadow: none;
+        inset: 10px;
+        border-radius: 20px;
+        border-width: 4px;
       }
-
       body.host-board::after {
         display: none;
       }
-
-      .game-card {
-        width: min(100%, 320px);
+      
+      .lobby-title {
+        font-size: 2rem;
+        letter-spacing: 2px;
       }
     }
   </style>
