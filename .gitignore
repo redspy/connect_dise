@@ -2,4 +2,6 @@ node_modules/
 .env
 .DS_Store
 dist
-.claude/settings.local.json
+.bkit
+.claude
+.playwright-mcp
