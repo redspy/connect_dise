@@ -84,7 +84,7 @@
     /* ── 게임 리스트 ─────────────────────────────────────────────────── */
     .game-list {
       display: flex;
-      gap: clamp(16px, 3vw, 40px);
+      gap: clamp(12px, 2vw, 32px);
       flex-wrap: wrap;
       justify-content: center;
       z-index: 10;
@@ -101,14 +101,16 @@
 
     /* ── 게임 카드 ───────────────────────────────────────────────────── */
     .game-card {
+      box-sizing: border-box !important;
       background: linear-gradient(160deg, #1a2e1a 0%, #0d1a0d 100%);
       border: 2px solid rgba(255, 215, 0, 0.4);
-      border-radius: 24px;
-      padding: 24px;
+      border-radius: min(24px, 6vw);
+      padding: clamp(16px, 4vw, 24px);
       text-align: center;
       color: #f0f0f0;
       cursor: pointer;
-      width: clamp(240px, 20vw, 300px);
+      /* Fluid width: Never exceed screen width while maintaining desired desktop size */
+      width: min(calc(100vw - 40px), clamp(240px, 20vw, 300px)) !important;
       display: flex;
       flex-direction: column;
       box-shadow:
@@ -118,7 +120,7 @@
     }
 
     .game-card:hover {
-      transform: translateY(-10px) scale(1.02);
+      transform: translateY(-8px) scale(1.01);
       border-color: rgba(255, 215, 0, 0.9);
       box-shadow:
         0 20px 50px rgba(0, 0, 0, 0.7),
@@ -126,8 +128,8 @@
     }
 
     .game-thumbnail {
-      font-size: 4rem;
-      height: 120px;
+      font-size: clamp(3rem, 10vw, 4rem);
+      height: clamp(100px, 15vh, 120px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -137,8 +139,8 @@
     .game-thumbnail-img-wrap {
       width: 100%;
       aspect-ratio: 16/10;
-      margin-bottom: 16px;
-      border-radius: 14px;
+      margin-bottom: clamp(12px, 2vw, 16px);
+      border-radius: min(14px, 4vw);
       overflow: hidden;
       flex-shrink: 0;
       background: #000;
@@ -158,8 +160,8 @@
     }
 
     .game-card h2 {
-      margin: 0 0 10px;
-      font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+      margin: 0 0 8px;
+      font-size: clamp(1.1rem, 4vw, 1.6rem);
       font-family: 'Cinzel', serif;
       background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%);
       -webkit-background-clip: text;
@@ -170,62 +172,77 @@
     .game-card p {
       margin: 4px 0;
       color: rgba(220, 220, 220, 0.9);
-      font-size: 0.95rem;
-      line-height: 1.5;
+      font-size: clamp(0.8rem, 3vw, 0.95rem);
+      line-height: 1.4;
     }
 
     .game-meta {
-      font-size: 0.85rem !important;
+      font-size: clamp(0.7rem, 2.5vw, 0.85rem) !important;
       color: rgba(255, 215, 0, 0.7) !important;
       margin-top: auto !important;
-      padding-top: 16px;
+      padding-top: 14px;
       font-weight: bold;
     }
 
     /* ── Responsive Background (Oval) ── */
     body.host-board::before {
-      /* Dynamic inset based on aspect ratio */
-      inset: clamp(10px, 3vw, 40px);
-      border-radius: clamp(30px, 10vw, 120px);
+      /* Fluid inset to avoid crushing content */
+      inset: clamp(12px, 3vw, 40px);
+      border-radius: clamp(20px, 8vw, 120px);
     }
     
     body.host-board::after {
-      inset: clamp(20px, 6vw, 90px);
-      border-radius: clamp(25px, 8vw, 100px);
+      inset: clamp(24px, 6vw, 90px);
+      border-radius: clamp(16px, 6vw, 100px);
     }
 
     /* ── Tablet / Large Phone ── */
     @media (max-width: 900px) {
       .game-card {
-        width: calc(50% - 20px);
-        min-width: 280px;
+        width: min(calc(50% - 20px), 320px);
       }
     }
 
     /* ── Phone (Narrow) ── */
     @media (max-width: 600px) {
       body.host-board {
-        padding: 60px 20px 80px;
+        padding: 40px 16px 60px !important;
       }
       
       .game-card {
-        width: 100%;
-        max-width: 340px;
+        width: 100% !important;
+        max-width: 320px;
+        margin-bottom: 0;
       }
       
-      /* Simplify background on very narrow screens to avoid "tube" effect */
+      /* Reduced insets for narrow screens to maximize space */
       body.host-board::before {
-        inset: 10px;
-        border-radius: 20px;
-        border-width: 4px;
+        inset: 10px !important;
+        border-radius: 20px !important;
+        border-width: 3px !important;
       }
+      
       body.host-board::after {
-        display: none;
+        inset: 18px !important;
+        border-radius: 15px !important;
+        display: block !important; /* Keep it but much subtler */
+        opacity: 0.3;
       }
       
       .lobby-title {
-        font-size: 2rem;
+        font-size: clamp(1.6rem, 8vw, 2.2rem);
         letter-spacing: 2px;
+        margin-bottom: 24px;
+      }
+
+      .tab-bar {
+        gap: 8px;
+        margin-bottom: 32px;
+      }
+
+      .tab-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
       }
     }
   </style>
