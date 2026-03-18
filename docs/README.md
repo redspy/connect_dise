@@ -18,6 +18,7 @@
 - [Give You Fire](./games/give-you-fire.md)
 - [그림 릴레이](./games/relay-drawing.md)
 - [Dobble](./games/dobble.md)
+- [Dixit](./games/dixit.md)
 - [오목](./games/omok.md)
 
 ## 아카이브

@@ -435,3 +435,25 @@ p2p:ice
 | `p2p:offer` | 모바일 | `{ sdp }` |
 | `p2p:answer` | 호스트 | `{ from, sdp }` |
 | `p2p:ice` | 양쪽 | `{ from?, candidate }` |
+
+---
+
+## 게임별 메시지 타입 예시 (구현 반영)
+
+### Dixit (`games/dixit`)
+
+모바일 -> 호스트
+- `setProfile` `{ nickname }`
+- `submitClue` `{ cardId, clue }`
+- `submitCard` `{ cardId }`
+- `submitVote` `{ cardId }`
+
+호스트 -> 모바일
+- `playerListUpdated` `{ players }`
+- `roundStarted` `{ round, storytellerId }`
+- `dealHand` `{ hand }`
+- `clueSubmitted` `{ clue }`
+- `votingStarted` `{ clue, boardCards }`
+- `roundResult` `{ storytellerCardId, boardCards, cardOwnerMap, clue, deltas, totals, scoringCase }`
+- `gameFinished` `{ rankings }`
+- `rejoinState` `{ phase, players, round, storytellerId, clue, hand, ... }`
