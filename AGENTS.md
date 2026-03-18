@@ -54,19 +54,21 @@
 
 # 문서 안내
 
-| 문서 | 내용 |
-|------|------|
-| `ARCHITECTURE.md` | 전체 구조, 디렉토리, 세션 라이프사이클 |
-| `SDK.md` | HostSDK, MobileSDK, BaseGame, 공유 컴포넌트 API |
-| `PROTOCOL.md` | Socket.IO 이벤트 프로토콜 (platform/game/p2p) |
-| `docs/game-development-guide.md` | 새 게임 추가 가이드 |
-| `docs/games/<game-id>/` | 게임별 기획/구현 문서 |
+| 문서                             | 내용                                            |
+| -------------------------------- | ----------------------------------------------- |
+| `ARCHITECTURE.md`                | 전체 구조, 디렉토리, 세션 라이프사이클          |
+| `SDK.md`                         | HostSDK, MobileSDK, BaseGame, 공유 컴포넌트 API |
+| `PROTOCOL.md`                    | Socket.IO 이벤트 프로토콜 (platform/game/p2p)   |
+| `DESIGN.md`                      | 화면 UI 개발 시 지켜야할 가이드                 |
+| `docs/game-development-guide.md` | 새 게임 추가 가이드                             |
+| `docs/games/<game-id>/`          | 게임별 기획/구현 문서                           |
 
 # 게임 개발 규칙
 
 ## 권장 패턴
 
 게임은 BaseGame 클래스를 상속하여 구현합니다:
+
 - 호스트: `HostSDK` + `HostBaseGame`
 - 모바일: `MobileSDK` + `MobileBaseGame`
 
@@ -76,10 +78,18 @@ class MyGame extends HostBaseGame {
   constructor(sdk) {
     super(sdk, { overlayClass: 'my-overlay', qrContainerId: 'qr-box' });
   }
-  async onSetup({ sessionId }) { this.setPhase('lobby'); }
-  onPlayerJoin(player) { /* UI 업데이트 */ }
-  onAllReady() { this.setPhase('game'); }
-  onReset() { this.setPhase('lobby'); }
+  async onSetup({ sessionId }) {
+    this.setPhase('lobby');
+  }
+  onPlayerJoin(player) {
+    /* UI 업데이트 */
+  }
+  onAllReady() {
+    this.setPhase('game');
+  }
+  onReset() {
+    this.setPhase('lobby');
+  }
 }
 ```
 
@@ -89,9 +99,15 @@ class MyMobileGame extends MobileBaseGame {
   constructor(sdk) {
     super(sdk, { screenClass: 'my-screen' });
   }
-  onJoin(player) { this.showScreen('waiting'); }
-  onAllReady() { this.showScreen('game'); }
-  onReset() { this.showScreen('waiting'); }
+  onJoin(player) {
+    this.showScreen('waiting');
+  }
+  onAllReady() {
+    this.showScreen('game');
+  }
+  onReset() {
+    this.showScreen('waiting');
+  }
 }
 ```
 

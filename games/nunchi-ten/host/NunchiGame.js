@@ -28,7 +28,7 @@ export function avatarUrl(id) {
 
 export class NunchiGame extends HostBaseGame {
   constructor(sdk) {
-    super(sdk, { overlayClass: 'n-overlay', qrContainerId: 'qr-container' });
+    super(sdk, { overlayClass: 'n-overlay' });
 
     // Per-player profile & game data (lives outside this.players which platform manages)
     this._profiles = new Map();  // id → { nickname, avatarId }
@@ -58,11 +58,7 @@ export class NunchiGame extends HostBaseGame {
     roundEl.textContent = 'Round - / 10';
     this._appbar.prependRight(roundEl);
 
-    document.getElementById('session-code').textContent = sessionId;
-    document.getElementById('qr-url-display').textContent = qrUrl;
-    document.getElementById('btn-start').addEventListener('click', () => {
-      if (this._canStart()) this._startGame();
-    });
+    document.querySelector('game-lobby').onStart = () => this._startGame();
     document.getElementById('btn-restart').addEventListener('click', () => {
       this.resetSession();
     });
@@ -76,8 +72,8 @@ export class NunchiGame extends HostBaseGame {
       this._renderSubmissionStatus();
     } else {
       this._initPlayerData(player.id);
-      this._renderLobby();
-      this._updateReadyStatus();
+      this.renderLobbyPlayers(this._getLobbyProfiles());
+      this.updateLobbyReady(this._readyCount);
     }
   }
 
@@ -89,23 +85,14 @@ export class NunchiGame extends HostBaseGame {
     this._profiles.delete(playerId);
     this._data.delete(playerId);
     this._submissions.delete(playerId);
-    this._renderLobby();
+    this.renderLobbyPlayers(this._getLobbyProfiles());
+    this.updateLobbyReady(this._readyCount);
     if (this.phase === 'round_input') this._checkAllSubmitted();
   }
 
   onReadyUpdate({ readyCount, total }) {
     this._readyCount = readyCount;
-    this._updateReadyStatus();
-    this._updateStartBtn();
-  }
-
-  _updateReadyStatus() {
-    const total = this.playerCount;
-    const el = document.getElementById('ready-status');
-    if (!el) return;
-    el.textContent = total === 0
-      ? '플레이어를 기다리는 중...'
-      : `${this._readyCount}/${total}명 준비완료`;
+    this.updateLobbyReady(readyCount);
   }
 
   onAllReady() {
@@ -125,8 +112,8 @@ export class NunchiGame extends HostBaseGame {
     this._lastRoundResult = null;
     this._lastRankings = null;
     for (const p of this.players.values()) this._initPlayerData(p.id);
-    document.getElementById('ready-status').textContent = '플레이어를 기다리는 중...';
-    this._renderLobby();
+    this.renderLobbyPlayers(this._getLobbyProfiles());
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
   }
 
@@ -135,7 +122,7 @@ export class NunchiGame extends HostBaseGame {
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname, avatarId }) => {
       this._profiles.set(player.id, { nickname: nickname.trim() || '익명', avatarId: Number(avatarId) || 1 });
-      this._renderLobby();
+      this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
       // 게임 진행 중에 합류한 경우 → 즉시 게임 상태 전송
       if (this._gameStarted) {
@@ -233,41 +220,12 @@ export class NunchiGame extends HostBaseGame {
     });
   }
 
-  _canStart() {
-    return this.playerCount >= MIN_PLAYERS && this._readyCount === this.playerCount && this.playerCount > 0;
-  }
-
-  _updateStartBtn() {
-    const btn = document.getElementById('btn-start');
-    if (!btn) return;
-    const can = this._canStart();
-    btn.disabled = !can;
-    if (this.playerCount < MIN_PLAYERS) {
-      btn.textContent = `최소 ${MIN_PLAYERS}명 필요 (현재 ${this.playerCount}명)`;
-    } else if (this._readyCount < this.playerCount) {
-      btn.textContent = `${this._readyCount}/${this.playerCount}명 준비 중...`;
-    } else {
-      btn.textContent = '🎮 게임 시작!';
+  _getLobbyProfiles() {
+    const map = new Map();
+    for (const [id, profile] of this._profiles) {
+      map.set(id, { nickname: profile.nickname, avatarUrl: avatarUrl(profile.avatarId) });
     }
-  }
-
-  _renderLobby() {
-    const grid = document.getElementById('lobby-players');
-    if (!grid) return;
-    grid.innerHTML = '';
-    for (const [id, player] of this.players) {
-      const profile = this._profiles.get(id);
-      const card = document.createElement('div');
-      card.className = 'lobby-player-card';
-      card.innerHTML = `
-        <div class="lp-avatar" style="border-color:${player.color}">
-          ${profile ? `<img src="${avatarUrl(profile.avatarId)}" alt="">` : '<span class="lp-placeholder">?</span>'}
-        </div>
-        <div class="lp-name">${profile?.nickname ?? '대기 중...'}</div>
-      `;
-      grid.appendChild(card);
-    }
-    this._updateStartBtn();
+    return map;
   }
 
   _broadcastPlayerList() {

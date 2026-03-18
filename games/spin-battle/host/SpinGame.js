@@ -8,7 +8,7 @@ const ITEM_TYPE_LIST = [ITEM_TYPES.ENERGY, ITEM_TYPES.SHIELD, ITEM_TYPES.COGS];
 
 export class SpinGame extends HostBaseGame {
   constructor(hostSDK, canvasContainer, { devMode = false } = {}) {
-    super(hostSDK, { overlayClass: 'spin-overlay', qrContainerId: 'qr-main' });
+    super(hostSDK, { overlayClass: 'spin-overlay' });
 
     this.renderer = new SpinRenderer(canvasContainer);
     this._devMode = devMode;
@@ -36,39 +36,43 @@ export class SpinGame extends HostBaseGame {
 
   // ─── HostBaseGame 라이프사이클 오버라이드 ────────────────────────────────
 
-  async onSetup({ sessionId }) {
-    document.getElementById('session-id-display').textContent = sessionId;
+  async onSetup() {
+    if (this._lobbyEl) {
+      this._lobbyEl.onStart = () => {
+        this._launchRpms.clear();
+        this.setPhase('launching');
+        this._startLaunchCountdown();
+      };
+    }
     document.getElementById('btn-restart').addEventListener('click', () => {
       this._readyCount = 0;
-      this._renderPlayerList();
       this.resetSession();
     });
     this.setPhase('lobby');
   }
 
   onPlayerJoin(_player) {
-    this._renderPlayerList();
+    this.renderLobbyPlayers();
+    this.updateLobbyReady(this._readyCount);
   }
 
   onPlayerLeave(_playerId) {
-    this._renderPlayerList();
+    this.renderLobbyPlayers();
+    this.updateLobbyReady(this._readyCount);
   }
 
   onReadyUpdate({ readyCount }) {
     this._readyCount = readyCount;
-    this._renderPlayerList();
+    this.updateLobbyReady(readyCount);
   }
 
   onAllReady() {
-    this._launchRpms.clear();
-    this.setPhase('launching');
-    this._startLaunchCountdown();
+    this.updateLobbyReady(this.playerCount);
   }
 
   onReset() {
     this._stopItemSpawner();
     this.renderer.clearItems();
-    this._setQRVisible(true);
 
     this._readyCount = 0;
     this._launchRpms.clear();
@@ -83,27 +87,9 @@ export class SpinGame extends HostBaseGame {
     const rpmBars = document.getElementById('rpm-bars');
     if (rpmBars) rpmBars.innerHTML = '';
 
-    this._renderPlayerList();
+    this.renderLobbyPlayers();
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
-  }
-
-  // ─── 플레이어 목록 렌더링 ────────────────────────────────────────────────
-
-  _renderPlayerList() {
-    const list = document.getElementById('player-list');
-    list.innerHTML = '';
-    for (const [, player] of this.players) {
-      const dot = document.createElement('div');
-      dot.className = 'player-dot';
-      dot.style.background = player.color;
-      list.appendChild(dot);
-    }
-    const countEl = document.getElementById('player-count-display');
-    if (this.playerCount === 0) {
-      countEl.textContent = '접속 중인 플레이어가 없습니다';
-    } else {
-      countEl.textContent = `${this.playerCount}명 접속 중 · ${this._readyCount}명 준비완료`;
-    }
   }
 
   // ─── 아이템 스포너 ────────────────────────────────────────────────────────
@@ -189,7 +175,6 @@ export class SpinGame extends HostBaseGame {
         clearInterval(iv);
         setTimeout(() => {
           this.setPhase('battle');
-          this._setQRVisible(false);
           this._startItemSpawner();
         }, 600);
       }
@@ -225,11 +210,6 @@ export class SpinGame extends HostBaseGame {
       const buffs = this.physics.getBuffs(playerId);
       buffEl.textContent = (buffs.shield > 0 ? '🛡️' : '') + (buffs.cogs > 0 ? '⚙️' : '');
     }
-  }
-
-  _setQRVisible(visible) {
-    const qr = document.getElementById('qr-main');
-    if (qr) qr.style.display = visible ? '' : 'none';
   }
 
   _showResult(rankings) {

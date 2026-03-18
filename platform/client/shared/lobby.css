@@ -1,0 +1,224 @@
+/* ── LobbyPanel 공통 스타일 ──────────────────────────────────────────────── */
+
+/* CSS 변수 기본값 (게임별 body에서 오버라이드) */
+:root {
+  --lobby-panel-bg:  #141c2e;
+  --lobby-panel2-bg: #1c2540;
+  --lobby-border:    #2a3654;
+  --lobby-accent:    #f59e0b;
+  --lobby-accent-dim: rgba(245, 158, 11, 0.15);
+  --lobby-text:      #e2e8f0;
+  --lobby-sub:       #94a3b8;
+  --lobby-avatar-size: 84px;
+}
+
+game-lobby {
+  display: contents;
+}
+
+/* ── 패널 컨테이너 ────────────────────────────────────────────────────────── */
+
+.lobby-panel {
+  background: var(--lobby-panel-bg);
+  border: 1px solid var(--lobby-border);
+  border-radius: 24px;
+  padding: 24px 40px;
+  width: min(960px, 92vw);
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.lobby-panel-top {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.lobby-back-btn {
+  color: var(--lobby-sub);
+  text-decoration: none;
+  font-size: 0.88rem;
+  padding: 5px 10px;
+  border: 1px solid var(--lobby-border);
+  border-radius: 8px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.lobby-back-btn:hover {
+  color: var(--lobby-accent);
+  border-color: var(--lobby-accent);
+}
+
+/* ── 배너 이미지 ─────────────────────────────────────────────────────────── */
+
+.lobby-banner-wrap {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+  max-height: 160px;
+}
+.lobby-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── 카드 2열 ────────────────────────────────────────────────────────────── */
+
+.lobby-cards-row {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.lobby-card {
+  flex: 1;
+  background: var(--lobby-panel2-bg);
+  border: 1px solid var(--lobby-border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.lobby-card.hidden { display: none; }
+
+/* QR 카드 */
+.lobby-qr-box { /* QR 이미지가 렌더링되는 자리 */ }
+
+.lobby-session-info {
+  font-size: 0.9rem;
+  color: var(--lobby-sub);
+  line-height: 1.6;
+}
+.lobby-session-info strong {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+  color: var(--lobby-text);
+  margin-top: 4px;
+}
+.lobby-qr-url {
+  font-size: 0.68rem;
+  color: var(--lobby-sub);
+  word-break: break-all;
+  max-width: 220px;
+  line-height: 1.4;
+}
+
+/* 사이드 카드 */
+.lobby-side-card {
+  align-items: flex-start;
+  text-align: left;
+}
+.lobby-side-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── 참가자 목록 ─────────────────────────────────────────────────────────── */
+
+.lobby-players-wrap {
+  margin-bottom: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.lobby-players-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--lobby-sub);
+  margin-bottom: 10px;
+}
+.lobby-players-grid {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  min-height: 60px;
+}
+
+/* 플레이어 카드 */
+.lobby-player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.lp-avatar {
+  width: var(--lobby-avatar-size);
+  height: var(--lobby-avatar-size);
+  border-radius: 50%;
+  border: 3px solid;
+  overflow: hidden;
+  background: var(--lobby-panel2-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lp-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.lp-initial {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.lp-name {
+  font-size: 0.78rem;
+  color: var(--lobby-sub);
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── 푸터 (준비 상태 + 시작 버튼) ──────────────────────────────────────── */
+
+.lobby-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  flex-shrink: 0;
+}
+.lobby-ready-status {
+  font-size: 0.9rem;
+  color: var(--lobby-sub);
+}
+.lobby-start-btn {
+  background: var(--lobby-accent);
+  color: #000;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 40px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.lobby-start-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+.lobby-start-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

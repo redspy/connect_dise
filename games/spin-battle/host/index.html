@@ -18,13 +18,15 @@
 
     <!-- Lobby Overlay -->
     <div id="lobby-overlay" class="spin-overlay" data-phase="lobby">
-      <div class="spin-panel">
-        <h2 class="lobby-title">Top Battle</h2>
-        <div id="qr-main"></div>
-        <p id="session-id-display" class="spin-sub"></p>
-        <div id="player-list"></div>
-        <p id="player-count-display" class="spin-sub">QR코드로 접속하세요</p>
-      </div>
+      <game-lobby title="Top Battle" min-players="2">
+        <div class="spin-lobby-desc-title">게임 방법</div>
+        <ul class="spin-lobby-desc-list">
+          <li>QR로 접속 후 <b>준비</b> 버튼을 누르세요</li>
+          <li>핸드폰을 <b>좌우로 흔들어</b> 팽이를 충전하세요</li>
+          <li>배틀에서 <b>아이템</b>을 획득해 상대를 날려버리세요!</li>
+          <li>마지막까지 살아남은 팽이가 <b>승리!</b></li>
+        </ul>
+      </game-lobby>
     </div>
 
     <!-- Launching Overlay -->

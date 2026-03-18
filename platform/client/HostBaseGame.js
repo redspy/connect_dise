@@ -1,5 +1,6 @@
 import { renderQR } from './shared/QRDisplay.js';
 import './shared/AppBar.js';
+import './shared/LobbyPanel.js';
 
 /**
  * HostBaseGame – 호스트 화면 게임의 베이스 클래스.
@@ -49,7 +50,12 @@ export class HostBaseGame {
 
   _wireSDK() {
     this.sdk.on('sessionReady', async ({ qrUrl, sessionId }) => {
-      if (this._qrContainerId) {
+      // <game-lobby> 자동 감지 — 있으면 QR/세션 자동 처리
+      this._lobbyEl = document.querySelector('game-lobby');
+      if (this._lobbyEl) {
+        await renderQR(this._lobbyEl.qrContainer, qrUrl, { width: 200 });
+        this._lobbyEl.setSession(sessionId, qrUrl);
+      } else if (this._qrContainerId) {
         const el = document.getElementById(this._qrContainerId);
         if (el) await renderQR(el, qrUrl, { width: 200 });
       }
@@ -145,6 +151,26 @@ export class HostBaseGame {
 
   /** 현재 QR URL 반환 */
   getQRUrl() { return this.sdk.getQRUrl(); }
+
+  // ─── Lobby helpers (<game-lobby> 전용) ───────────────────────────────────
+
+  /**
+   * 로비 플레이어 카드를 렌더링합니다.
+   * @param {Map<string, {nickname?:string, avatarUrl?:string}>|null} profilesMap
+   */
+  renderLobbyPlayers(profilesMap = null) {
+    this._lobbyEl?.renderPlayers(this._players, profilesMap);
+  }
+
+  /**
+   * 준비 상태 텍스트와 시작 버튼을 업데이트합니다.
+   * @param {number} readyCount
+   */
+  updateLobbyReady(readyCount) {
+    const total = this._players.size;
+    this._lobbyEl?.setReady(readyCount, total);
+    this._lobbyEl?.updateStartButton(readyCount, total);
+  }
 
   // ─── Lifecycle hooks ─────────────────────────────────────────────────────
   // 서브클래스에서 필요한 것만 override합니다.
