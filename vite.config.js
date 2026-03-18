@@ -85,6 +85,8 @@ export default defineConfig({
         relayDrawingMobile: resolve(__dirname, 'games/relay-drawing/mobile/index.html'),
         dobbleHost:         resolve(__dirname, 'games/dobble/host/index.html'),
         dobbleMobile:       resolve(__dirname, 'games/dobble/mobile/index.html'),
+        dixitHost:          resolve(__dirname, 'games/dixit/host/index.html'),
+        dixitMobile:        resolve(__dirname, 'games/dixit/mobile/index.html'),
         omok:               resolve(__dirname, 'games/omok/index.html'),
       },
     },

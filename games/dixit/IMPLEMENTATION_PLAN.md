@@ -21,9 +21,9 @@ MVP 제외:
 - 카드팩 에디터
 
 > ⚠️ **카드 수 제약**: 3~6인 플레이를 안정적으로 지원하려면 최소 **60장** 필요.
-> 현재 생성된 카드는 6장, 계획 총계 20장으로 3인 기본(21장)조차 불가능.
+> 현재 생성된 카드는 14장으로, 3인 기본(21장)도 아직 불가능합니다.
 > 구현 전 카드 이미지를 **최소 84장**(공식 기준)으로 늘려야 합니다.
-> → `cards/IMAGE_PROMPTS.md` 확장 필수.
+> → `cards/IMAGE_PROMPTS_100.md`를 기준으로 생성 진행.
 
 ---
 
@@ -96,7 +96,7 @@ games/dixit/
 ├── IMPLEMENTATION_PLAN.md
 ├── PLAN.md
 ├── cards/
-│   └── IMAGE_PROMPTS.md      # 84장 목표로 확장 필요
+│   └── IMAGE_PROMPTS_100.md  # 100개 프롬프트 가이드 (84장 이상 생성 목표)
 ├── assets/
 │   └── cards/                # card_001.png ~ card_084.png (목표)
 ├── shared/
@@ -124,8 +124,7 @@ games/dixit/
 
 ### Phase 0: 카드 에셋 확보 (선행 필수)
 
-- `cards/IMAGE_PROMPTS.md`를 84장 기준으로 확장
-- card_007 ~ card_084 생성 완료
+- `cards/IMAGE_PROMPTS_100.md` 기준으로 card_015 ~ card_084 생성
 - 완료 기준: `assets/cards/` 폴더에 최소 60장 이상
 
 ### Phase 1: 코어 로직
@@ -195,9 +194,9 @@ games/dixit/
 | 이벤트 | 페이로드 | 설명 |
 |--------|----------|------|
 | `setProfile` | `{ nickname }` | 닉네임 설정 |
-| `submitClueAndCard` | `{ clue, cardId }` | 스토리텔러 전용 |
-| `submitCard` | `{ cardId }` | 비-스토리텔러 카드 제출 |
-| `submitVote` | `{ revealIndex }` | 투표 (스토리텔러 제외, 자기 카드 불가) |
+| `submitClueAndCard` | `{ clue, cardId, actionId }` | 스토리텔러 전용 |
+| `submitCard` | `{ cardId, actionId }` | 비-스토리텔러 카드 제출 |
+| `submitVote` | `{ revealIndex, actionId }` | 투표 (스토리텔러 제외, 자기 카드 불가) |
 | `requestRematch` | `{}` | 다시하기 |
 
 ### Host → Mobile
@@ -221,7 +220,7 @@ games/dixit/
 | `vote` | `boardCards: [{revealIndex, cardId}]`, `deadlineAt` |
 | `result` | `boardCards`(소유자 포함), `votes`, `roundScores` |
 
-> **boardCards 셔플**: 투표 단계에서는 cardId가 포함되지 않아야 모바일에서 카드 이미지를 보여줄 수 있다.
+> **boardCards 셔플**: 투표 단계에서는 `cardId`는 포함하고 `ownerId`는 숨긴다.
 > revealIndex는 0-based 순서로 공개된 카드 번호를 의미. host에서 랜덤 셔플 후 배정.
 
 ---
@@ -254,6 +253,7 @@ games/dixit/
     voterId,
     revealIndex,
   }],
+  processedActionIds: string[], // 최근 actionId 슬라이딩 윈도우 (중복 요청 방지)
   deck: {
     drawPile:    number[],
     discardPile: number[],
@@ -290,12 +290,12 @@ export function calcRoundScores(storytellerId, boardCards, votes) { ... }
 
 | 상태 | 장수 |
 |------|------|
-| 생성 완료 | 6장 (card_001~006) |
-| 프롬프트 작성 완료 | 14장 (card_007~020) |
-| 추가 필요 | **64장** (card_021~084) |
+| 생성 완료 | 14장 (card_001~014) |
+| 프롬프트 작성 완료 | 100개 (card_001~100) |
+| 추가 필요 | **70장** (card_015~084 기준) |
 | **목표** | **84장** |
 
-> 생성 가이드: `cards/IMAGE_PROMPTS.md` 참조.
+> 생성 가이드: `cards/IMAGE_PROMPTS_100.md` 참조.
 > 3:4 세로형, 몽환적 동화 스타일, 텍스트/워터마크 없음.
 
 ---
@@ -310,6 +310,7 @@ export function calcRoundScores(storytellerId, boardCards, votes) { ... }
 - [ ] 미끼 카드 2표 획득 시 +2 보너스 검증
 - [ ] 스토리텔러가 submitVote 시도 시 서버에서 무시되는지 확인
 - [ ] 타임아웃 자동처리 (미제출 → 첫 카드 자동 선택)
+- [ ] 동일 actionId 재전송 시 1회만 반영되는지 확인
 - [ ] 재연결 후 hand / 점수 / phase 복원 확인
 - [ ] 덱 소진 종료 처리 확인
 - [ ] 30점 도달 종료 처리 확인
@@ -321,8 +322,8 @@ export function calcRoundScores(storytellerId, boardCards, votes) { ... }
 ## 13. 현재 준비 상태
 
 - [x] 게임 개념 / 초기 플랜 문서(`PLAN.md`) 작성
-- [x] 카드 생성 프롬프트 문서(`cards/IMAGE_PROMPTS.md`) 작성 (card_001~020)
-- [x] 카드 이미지 6장 생성 완료 (card_001~006)
+- [x] 카드 생성 프롬프트 문서(`cards/IMAGE_PROMPTS_100.md`) 작성 (card_001~100)
+- [x] 카드 이미지 14장 생성 완료 (card_001~014)
 - [ ] **카드 이미지 84장 목표 달성** ← 구현 전 선행 필수
 - [ ] host/mobile/shared 스캐폴딩 파일 생성
 - [ ] registry / vite 엔트리 연결
@@ -332,7 +333,7 @@ export function calcRoundScores(storytellerId, boardCards, votes) { ... }
 
 ## 14. 다음 즉시 작업
 
-1. **[선행]** `cards/IMAGE_PROMPTS.md`에 card_021~084 프롬프트 추가 및 이미지 생성
+1. **[선행]** `cards/IMAGE_PROMPTS_100.md` 기준으로 card_015~084 이미지 생성
 2. `shared/constants.js`, `shared/deck.js`, `shared/scoring.js` 생성
 3. `host/index.html`, `host/main.js`, `host/DixitGame.js` 생성
 4. `mobile/index.html`, `mobile/main.js`, `mobile/DixitMobile.js` 생성

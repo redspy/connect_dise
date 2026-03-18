@@ -78,6 +78,17 @@ export const GAMES = [
     group: 'multi',
   },
   {
+    id: 'dixit',
+    name: 'Dixit',
+    description: '상상력과 스토리텔링의 카드 게임! 힌트를 듣고 이야기꾼의 카드를 찾아보세요.',
+    hostPath: '/games/dixit/host/',
+    mobilePath: '/games/dixit/mobile/',
+    minPlayers: 3,
+    maxPlayers: 8,
+    thumbnail: '🖼️',
+    group: 'multi',
+  },
+  {
     id: 'omok',
     name: '오목',
     description: 'AI와 1:1 오목 대결! 13×13 바둑판에서 먼저 5개를 연결하면 승리',

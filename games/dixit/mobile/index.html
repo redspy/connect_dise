@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Dixit — Mobile</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-body">
+
+  <!-- 1. Setup -->
+  <div class="game-screen view" data-screen="setup">
+    <h1 class="logo-text">Dixit 🖼️</h1>
+    <div class="setup-form glass">
+      <div class="input-group">
+        <label for="nickname">닉네임</label>
+        <input type="text" id="nickname" maxlength="10" placeholder="이름을 입력하세요" autocomplete="off">
+      </div>
+      <button id="join-btn" class="primary-btn full-width">참여하기</button>
+    </div>
+  </div>
+
+  <!-- 2. Waiting -->
+  <div class="game-screen view hidden" data-screen="waiting">
+    <div class="waiting-header">
+      <h2 id="my-name-display"></h2>
+      <p>다른 사람이 들어오기를 기다리는 중...</p>
+    </div>
+    <div class="player-list-box glass">
+      <h3>참여자 (<span id="player-count">0</span>)</h3>
+      <div id="player-list" class="player-list"></div>
+    </div>
+    <button id="ready-btn" class="primary-btn full-width">준비 완료</button>
+    <div id="ready-status" class="ready-status hidden">준비 완료!</div>
+  </div>
+
+  <!-- 3. Storyteller Clue Input -->
+  <div class="game-screen view hidden" data-screen="storyteller-clue">
+    <div class="phase-header">
+      <h2>이야기꾼의 턴</h2>
+      <p>상상력을 발휘하여 카드 한 장을 고르고 힌트를 입력하세요.</p>
+    </div>
+    <div class="hand-container" id="storyteller-hand"></div>
+    <div class="clue-input-area glass">
+      <input type="text" id="clue-input" placeholder="힌트를 입력하세요 (단어, 문장, 소리 등)">
+      <button id="submit-clue-btn" class="primary-btn full-width" disabled>카드와 힌트를 선택하세요</button>
+    </div>
+  </div>
+
+  <!-- 4. Card Selection (Followers) -->
+  <div class="game-screen view hidden" data-screen="card-select">
+    <div class="clue-banner glass">
+      <span class="label">힌트</span>
+      <h2 id="current-clue" class="clue-text">"..."</h2>
+    </div>
+    <p class="instruction">이 힌트와 가장 어울리는 내 카드를 한 장 제출하세요.</p>
+    <div class="hand-container" id="follower-hand"></div>
+    <button id="submit-card-btn" class="primary-btn full-width" disabled>카드를 선택하세요</button>
+  </div>
+
+  <!-- 5. Voting -->
+  <div class="game-screen view hidden" data-screen="vote">
+    <div class="clue-banner glass">
+      <span class="label">힌트</span>
+      <h2 id="voting-clue" class="clue-text">"..."</h2>
+    </div>
+    <p class="instruction">이야기꾼의 카드는 무엇일까요? 한 장을 선택하세요.</p>
+    <div class="board-container" id="voting-board"></div>
+    <button id="submit-vote-btn" class="primary-btn full-width" disabled>투표하기</button>
+  </div>
+
+  <!-- 6. Round Result -->
+  <div class="game-screen view hidden" data-screen="round-result">
+    <div class="result-content glass">
+      <h1>라운드 종료</h1>
+      <p>PC 화면에서 확인하세요!</p>
+      <div class="my-score-box">
+        <span class="label">내 점수</span>
+        <h2 id="my-score">0</h2>
+      </div>
+    </div>
+    <p class="waiting-next">다음 라운드를 기다리고 있습니다...</p>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
