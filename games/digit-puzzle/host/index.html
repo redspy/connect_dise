@@ -20,28 +20,14 @@
 
   <!-- ── 로비 오버레이 ──────────────────────────────────────────── -->
   <div class="dp-overlay" data-phase="lobby">
-    <div class="dp-lobby-panel">
-      <div class="dp-lobby-top">
-        <button class="dp-btn-header" onclick="location.href='/'"> &larr; 게임 선택</button>
-      </div>
-
-      <h1 class="dp-lobby-title">Digit Puzzle</h1>
-      <p class="dp-lobby-desc">4&times;4 슬라이딩 퍼즐 레이스! 먼저 완성하면 승리</p>
-
-      <div id="qr-container" class="dp-qr-center"></div>
-
-      <div class="dp-session-info">
-        방 코드 <strong id="session-code">------</strong>
-      </div>
-
-      <div class="dp-lobby-players-wrap">
-        <div class="dp-lobby-players-title">참가자</div>
-        <div id="lobby-players" class="dp-lobby-players-grid"></div>
-      </div>
-
-      <div id="ready-status" class="dp-ready-status">플레이어를 기다리는 중...</div>
-      <button id="btn-start" class="dp-btn-start" disabled>최소 2명 필요</button>
-    </div>
+    <game-lobby title="Digit Puzzle" min-players="2">
+      <div class="lobby-desc-title">게임 방법</div>
+      <ul class="lobby-desc-list">
+        <li><b>4×4 슬라이딩 퍼즐</b> 레이스!</li>
+        <li>숫자를 올바른 순서로 <b>먼저 완성</b>하면 승리</li>
+        <li>모두 준비하면 <b>동시에 시작</b>됩니다</li>
+      </ul>
+    </game-lobby>
   </div>
 
   <!-- ── 결과 오버레이 ──────────────────────────────────────────── -->

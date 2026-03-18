@@ -13,40 +13,18 @@
        로비 오버레이 (data-phase="lobby")
   ══════════════════════════════════════════ -->
   <div class="gyf-overlay" data-phase="lobby">
-
-    <!-- 로비 중앙 패널 -->
-    <div class="gyf-lobby-panel">
-      <div class="gyf-logo">
-        <span class="gyf-logo-fire">Give You</span>
-        <span class="gyf-logo-accent"> Fire</span>
-        <span class="gyf-logo-icon">🔥</span>
-      </div>
-
-      <div id="qr-container" class="gyf-qr-center"></div>
-
-      <div class="gyf-session-row">
-        방 코드: <strong id="session-code">----</strong>
-      </div>
-
-      <!-- 참가자 목록 -->
-      <div class="gyf-lobby-players" id="lobby-players">
-        <div class="gyf-waiting-hint">QR 코드를 스캔하여 참가하세요</div>
-      </div>
-
-      <!-- 준비 상태 -->
-      <div class="gyf-ready-status" id="ready-status">0 / 0 준비 완료</div>
-
-      <!-- 다음 블록 미리보기 옵션 -->
+    <game-lobby title="Give You Fire 🔥" min-players="1">
+      <div class="gyf-lobby-desc-title">게임 방법</div>
+      <ul class="gyf-lobby-desc-list">
+        <li>블록이 쌓이지 않도록 라인을 클리어하세요</li>
+        <li>라인 클리어 시 상대방의 <b>속도가 올라갑니다!</b></li>
+        <li>레벨 100 달성 또는 상대 전원 탈락 시 <b>승리!</b></li>
+      </ul>
       <label class="gyf-option-row">
         <input type="checkbox" id="chk-next-piece">
         <span>다음 블록 미리보기 ON</span>
       </label>
-
-      <div class="gyf-lobby-actions">
-        <button class="gyf-btn gyf-btn-secondary" id="btn-back">← 로비</button>
-        <button class="gyf-btn gyf-btn-primary" id="btn-start" disabled>🔥 게임 시작</button>
-      </div>
-    </div>
+    </game-lobby>
   </div>
 
   <!-- ══════════════════════════════════════════

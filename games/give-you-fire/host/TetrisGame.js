@@ -11,7 +11,6 @@
  */
 
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import { renderBoard } from '../shared/BoardRenderer.js';
 
 /** 색상 표시에 사용할 플레이어 색상 목록 (플랫폼에서 자동 배정되지만 레이블용으로 보유) */
@@ -40,13 +39,7 @@ export class TetrisGame extends HostBaseGame {
 
   // ─── HostBaseGame 훅 ──────────────────────────────────────────────────────
 
-  async onSetup({ sessionId, qrUrl }) {
-    document.getElementById('session-code').textContent = sessionId;
-
-    // QR 렌더링
-    const qrEl = document.getElementById('qr-container');
-    if (qrEl) await renderQR(qrEl, qrUrl, { width: 160 });
-
+  async onSetup() {
     // 미리보기 체크박스
     const chk = document.getElementById('chk-next-piece');
     if (chk) {
@@ -55,13 +48,11 @@ export class TetrisGame extends HostBaseGame {
       });
     }
 
-    // 버튼 이벤트
-    document.getElementById('btn-start')?.addEventListener('click', () => {
-      if (this._canStart()) this._startGame();
-    });
-    document.getElementById('btn-back')?.addEventListener('click', () => {
-      location.href = '/';
-    });
+    // 로비 시작 버튼
+    if (this._lobbyEl) {
+      this._lobbyEl.onStart = () => { if (this._canStart()) this._startGame(); };
+    }
+
     document.getElementById('btn-restart-result')?.addEventListener('click', () => {
       this.resetSession();
     });
@@ -290,28 +281,15 @@ export class TetrisGame extends HostBaseGame {
   // ─── 로비 UI ─────────────────────────────────────────────────────────────
 
   _renderLobby() {
-    const list = document.getElementById('lobby-players');
-    if (!list) return;
-    const players = [...this.players.values()];
-    list.innerHTML = players.map(p => {
-      const nick = this._profiles.get(p.id)?.nickname ?? '...';
-      return `
-        <div class="gyf-lobby-player">
-          <span class="gyf-lobby-dot" style="background:${p.color}"></span>
-          <span>${nick}</span>
-        </div>`;
-    }).join('');
+    this.renderLobbyPlayers(this._profiles);
   }
 
   _updateReadyStatus() {
-    const el = document.getElementById('ready-status');
-    if (el) el.textContent = `${this._readyCount} / ${this.playerCount} 준비 완료`;
+    this.updateLobbyReady(this._readyCount);
   }
 
   _updateStartBtn() {
-    const btn = document.getElementById('btn-start');
-    if (!btn) return;
-    btn.disabled = !this._canStart();
+    this.updateLobbyReady(this._readyCount);
   }
 
   _broadcastPlayerList() {

@@ -1,5 +1,4 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import {
   generateDeck, getSymbolPath,
   hanjaSymbols, hangulSymbols, hanjaMeanings,
@@ -33,19 +32,16 @@ export class DobbleGame extends HostBaseGame {
 
   // ─── HostBaseGame hooks ────────────────────────────────────────────────────
 
-  onSetup({ sessionId, qrUrl }) {
-    renderQR(document.getElementById('qr-container'), qrUrl, { width: 140 });
-    document.getElementById('qr-url-text').textContent = qrUrl;
-
+  onSetup() {
     document.getElementById('sel-mode')?.addEventListener('change', e => {
       this._mode = e.target.value;
     });
     document.getElementById('sel-winscore')?.addEventListener('change', e => {
       this._winScore = Number(e.target.value);
     });
-    document.getElementById('btn-start')?.addEventListener('click', () => {
-      if (this._canStart()) this._startGame();
-    });
+    if (this._lobbyEl) {
+      this._lobbyEl.onStart = () => { if (this._canStart()) this._startGame(); };
+    }
     document.querySelector('game-appbar').onRestart = () => this.resetSession();
 
     this.setPhase('lobby');
@@ -54,7 +50,7 @@ export class DobbleGame extends HostBaseGame {
   onPlayerJoin(player) {
     this._scores.set(player.id, 0);
     this._renderLobby();
-    this._updateStartBtn();
+    this.updateLobbyReady(this._readyCount);
   }
 
   onPlayerLeave(playerId) {
@@ -65,17 +61,13 @@ export class DobbleGame extends HostBaseGame {
     clearTimeout(this._freezeTimers.get(playerId));
     this._freezeTimers.delete(playerId);
     this._renderLobby();
-    this._updateStartBtn();
+    this.updateLobbyReady(this._readyCount);
     if (this._gameStarted) this._renderScoreCards();
   }
 
-  onReadyUpdate({ readyCount, total }) {
+  onReadyUpdate({ readyCount }) {
     this._readyCount = readyCount;
-    const el = document.getElementById('ready-status');
-    if (el) el.textContent = total === 0
-      ? '플레이어를 기다리는 중...'
-      : `${readyCount} / ${total}명 준비완료`;
-    this._updateStartBtn();
+    this.updateLobbyReady(readyCount);
   }
 
   onAllReady() {
@@ -99,10 +91,8 @@ export class DobbleGame extends HostBaseGame {
     this._roundLock   = false;
     this._readyCount  = 0;
     for (const p of this.players.values()) this._scores.set(p.id, 0);
-    const el = document.getElementById('ready-status');
-    if (el) el.textContent = '플레이어를 기다리는 중...';
     this._renderLobby();
-    this._updateStartBtn();
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
   }
 
@@ -130,35 +120,8 @@ export class DobbleGame extends HostBaseGame {
     return this.playerCount >= 2 && this._readyCount === this.playerCount && this.playerCount > 0;
   }
 
-  _updateStartBtn() {
-    const btn = document.getElementById('btn-start');
-    if (!btn) return;
-    const can = this._canStart();
-    btn.disabled = !can;
-    if (this.playerCount < 2) {
-      btn.textContent = `최소 2명 필요 (현재 ${this.playerCount}명)`;
-    } else if (this._readyCount < this.playerCount) {
-      btn.textContent = `${this._readyCount} / ${this.playerCount}명 준비 중...`;
-    } else {
-      btn.textContent = '🎮 게임 시작!';
-    }
-  }
-
   _renderLobby() {
-    const grid = document.getElementById('lobby-players');
-    if (!grid) return;
-    grid.innerHTML = '';
-    for (const [id, player] of this.players) {
-      const profile = this._profiles.get(id);
-      const card = document.createElement('div');
-      card.className = 'db-lobby-card';
-      card.innerHTML = `
-        <div class="db-lobby-dot" style="background:${player.color}"></div>
-        <div class="db-lobby-name">${profile?.nickname ?? '대기 중...'}</div>
-      `;
-      grid.appendChild(card);
-    }
-    this._updateStartBtn();
+    this.renderLobbyPlayers(this._profiles);
   }
 
   _broadcastPlayerList() {

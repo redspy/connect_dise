@@ -35,62 +35,34 @@
 
   <!-- ── 로비 오버레이 ───────────────────────────────────────────── -->
   <div class="db-overlay" data-phase="lobby">
-    <div class="db-lobby-panel">
-
-      <div class="db-lobby-top">
-        <button onclick="location.href='/'" class="db-btn-header">← 게임 선택</button>
+    <game-lobby title="🎯 Dobble" min-players="2">
+      <div class="db-setting-group">
+        <label class="db-setting-label">심볼 모드</label>
+        <select id="sel-mode" class="db-select">
+          <option value="image">그림 (Image)</option>
+          <option value="hanja">한자 (Hanja)</option>
+          <option value="hiragana">히라가나</option>
+          <option value="katakana">가타카나</option>
+        </select>
       </div>
-
-      <div class="db-lobby-title">🎯 Dobble</div>
-      <div class="db-lobby-sub">일치하는 심볼을 먼저 찾아라!</div>
-
-      <div class="db-lobby-body">
-
-        <!-- QR -->
-        <div class="db-lobby-qr-col">
-          <div id="qr-container"></div>
-          <div id="qr-url-text" class="db-qr-url"></div>
-        </div>
-
-        <!-- 설정 + 게임 설명 -->
-        <div class="db-lobby-settings-col">
-          <div class="db-setting-group">
-            <label class="db-setting-label">심볼 모드</label>
-            <select id="sel-mode" class="db-select">
-              <option value="image">그림 (Image)</option>
-              <option value="hanja">한자 (Hanja)</option>
-              <option value="hiragana">히라가나</option>
-              <option value="katakana">가타카나</option>
-            </select>
-          </div>
-          <div class="db-setting-group">
-            <label class="db-setting-label">목표 점수</label>
-            <select id="sel-winscore" class="db-select">
-              <option value="5">5점</option>
-              <option value="10" selected>10점</option>
-              <option value="15">15점</option>
-            </select>
-          </div>
-
-          <div class="db-rules">
-            <div class="db-rules-title">게임 방법</div>
-            <ul class="db-rules-list">
-              <li>중앙 카드와 내 카드에서 <b>같은 심볼</b>을 찾아 탭!</li>
-              <li>정답 시 내 카드가 새 중앙 카드로, 새 카드 수령</li>
-              <li>오답 시 <b>3초 패널티</b></li>
-              <li>목표 점수를 먼저 달성한 플레이어 승리</li>
-            </ul>
-          </div>
-        </div>
+      <div class="db-setting-group">
+        <label class="db-setting-label">목표 점수</label>
+        <select id="sel-winscore" class="db-select">
+          <option value="5">5점</option>
+          <option value="10" selected>10점</option>
+          <option value="15">15점</option>
+        </select>
       </div>
-
-      <!-- 참가자 목록 -->
-      <div class="db-lobby-players-title">참가자</div>
-      <div id="lobby-players" class="db-lobby-players"></div>
-
-      <div id="ready-status" class="db-ready-status">플레이어를 기다리는 중...</div>
-      <button id="btn-start" class="db-btn-start" disabled>최소 2명 필요</button>
-    </div>
+      <div class="db-rules">
+        <div class="db-rules-title">게임 방법</div>
+        <ul class="db-rules-list">
+          <li>중앙 카드와 내 카드에서 <b>같은 심볼</b>을 찾아 탭!</li>
+          <li>정답 시 내 카드가 새 중앙 카드로, 새 카드 수령</li>
+          <li>오답 시 <b>3초 패널티</b></li>
+          <li>목표 점수를 먼저 달성한 플레이어 승리</li>
+        </ul>
+      </div>
+    </game-lobby>
   </div>
 
   <!-- ── 결과 오버레이 ───────────────────────────────────────────── -->

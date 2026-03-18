@@ -1,5 +1,4 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import { audioManager } from '../shared/AudioManager.js';
 
 const STARTER_PROMPTS = [
@@ -28,18 +27,9 @@ export class RelayDrawingGame extends HostBaseGame {
 
   // ─── HostBaseGame 훅 ─────────────────────────────────────────────────────
 
-  async onSetup({ sessionId, qrUrl }) {
-    const qrEl = document.getElementById('qrContainer');
-    if (qrEl) await renderQR(qrEl, qrUrl, { width: 180 });
-
-    const joinUrlEl = document.getElementById('joinUrl');
-    if (joinUrlEl) joinUrlEl.textContent = qrUrl;
-
-    const startBtn = document.getElementById('startBtn');
-    if (startBtn) {
-      startBtn.onclick = () => {
-        if (this.playerCount >= 2) this._startGame();
-      };
+  async onSetup() {
+    if (this._lobbyEl) {
+      this._lobbyEl.onStart = () => { if (this.playerCount >= 2) this._startGame(); };
     }
 
     const nextStoryBtn = document.getElementById('nextStoryBtn');
@@ -65,12 +55,12 @@ export class RelayDrawingGame extends HostBaseGame {
     this._updateLobbyPlayers();
   }
 
-  onReadyUpdate({ readyCount, total }) {
-    this._updateStartButton(readyCount, total);
+  onReadyUpdate({ readyCount }) {
+    this.updateLobbyReady(readyCount);
   }
 
   onAllReady() {
-    this._updateStartButton(this.playerCount, this.playerCount);
+    this.updateLobbyReady(this.playerCount);
   }
 
   onReset() {
@@ -79,7 +69,7 @@ export class RelayDrawingGame extends HostBaseGame {
     this._currentRound = 0;
     clearInterval(this._timerInterval);
     this._updateLobbyPlayers();
-    this._updateStartButton(0, this.playerCount);
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
   }
 
@@ -111,44 +101,7 @@ export class RelayDrawingGame extends HostBaseGame {
   // ─── 로비 UI ─────────────────────────────────────────────────────────────
 
   _updateLobbyPlayers() {
-    const countEl = document.getElementById('playerCount');
-    if (countEl) countEl.textContent = this.playerCount;
-
-    const grid = document.getElementById('playerGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-
-    this.players.forEach(p => {
-      const profile = this._profiles.get(p.id);
-      const el = document.createElement('div');
-      el.className = 'player-card';
-
-      let avatarHtml = `<div class="avatar-dot" style="background:${p.color};"></div>`;
-      if (profile?.avatar) {
-        avatarHtml = `<img src="${profile.avatar}" class="avatar-img" style="border-color:${p.color};">`;
-      }
-
-      el.innerHTML = `
-        ${avatarHtml}
-        <div class="name">${profile?.nickname ?? '대기 중...'}</div>
-      `;
-      grid.appendChild(el);
-    });
-  }
-
-  _updateStartButton(readyCount, total) {
-    const btn = document.getElementById('startBtn');
-    if (!btn) return;
-    if (total < 2) {
-      btn.disabled = true;
-      btn.textContent = '최소 2명 이상 필요';
-    } else if (readyCount < total) {
-      btn.disabled = true;
-      btn.textContent = `모두 준비해주세요 (${readyCount}/${total})`;
-    } else {
-      btn.disabled = false;
-      btn.textContent = '게임 시작하기';
-    }
+    this.renderLobbyPlayers(this._profiles);
   }
 
   _broadcastPlayerList() {

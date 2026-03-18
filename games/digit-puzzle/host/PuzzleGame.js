@@ -1,5 +1,4 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 
 const SIZE = 4;
 const MIN_PLAYERS = 2;
@@ -22,12 +21,10 @@ export class PuzzleGame extends HostBaseGame {
 
   // ─── HostBaseGame hooks ──────────────────────────────────────────────────
 
-  async onSetup({ sessionId, qrUrl }) {
-    document.getElementById('session-code').textContent = sessionId;
-
-    // QR 렌더링
-    const qrEl = document.getElementById('qr-container');
-    if (qrEl) await renderQR(qrEl, qrUrl, { width: 160 });
+  async onSetup() {
+    if (this._lobbyEl) {
+      this._lobbyEl.onStart = () => { if (this._canStart()) this._startGame(); };
+    }
 
     const appbar = document.querySelector('game-appbar');
     appbar.onRestart = () => this.resetSession();
@@ -48,7 +45,7 @@ export class PuzzleGame extends HostBaseGame {
   onPlayerJoin(player) {
     if (this._gameStarted) return;
     this._renderLobby();
-    this._updateReadyStatus();
+    this.updateLobbyReady(this._readyCount);
   }
 
   onPlayerRejoin(player) {
@@ -67,10 +64,9 @@ export class PuzzleGame extends HostBaseGame {
     this._renderLobby();
   }
 
-  onReadyUpdate({ readyCount, total }) {
+  onReadyUpdate({ readyCount }) {
     this._readyCount = readyCount;
-    this._updateReadyStatus();
-    this._updateStartBtn();
+    this.updateLobbyReady(readyCount);
   }
 
   onAllReady() {
@@ -92,6 +88,7 @@ export class PuzzleGame extends HostBaseGame {
       this._timerInterval = null;
     }
     this._renderLobby();
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
   }
 
@@ -144,46 +141,8 @@ export class PuzzleGame extends HostBaseGame {
     return this.playerCount >= MIN_PLAYERS && this._readyCount === this.playerCount && this.playerCount > 0;
   }
 
-  _updateStartBtn() {
-    const btn = document.getElementById('btn-start');
-    if (!btn) return;
-    const can = this._canStart();
-    btn.disabled = !can;
-    if (this.playerCount < MIN_PLAYERS) {
-      btn.textContent = `최소 ${MIN_PLAYERS}명 필요 (현재 ${this.playerCount}명)`;
-    } else if (this._readyCount < this.playerCount) {
-      btn.textContent = `${this._readyCount}/${this.playerCount}명 준비 중...`;
-    } else {
-      btn.textContent = '게임 시작!';
-    }
-  }
-
-  _updateReadyStatus() {
-    const total = this.playerCount;
-    const el = document.getElementById('ready-status');
-    if (!el) return;
-    el.textContent = total === 0
-      ? '플레이어를 기다리는 중...'
-      : `${this._readyCount}/${total}명 준비완료`;
-  }
-
   _renderLobby() {
-    const grid = document.getElementById('lobby-players');
-    if (!grid) return;
-    grid.innerHTML = '';
-    for (const [id, player] of this.players) {
-      const profile = this._profiles.get(id);
-      const card = document.createElement('div');
-      card.className = 'dp-lobby-player';
-      card.innerHTML = `
-        <div class="dp-lobby-avatar" style="border-color:${player.color}">
-          <span>${profile?.nickname?.charAt(0) ?? '?'}</span>
-        </div>
-        <div class="dp-lobby-name">${profile?.nickname ?? '대기 중...'}</div>
-      `;
-      grid.appendChild(card);
-    }
-    this._updateStartBtn();
+    this.renderLobbyPlayers(this._profiles);
   }
 
   _broadcastPlayerList() {
