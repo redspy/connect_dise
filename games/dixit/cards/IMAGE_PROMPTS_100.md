@@ -44,10 +44,10 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 027. A forest of giant dandelions where the seeds are tiny white umbrellas drifting upwards. (DONE)
 028. A polar bear wearing a warm knitted sweater, ice-skating on a frozen lake of starlight. (DONE)
 029. An ancient tree whose roots are tangling around a forgotten underwater castle. (DONE)
-030. A volcano erupting with a fountain of colorful butterflies instead of lava.
+030. A volcano erupting with a fountain of colorful butterflies instead of lava. (DONE)
 
 ### [Objects & Symbols]
-031. A grandfather clock that leaks golden sand, forming a beach inside a living room.
+031. A grandfather clock that leaks golden sand, forming a beach inside a living room. (DONE)
 032. A suit of armor filled with blooming rose bushes instead of a knight.
 033. A pair of old spectacles that show a vibrant garden when looking at a gray wall.
 034. A teacup containing a tiny, perfect ocean with a miniature lighthouse and boat.
