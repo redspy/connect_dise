@@ -2,13 +2,13 @@ import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 
 export class DixitMobile extends MobileBaseGame {
   constructor(sdk) {
-    super(sdk, { screenClass: 'game-screen' });
+    super(sdk, { screenClass: 'dx-screen' });
 
     this._nickname        = '';
     this._isStoryteller   = false;
     this._hand            = [];
-    this._selectedCard    = null;   // storyteller 카드 선택 / follower 카드 선택
-    this._mySubmittedCard = null;   // 이번 라운드 제출한 카드
+    this._selectedCard    = null;
+    this._mySubmittedCard = null;
     this._selectedVote    = null;
     this._submitted       = false;
     this._voted           = false;
@@ -48,12 +48,11 @@ export class DixitMobile extends MobileBaseGame {
     this._boardCards      = [];
     this._myScore         = 0;
 
-    const readyBtn = document.getElementById('ready-btn');
+    const readyBtn = document.getElementById('btn-ready');
     if (readyBtn) {
-      readyBtn.disabled  = false;
-      readyBtn.textContent = '준비 완료';
+      readyBtn.disabled    = false;
+      readyBtn.textContent = '준비하기';
     }
-    document.getElementById('ready-status').classList.add('hidden');
 
     if (this._nickname) {
       this._sendProfile();
@@ -65,59 +64,53 @@ export class DixitMobile extends MobileBaseGame {
   // ── UI wiring ─────────────────────────────────────────────────────────────
 
   _wireUI() {
-    // Setup: 닉네임 입력 후 참여
-    document.getElementById('join-btn').addEventListener('click', () => {
-      const nick = document.getElementById('nickname').value.trim();
+    document.getElementById('btn-join').addEventListener('click', () => {
+      const nick = document.getElementById('nickname-input').value.trim();
       if (!nick) return;
       this._nickname = nick;
       this._sendProfile();
     });
-    document.getElementById('nickname').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('join-btn').click();
+    document.getElementById('nickname-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btn-join').click();
     });
 
-    // Waiting: 준비 완료
-    document.getElementById('ready-btn').addEventListener('click', () => {
-      document.getElementById('ready-btn').disabled = true;
-      document.getElementById('ready-btn').textContent = '준비 완료 ✓';
-      document.getElementById('ready-status').classList.remove('hidden');
+    document.getElementById('btn-ready').addEventListener('click', () => {
+      document.getElementById('btn-ready').disabled    = true;
+      document.getElementById('btn-ready').textContent = '준비 완료 ✓';
       this.ready();
     });
 
-    // Storyteller: 힌트+카드 제출
     document.getElementById('clue-input').addEventListener('input', () => this._updateClueBtn());
     document.getElementById('submit-clue-btn').addEventListener('click', () => {
       if (!this._selectedCard) return;
       const clue = document.getElementById('clue-input').value.trim();
       if (!clue) return;
       this.sendToHost('submitClue', { cardId: this._selectedCard, clue });
-      document.getElementById('submit-clue-btn').disabled = true;
+      document.getElementById('submit-clue-btn').disabled    = true;
       document.getElementById('submit-clue-btn').textContent = '제출 완료! 기다리는 중...';
     });
 
-    // Follower: 카드 제출
     document.getElementById('submit-card-btn').addEventListener('click', () => {
       if (!this._selectedCard || this._submitted) return;
       this._submitted       = true;
       this._mySubmittedCard = this._selectedCard;
       this.sendToHost('submitCard', { cardId: this._selectedCard });
-      document.getElementById('submit-card-btn').disabled = true;
+      document.getElementById('submit-card-btn').disabled    = true;
       document.getElementById('submit-card-btn').textContent = '제출 완료! 기다리는 중...';
     });
 
-    // Vote: 투표
     document.getElementById('submit-vote-btn').addEventListener('click', () => {
       if (!this._selectedVote || this._voted) return;
       this._voted = true;
       this.sendToHost('submitVote', { cardId: this._selectedVote });
-      document.getElementById('submit-vote-btn').disabled = true;
+      document.getElementById('submit-vote-btn').disabled    = true;
       document.getElementById('submit-vote-btn').textContent = '투표 완료! 기다리는 중...';
     });
   }
 
   _updateClueBtn() {
-    const clue = document.getElementById('clue-input').value.trim();
-    const btn  = document.getElementById('submit-clue-btn');
+    const clue  = document.getElementById('clue-input').value.trim();
+    const btn   = document.getElementById('submit-clue-btn');
     const ready = !!(clue && this._selectedCard);
     btn.disabled    = !ready;
     btn.textContent = ready ? '힌트와 카드 제출' : '카드와 힌트를 선택하세요';
@@ -128,7 +121,7 @@ export class DixitMobile extends MobileBaseGame {
   _wireMessages() {
     this.onMessage('playerListUpdated', ({ players }) => {
       this._players = players;
-      this._renderPlayerList();
+      this._renderWaitingPlayers();
     });
 
     this.onMessage('roundStarted', ({ round, storytellerId }) => {
@@ -147,16 +140,14 @@ export class DixitMobile extends MobileBaseGame {
       if (this._isStoryteller) {
         this._showStorytellerClueScreen();
       } else {
-        this._setWaitingMsg('이야기꾼이 힌트를 고르는 중...');
+        this._setWaitingHint('이야기꾼이 힌트를 고르는 중...');
         this.showScreen('waiting');
       }
     });
 
     this.onMessage('clueSubmitted', ({ clue }) => {
       this._clue = clue;
-      if (!this._isStoryteller) {
-        this._showCardSelectScreen();
-      }
+      if (!this._isStoryteller) this._showCardSelectScreen();
     });
 
     this.onMessage('votingStarted', ({ clue, boardCards }) => {
@@ -165,14 +156,14 @@ export class DixitMobile extends MobileBaseGame {
       if (!this._isStoryteller) {
         this._showVoteScreen();
       } else {
-        this._setWaitingMsg('플레이어들이 투표하는 중...');
+        this._setWaitingHint('플레이어들이 투표하는 중...');
         this.showScreen('waiting');
       }
     });
 
     this.onMessage('roundResult', ({ deltas, totals }) => {
-      const delta    = deltas[this.playerId] ?? 0;
-      this._myScore  = totals[this.playerId] ?? this._myScore;
+      const delta   = deltas[this.playerId] ?? 0;
+      this._myScore = totals[this.playerId] ?? this._myScore;
       this._showRoundResultScreen(delta, false);
     });
 
@@ -181,9 +172,7 @@ export class DixitMobile extends MobileBaseGame {
       this._showRoundResultScreen(0, true);
     });
 
-    this.onMessage('rejoinState', payload => {
-      this._applyRejoinState(payload);
-    });
+    this.onMessage('rejoinState', payload => this._applyRejoinState(payload));
   }
 
   // ── Profile ───────────────────────────────────────────────────────────────
@@ -191,8 +180,8 @@ export class DixitMobile extends MobileBaseGame {
   _sendProfile() {
     this.sendToHost('setProfile', { nickname: this._nickname });
     localStorage.setItem('dixit_nickname', this._nickname);
-    document.getElementById('my-name-display').textContent = this._nickname;
-    this._setWaitingMsg('다른 사람이 들어오기를 기다리는 중...');
+    document.getElementById('waiting-nickname').textContent = this._nickname;
+    this._setWaitingHint('게임 시작을 기다리는 중...');
     this.showScreen('waiting');
   }
 
@@ -200,25 +189,24 @@ export class DixitMobile extends MobileBaseGame {
     const saved = localStorage.getItem('dixit_nickname');
     if (saved) {
       this._nickname = saved;
-      document.getElementById('nickname').value = saved;
+      document.getElementById('nickname-input').value = saved;
     }
   }
 
   // ── Screen helpers ────────────────────────────────────────────────────────
 
-  _setWaitingMsg(text) {
-    const p = document.querySelector('[data-screen="waiting"] .waiting-header p');
-    if (p) p.textContent = text;
+  _setWaitingHint(text) {
+    const el = document.getElementById('waiting-hint');
+    if (el) el.textContent = text;
   }
 
-  _renderPlayerList() {
-    const list = document.getElementById('player-list');
-    if (!list) return;
-    document.getElementById('player-count').textContent = this._players.length;
-    list.innerHTML = this._players.map(p => `
-      <div class="player-list-item" style="border-left: 4px solid ${p.color}">
+  _renderWaitingPlayers() {
+    const el = document.getElementById('waiting-players');
+    if (!el) return;
+    el.innerHTML = this._players.map(p => `
+      <div class="dx-waiting-player" style="border-left: 3px solid ${p.color}">
         <span>${p.nickname}</span>
-        <span class="player-score">${p.score}점</span>
+        <span class="dx-player-score">${p.score}점</span>
       </div>
     `).join('');
   }
@@ -235,7 +223,7 @@ export class DixitMobile extends MobileBaseGame {
     for (const cardId of this._hand) {
       const img = this._createCardImg(cardId, () => {
         this._selectedCard = cardId;
-        handEl.querySelectorAll('.card-img').forEach(c => c.classList.remove('selected'));
+        handEl.querySelectorAll('.dx-card-img').forEach(c => c.classList.remove('selected'));
         img.classList.add('selected');
         this._updateClueBtn();
       });
@@ -257,7 +245,7 @@ export class DixitMobile extends MobileBaseGame {
     for (const cardId of this._hand) {
       const img = this._createCardImg(cardId, () => {
         this._selectedCard = cardId;
-        handEl.querySelectorAll('.card-img').forEach(c => c.classList.remove('selected'));
+        handEl.querySelectorAll('.dx-card-img').forEach(c => c.classList.remove('selected'));
         img.classList.add('selected');
         btn.disabled    = false;
         btn.textContent = '이 카드 제출';
@@ -281,7 +269,7 @@ export class DixitMobile extends MobileBaseGame {
       const isMine = cardId === this._mySubmittedCard;
       const img    = this._createCardImg(cardId, isMine ? null : () => {
         this._selectedVote = cardId;
-        boardEl.querySelectorAll('.card-img').forEach(c => c.classList.remove('selected'));
+        boardEl.querySelectorAll('.dx-card-img').forEach(c => c.classList.remove('selected'));
         img.classList.add('selected');
         btn.disabled    = false;
         btn.textContent = '이 카드에 투표';
@@ -293,36 +281,35 @@ export class DixitMobile extends MobileBaseGame {
   }
 
   _showRoundResultScreen(delta, isGameEnd) {
-    const scoreEl = document.getElementById('my-score');
-    if (scoreEl) scoreEl.textContent = this._myScore;
-
-    const titleEl = document.querySelector('[data-screen="round-result"] h1');
+    const titleEl = document.getElementById('result-title');
     if (titleEl) titleEl.textContent = isGameEnd ? '게임 종료! 🎉' : '라운드 종료';
 
-    const msgEl = document.querySelector('[data-screen="round-result"] .result-content > p');
+    const msgEl = document.getElementById('result-msg');
     if (msgEl) {
       msgEl.textContent = isGameEnd
         ? 'PC 화면에서 최종 순위를 확인하세요!'
         : `이번 라운드: ${delta > 0 ? '+' : ''}${delta}점`;
     }
 
-    const waitEl = document.querySelector('[data-screen="round-result"] .waiting-next');
-    if (waitEl) {
-      waitEl.textContent = isGameEnd ? '' : '다음 라운드를 기다리고 있습니다...';
-    }
+    const scoreEl = document.getElementById('my-score');
+    if (scoreEl) scoreEl.textContent = this._myScore;
+
+    const waitEl = document.getElementById('waiting-next');
+    if (waitEl) waitEl.textContent = isGameEnd ? '' : '다음 라운드를 기다리고 있습니다...';
+
     this.showScreen('round-result');
   }
 
   _createCardImg(cardId, onClick) {
-    const img      = document.createElement('img');
-    img.className  = 'card-img';
-    img.src        = `/games/dixit/assets/cards/${cardId}.png`;
-    img.alt        = cardId;
+    const img          = document.createElement('img');
+    img.className      = 'dx-card-img';
+    img.src            = `/games/dixit/assets/cards/${cardId}.png`;
+    img.alt            = cardId;
     img.dataset.cardId = cardId;
     if (onClick) {
       img.addEventListener('click', onClick);
     } else {
-      img.style.cursor  = 'not-allowed';
+      img.style.cursor = 'not-allowed';
     }
     return img;
   }
@@ -334,26 +321,26 @@ export class DixitMobile extends MobileBaseGame {
     boardCards, alreadySubmitted, alreadyVoted, mySubmittedCard,
     myProfile, totals,
   }) {
-    if (players)       { this._players = players; this._renderPlayerList(); }
-    if (round)           this._round           = round;
-    if (storytellerId) {
+    if (players)          { this._players = players; this._renderWaitingPlayers(); }
+    if (round)              this._round           = round;
+    if (storytellerId)    {
       this._storytellerId = storytellerId;
       this._isStoryteller = storytellerId === this.playerId;
     }
-    if (clue)            this._clue            = clue;
-    if (hand)            this._hand            = hand;
-    if (boardCards?.length) this._boardCards   = boardCards;
-    if (totals)          this._myScore         = totals[this.playerId] ?? this._myScore;
-    if (mySubmittedCard) this._mySubmittedCard  = mySubmittedCard;
+    if (clue)               this._clue            = clue;
+    if (hand)               this._hand            = hand;
+    if (boardCards?.length) this._boardCards       = boardCards;
+    if (totals)             this._myScore         = totals[this.playerId] ?? this._myScore;
+    if (mySubmittedCard)    this._mySubmittedCard  = mySubmittedCard;
     if (myProfile?.nickname) {
       this._nickname = myProfile.nickname;
-      document.getElementById('nickname').value = this._nickname;
-      document.getElementById('my-name-display').textContent = this._nickname;
+      document.getElementById('nickname-input').value    = this._nickname;
+      document.getElementById('waiting-nickname').textContent = this._nickname;
     }
 
     if (phase === 'lobby') {
       if (this._nickname) {
-        this._setWaitingMsg('다른 사람이 들어오기를 기다리는 중...');
+        this._setWaitingHint('게임 시작을 기다리는 중...');
         this.showScreen('waiting');
       } else {
         this.showScreen('setup');
@@ -363,17 +350,17 @@ export class DixitMobile extends MobileBaseGame {
 
     if (phase === 'storytelling') {
       if (this._isStoryteller) this._showStorytellerClueScreen();
-      else { this._setWaitingMsg('이야기꾼이 힌트를 고르는 중...'); this.showScreen('waiting'); }
+      else { this._setWaitingHint('이야기꾼이 힌트를 고르는 중...'); this.showScreen('waiting'); }
       return;
     }
 
     if (phase === 'card-selection') {
       if (alreadySubmitted) {
         this._submitted = true;
-        this._setWaitingMsg('카드를 제출했습니다. 다른 플레이어를 기다리는 중...');
+        this._setWaitingHint('카드를 제출했습니다. 다른 플레이어를 기다리는 중...');
         this.showScreen('waiting');
       } else if (this._isStoryteller) {
-        this._setWaitingMsg('플레이어들이 카드를 제출하는 중...');
+        this._setWaitingHint('플레이어들이 카드를 제출하는 중...');
         this.showScreen('waiting');
       } else {
         this._showCardSelectScreen();
@@ -384,10 +371,10 @@ export class DixitMobile extends MobileBaseGame {
     if (phase === 'voting') {
       if (alreadyVoted) {
         this._voted = true;
-        this._setWaitingMsg('투표했습니다. 다른 플레이어를 기다리는 중...');
+        this._setWaitingHint('투표했습니다. 다른 플레이어를 기다리는 중...');
         this.showScreen('waiting');
       } else if (this._isStoryteller) {
-        this._setWaitingMsg('플레이어들이 투표하는 중...');
+        this._setWaitingHint('플레이어들이 투표하는 중...');
         this.showScreen('waiting');
       } else {
         this._showVoteScreen();

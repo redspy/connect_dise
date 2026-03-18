@@ -7,99 +7,85 @@
   <link rel="stylesheet" href="/src/style.css">
   <link rel="stylesheet" href="./style.css">
 </head>
-<body class="host-body">
+<body class="host-board">
 
-  <!-- 1. Lobby -->
-  <div class="game-overlay view" data-phase="lobby">
-    <div class="lobby-header">
-      <h1 class="logo-text">Dixit 🖼️</h1>
-      <p class="description">상상력과 스토리텔링의 예술적인 카드 게임</p>
-    </div>
+  <!-- 항상 보이는 앱바 -->
+  <div id="game-board">
+    <game-appbar title="🖼️ Dixit"></game-appbar>
+  </div>
 
-    <div class="lobby-content">
-      <div class="qr-panel glass">
-        <h2>참가하기</h2>
-        <div id="qr-box" class="qr-container"></div>
-        <p class="qr-url" id="join-url"></p>
+  <!-- 1. 로비 -->
+  <div class="dx-overlay" data-phase="lobby">
+    <game-lobby title="🖼️ Dixit" min-players="3">
+      <div class="dx-rules">
+        <div class="dx-rules-title">게임 방법</div>
+        <ul class="dx-rules-list">
+          <li>이야기꾼이 자신의 카드를 보며 <b>힌트</b>를 제시합니다</li>
+          <li>나머지 플레이어는 힌트에 어울리는 <b>자신의 카드를 제출</b>합니다</li>
+          <li>모든 카드를 섞어 공개 — 이야기꾼의 카드를 <b>투표</b>합니다</li>
+          <li>일부만 정답: 이야기꾼 <b>+3</b>, 정답자 <b>+3</b>, 미끼 득표 <b>+1</b></li>
+          <li>전원 정답 또는 전원 오답: 이야기꾼 0, 나머지 <b>+2</b></li>
+          <li>먼저 <b>30점</b>을 달성하면 승리!</li>
+        </ul>
       </div>
+    </game-lobby>
+  </div>
 
-      <div class="players-panel glass">
-        <div class="players-header">
-          <h2>플레이어 (<span id="player-count">0</span>/8)</h2>
-        </div>
-        <div id="player-grid" class="player-grid"></div>
-        <div class="preparation-status">
-          <p id="ready-status">최소 3명의 플레이어가 필요합니다.</p>
-        </div>
+  <!-- 2. Storytelling Phase -->
+  <div class="dx-overlay hidden" data-phase="storytelling">
+    <div class="dx-phase-container">
+      <h2 id="storyteller-name" class="dx-storyteller-badge">이야기꾼 선정 중...</h2>
+      <p class="dx-instruction">이야기꾼이 카드를 고르고 힌트를 입력하고 있습니다.</p>
+      <div class="dx-loading-area">
+        <div class="dx-card-loader"></div>
       </div>
     </div>
   </div>
 
-  <!-- 2. Storytelling Phase (Clue wait) -->
-  <div class="game-overlay view hidden" data-phase="storytelling">
-    <div class="phase-header">
-      <h2 id="storyteller-name" class="storyteller-badge">이야기꾼 선정 중...</h2>
-      <p class="instruction">이야기꾼이 카드를 고르고 힌트를 입력하고 있습니다.</p>
-    </div>
-    <div class="center-content">
-      <div class="loading-animation">
-        <div class="card-loader"></div>
+  <!-- 3. Card Selection Phase -->
+  <div class="dx-overlay hidden" data-phase="card-selection">
+    <div class="dx-phase-container">
+      <div class="dx-clue-banner glass">
+        <span class="dx-label">힌트</span>
+        <h2 id="current-clue" class="dx-clue-text">"..."</h2>
       </div>
-    </div>
-  </div>
-
-  <!-- 3. Card Selection Phase (Others wait) -->
-  <div class="game-overlay view hidden" data-phase="card-selection">
-    <div class="phase-header">
-      <div class="clue-banner glass">
-        <span class="label">힌트</span>
-        <h2 id="current-clue" class="clue-text">"..."</h2>
-      </div>
-      <p class="instruction">다른 플레이어들이 힌트에 어울리는 카드를 제출하고 있습니다.</p>
-    </div>
-    <div class="submission-status">
-      <div id="submission-grid" class="submission-grid"></div>
+      <p class="dx-instruction">다른 플레이어들이 카드를 제출하고 있습니다.</p>
+      <div id="submission-grid" class="dx-submission-grid"></div>
     </div>
   </div>
 
   <!-- 4. Voting Phase -->
-  <div class="game-overlay view hidden" data-phase="voting">
-    <div class="phase-header">
-      <div class="clue-banner glass">
-        <span class="label">힌트</span>
-        <h2 id="voting-clue" class="clue-text">"..."</h2>
+  <div class="dx-overlay hidden" data-phase="voting">
+    <div class="dx-phase-container">
+      <div class="dx-clue-banner glass">
+        <span class="dx-label">힌트</span>
+        <h2 id="voting-clue" class="dx-clue-text">"..."</h2>
       </div>
-      <p class="instruction">이야기꾼의 카드는 무엇일까요? 투표해주세요!</p>
-    </div>
-    <div class="board-container">
-      <div id="card-board" class="card-board"></div>
-    </div>
-    <div class="vote-status-bar">
-      <div id="vote-progress" class="vote-progress"></div>
+      <p class="dx-instruction">이야기꾼의 카드를 찾아 투표하세요!</p>
+      <div id="card-board" class="dx-card-board"></div>
+      <div id="vote-progress" class="dx-vote-progress"></div>
     </div>
   </div>
 
   <!-- 5. Round Results -->
-  <div class="game-overlay view hidden" data-phase="round-result">
-    <div class="result-header">
+  <div class="dx-overlay hidden" data-phase="round-result">
+    <div class="dx-phase-container dx-result-container">
       <h1>라운드 결과</h1>
-      <p id="round-conclusion"></p>
-    </div>
-    <div class="result-board">
-      <div id="result-cards" class="result-cards"></div>
-    </div>
-    <div class="score-update-list" id="score-updates"></div>
-    <div class="action-footer">
-      <button id="next-round-btn" class="primary-btn">다음 라운드</button>
+      <p id="round-conclusion" class="dx-conclusion"></p>
+      <div id="result-cards" class="dx-result-cards"></div>
+      <div id="score-updates" class="dx-score-updates"></div>
+      <div class="dx-action-footer">
+        <button id="next-round-btn" class="dx-btn-primary">다음 라운드 →</button>
+      </div>
     </div>
   </div>
 
-  <!-- 6. Game Final Results -->
-  <div class="game-overlay view hidden" data-phase="final">
-    <div class="final-content glass">
+  <!-- 6. Final Results -->
+  <div class="dx-overlay hidden" data-phase="final">
+    <div class="dx-final-panel glass">
       <h1>최종 순위 🎉</h1>
-      <div id="ranking-list" class="ranking-list"></div>
-      <button id="restart-btn" class="primary-btn">로비로 이동</button>
+      <div id="ranking-list" class="dx-ranking-list"></div>
+      <button id="restart-btn" class="dx-btn-primary">로비로 이동</button>
     </div>
   </div>
 

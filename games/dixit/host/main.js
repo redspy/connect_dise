@@ -6,7 +6,7 @@ import { getHandSize, WIN_SCORE, MIN_PLAYERS } from '../shared/constants.js';
 
 class DixitGame extends HostBaseGame {
   constructor(sdk) {
-    super(sdk, { overlayClass: 'game-overlay', qrContainerId: 'qr-box' });
+    super(sdk, { overlayClass: 'dx-overlay' });
 
     this._profiles      = new Map();  // id → { nickname }
     this._hands         = new Map();  // id → cardId[]
@@ -21,15 +21,20 @@ class DixitGame extends HostBaseGame {
     this._votes          = [];  // [{ voterId, cardId }]
     this._boardCards     = [];  // 투표용 셔플 배열
     this._gameStarted    = false;
+    this._readyCount     = 0;
 
     this._wireHandlers();
   }
 
   // ── HostBaseGame hooks ────────────────────────────────────────────────────
 
-  async onSetup({ sessionId }) {
-    document.getElementById('join-url').textContent =
-      location.origin + '/mobile/#' + sessionId;
+  async onSetup() {
+    const appbar = document.querySelector('game-appbar');
+    if (appbar) appbar.onRestart = () => this.resetSession();
+
+    const lobby = document.querySelector('game-lobby');
+    if (lobby) lobby.onStart = () => this._startGame();
+
     document.getElementById('next-round-btn')
       .addEventListener('click', () => this._nextRound());
     document.getElementById('restart-btn')
@@ -39,14 +44,21 @@ class DixitGame extends HostBaseGame {
 
   onPlayerJoin(player) {
     this._scores.set(player.id, 0);
-    this._updateLobby();
+    this.renderLobbyPlayers(this._getLobbyProfiles());
+    this.updateLobbyReady(this._readyCount);
   }
 
   onPlayerLeave(playerId) {
     this._profiles.delete(playerId);
     this._scores.delete(playerId);
     this._hands.delete(playerId);
-    this._updateLobby();
+    this.renderLobbyPlayers(this._getLobbyProfiles());
+    this.updateLobbyReady(this._readyCount);
+  }
+
+  onReadyUpdate({ readyCount }) {
+    this._readyCount = readyCount;
+    this.updateLobbyReady(readyCount);
   }
 
   onPlayerRejoin(player) {
@@ -70,8 +82,10 @@ class DixitGame extends HostBaseGame {
     this._votes          = [];
     this._boardCards     = [];
     this._gameStarted    = false;
+    this._readyCount     = 0;
     for (const p of this.players.values()) this._scores.set(p.id, 0);
-    this._updateLobby();
+    this.renderLobbyPlayers(this._getLobbyProfiles());
+    this.updateLobbyReady(0);
     this.setPhase('lobby');
   }
 
@@ -80,7 +94,7 @@ class DixitGame extends HostBaseGame {
   _wireHandlers() {
     this.onMessage('setProfile', (player, { nickname }) => {
       this._profiles.set(player.id, { nickname: nickname?.trim() || '익명' });
-      this._updateLobby();
+      this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
       if (this._gameStarted) this._sendRejoinState(player.id);
     });
@@ -275,24 +289,12 @@ class DixitGame extends HostBaseGame {
 
   // ── Rendering ─────────────────────────────────────────────────────────────
 
-  _updateLobby() {
-    document.getElementById('player-count').textContent = this.playerCount;
-    const grid = document.getElementById('player-grid');
-    grid.innerHTML = '';
-    for (const [id, player] of this.players) {
-      const nick = this._profiles.get(id)?.nickname;
-      const el   = document.createElement('div');
-      el.className = 'player-card glass';
-      el.style.borderTop = `4px solid ${player.color}`;
-      el.innerHTML = `<div class="player-name">${nick ?? '접속 중...'}</div>`;
-      grid.appendChild(el);
+  _getLobbyProfiles() {
+    const map = new Map();
+    for (const [id, profile] of this._profiles) {
+      map.set(id, { nickname: profile.nickname });
     }
-    const status = document.getElementById('ready-status');
-    if (this.playerCount < MIN_PLAYERS) {
-      status.textContent = `최소 ${MIN_PLAYERS}명의 플레이어가 필요합니다.`;
-    } else {
-      status.textContent = '모든 플레이어가 준비되면 시작합니다.';
-    }
+    return map;
   }
 
   _renderSubmissionGrid() {
@@ -304,11 +306,11 @@ class DixitGame extends HostBaseGame {
       const nick      = this._profiles.get(id)?.nickname ?? '익명';
       const isStory   = id === this._storytellerId;
       const el        = document.createElement('div');
-      el.className    = `submission-status-card ${submitted ? 'done' : 'waiting'}`;
+      el.className    = `dx-submission-card ${submitted ? 'done' : 'waiting'}`;
       el.style.borderColor = player.color;
       el.innerHTML = `
-        <span class="ss-nick">${nick}</span>
-        <span class="ss-icon">${isStory ? '✍️' : (submitted ? '✅' : '⌛')}</span>
+        <span class="dx-ss-nick">${nick}</span>
+        <span class="dx-ss-icon">${isStory ? '✍️' : (submitted ? '✅' : '⌛')}</span>
       `;
       grid.appendChild(el);
     }
@@ -320,7 +322,7 @@ class DixitGame extends HostBaseGame {
     board.innerHTML = '';
     for (const cardId of this._boardCards) {
       const img = document.createElement('img');
-      img.className = 'dixit-card';
+      img.className = 'dx-card';
       img.src = `/games/dixit/assets/cards/${cardId}.png`;
       img.alt = cardId;
       board.appendChild(img);
@@ -357,11 +359,11 @@ class DixitGame extends HostBaseGame {
       const isStory   = cardId === storyCardId;
       const voteCount = votesOnCard[cardId] ?? 0;
       const wrap      = document.createElement('div');
-      wrap.className  = `result-card-wrap${isStory ? ' storyteller-card' : ''}`;
+      wrap.className  = `dx-result-card-wrap${isStory ? ' storyteller-card' : ''}`;
       wrap.innerHTML  = `
-        <img class="dixit-card" src="/games/dixit/assets/cards/${cardId}.png" alt="${cardId}">
-        <div class="card-owner" style="border-color:${ownerColor}">${ownerNick}${isStory ? ' 👑' : ''}</div>
-        ${voteCount > 0 ? `<div class="vote-count">${voteCount}표</div>` : ''}
+        <img class="dx-card" src="/games/dixit/assets/cards/${cardId}.png" alt="${cardId}">
+        <div class="dx-card-owner" style="border-color:${ownerColor}">${ownerNick}${isStory ? ' 👑' : ''}</div>
+        ${voteCount > 0 ? `<div class="dx-vote-count">${voteCount}표</div>` : ''}
       `;
       resultCards.appendChild(wrap);
     }
@@ -373,12 +375,12 @@ class DixitGame extends HostBaseGame {
       const delta = deltas[id] ?? 0;
       const total = totals[id] ?? 0;
       const el    = document.createElement('div');
-      el.className = 'score-update-row';
+      el.className = 'dx-score-row';
       el.style.borderLeft = `4px solid ${player.color}`;
       el.innerHTML = `
-        <span class="su-nick">${nick}</span>
-        <span class="su-delta ${delta > 0 ? 'plus' : ''}">${delta > 0 ? '+' : ''}${delta}점</span>
-        <span class="su-total">→ ${total}점</span>
+        <span class="dx-su-nick">${nick}</span>
+        <span class="dx-su-delta ${delta > 0 ? 'plus' : ''}">${delta > 0 ? '+' : ''}${delta}점</span>
+        <span class="dx-su-total">→ ${total}점</span>
       `;
       scoresEl.appendChild(el);
     }
@@ -392,11 +394,11 @@ class DixitGame extends HostBaseGame {
       if (i > 0 && p.score < ranked[i - 1].score) displayRank = i + 1;
       const medal = medals[displayRank - 1] ?? `${displayRank}위`;
       return `
-        <div class="rank-row ${displayRank === 1 ? 'winner' : ''}">
-          <span class="rank-medal">${medal}</span>
-          <div class="rank-dot" style="background:${p.color}"></div>
-          <span class="rank-name">${p.nickname}</span>
-          <span class="rank-score">${p.score}점</span>
+        <div class="dx-rank-row ${displayRank === 1 ? 'winner' : ''}">
+          <span class="dx-rank-medal">${medal}</span>
+          <div class="dx-rank-dot" style="background:${p.color}"></div>
+          <span class="dx-rank-name">${p.nickname}</span>
+          <span class="dx-rank-score">${p.score}점</span>
         </div>
       `;
     }).join('');
