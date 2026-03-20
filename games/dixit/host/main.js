@@ -447,5 +447,5 @@ class DixitGame extends HostBaseGame {
   }
 }
 
-const sdk  = new HostSDK();
+const sdk  = new HostSDK({ gameId: 'dixit' });
 new DixitGame(sdk);
