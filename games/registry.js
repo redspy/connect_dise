@@ -89,6 +89,17 @@ export const GAMES = [
     group: 'multi',
   },
   {
+    id: 'trading-battle',
+    name: '천하제일단타대회',
+    description: '실제 주식 차트로 매매 배틀! 제한 시간 내 최고 수익률을 달성하라 📈',
+    hostPath: '/games/trading-battle/host/',
+    mobilePath: '/games/trading-battle/mobile/',
+    minPlayers: 2,
+    maxPlayers: 4,
+    thumbnail: '📈',
+    group: 'multi',
+  },
+  {
     id: 'omok',
     name: '오목',
     description: 'AI와 1:1 오목 대결! 13×13 바둑판에서 먼저 5개를 연결하면 승리',

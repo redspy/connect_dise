@@ -16,6 +16,7 @@
   "dependencies": {
     "@3d-dice/dice-box": "^1.1.4",
     "express": "^5.2.1",
+    "lightweight-charts": "^5.1.0",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",

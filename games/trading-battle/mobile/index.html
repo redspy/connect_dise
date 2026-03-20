@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>천하제일단타대회</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="tb-mobile">
+
+  <!-- ── 닉네임 설정 화면 ── -->
+  <div class="tb-screen" data-screen="setup">
+    <div class="setup-wrap">
+      <div class="setup-logo">📈</div>
+      <h1 class="setup-title">천하제일<br>단타대회</h1>
+      <p class="setup-sub">닉네임을 입력하세요</p>
+      <input
+        id="nickname-input"
+        class="nickname-input"
+        type="text"
+        maxlength="10"
+        placeholder="닉네임 (최대 10자)"
+        autocomplete="off"
+      >
+      <button id="btn-join" class="btn-primary">참가하기 →</button>
+    </div>
+  </div>
+
+  <!-- ── 대기 화면 ── -->
+  <div class="tb-screen hidden" data-screen="waiting">
+    <div class="waiting-wrap">
+      <div class="waiting-icon">⏳</div>
+      <div id="waiting-nickname" class="waiting-nickname"></div>
+      <div class="waiting-hint">호스트가 게임을 시작할 때까지<br>기다리는 중...</div>
+      <button id="btn-ready" class="btn-primary">준비하기</button>
+    </div>
+  </div>
+
+  <!-- ── 트레이딩 화면 ── -->
+  <div class="tb-screen hidden" data-screen="trading">
+
+    <!-- 카운트다운 오버레이 -->
+    <div id="countdown-overlay" class="countdown-overlay hidden">
+      <div id="countdown-text" class="countdown-text">3</div>
+    </div>
+
+    <!-- 체결 오버레이 (주문 후 다음 캔들까지 표시) -->
+    <div id="settled-overlay" class="settled-overlay hidden">
+      <div class="settled-icon">✓</div>
+      <div class="settled-text">체결</div>
+      <p class="settled-sub">다음 캔들 대기 중...</p>
+    </div>
+
+    <!-- 상단 상태 바 -->
+    <div class="trading-header">
+      <div class="stat-item">
+        <span class="stat-label">포지션</span>
+        <span id="my-position" class="stat-value">💰 현금</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">자산</span>
+        <span id="my-equity" class="stat-value">$10,000</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">수익률</span>
+        <span id="my-pnl" class="stat-value">0.0%</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">남은 시간</span>
+        <span id="trading-timer" class="stat-value timer">--:--</span>
+      </div>
+    </div>
+
+    <!-- 캔들 타이머 바 -->
+    <div class="candle-timer-bar">
+      <div id="candle-timer-bar-fill" class="candle-timer-bar-fill"></div>
+    </div>
+
+    <!-- 주문 버튼 영역 -->
+    <div class="order-area">
+
+      <!-- 현금 상태: 4가지 주문 버튼 -->
+      <div id="order-grid" class="order-grid">
+        <button id="btn-long2x" class="order-btn long2x">
+          <span class="order-btn-icon">🚀</span>
+          <span class="order-btn-name">2배 롱</span>
+          <span class="order-btn-sub">상승×2</span>
+        </button>
+        <button id="btn-short2x" class="order-btn short2x">
+          <span class="order-btn-icon">💥</span>
+          <span class="order-btn-name">2배 숏</span>
+          <span class="order-btn-sub">하락×2</span>
+        </button>
+        <button id="btn-long" class="order-btn long">
+          <span class="order-btn-icon">📈</span>
+          <span class="order-btn-name">롱</span>
+          <span class="order-btn-sub">상승 베팅</span>
+        </button>
+        <button id="btn-short" class="order-btn short">
+          <span class="order-btn-icon">📉</span>
+          <span class="order-btn-name">숏</span>
+          <span class="order-btn-sub">하락 베팅</span>
+        </button>
+      </div>
+
+      <!-- 포지션 있는 상태: 매도 버튼만 -->
+      <div id="sell-btn-wrap" class="sell-btn-wrap hidden">
+        <button id="btn-cash" class="order-btn-sell">
+          <span class="order-btn-icon">💰</span>
+          <span class="order-btn-name">매도</span>
+          <span class="order-btn-sub">현금 전환</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 게임 결과 화면 ── -->
+  <div class="tb-screen hidden" data-screen="game_result">
+    <div class="result-wrap">
+      <div id="result-my-rank" class="result-rank-big">--</div>
+      <div id="result-my-equity" class="result-equity-big">$--</div>
+      <div id="result-my-pnl" class="result-pnl-big">--%</div>
+
+      <div class="result-divider"></div>
+
+      <div class="result-list-label">최종 순위</div>
+      <div id="result-list" class="result-list"></div>
+
+      <button id="btn-rematch" class="btn-primary">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

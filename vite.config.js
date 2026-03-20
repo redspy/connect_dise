@@ -87,6 +87,8 @@ export default defineConfig({
         dobbleMobile:       resolve(__dirname, 'games/dobble/mobile/index.html'),
         dixitHost:          resolve(__dirname, 'games/dixit/host/index.html'),
         dixitMobile:        resolve(__dirname, 'games/dixit/mobile/index.html'),
+        tradingBattleHost:   resolve(__dirname, 'games/trading-battle/host/index.html'),
+        tradingBattleMobile: resolve(__dirname, 'games/trading-battle/mobile/index.html'),
         omok:               resolve(__dirname, 'games/omok/index.html'),
       },
     },

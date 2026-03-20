@@ -1,0 +1,313 @@
+/* ── 천하제일단타대회 호스트 스타일 ── */
+/* Stitch 디자인 시스템: 다크 사이버펑크, 네온 청록+녹색 */
+
+:root {
+  --primary: #00daf3;
+  --primary-dim: #c3f5ff;
+  --secondary: #02c953;
+  --danger: #b4002b;
+  --surface: #10141a;
+  --surface-low: #181c22;
+  --surface-high: #262a31;
+  --surface-bright: #353940;
+  --on-surface: #dfe2eb;
+  --on-surface-dim: #bac9cc;
+  --positive: #40e56c;
+  --negative: #ffb4ab;
+}
+
+.tb-host {
+  background: var(--surface);
+  color: var(--on-surface);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 게임 보드 ── */
+.game-board {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  gap: 0;
+}
+
+.game-board.hidden { display: none; }
+
+/* 트레이딩 페이즈에서 게임보드 표시 */
+.tb-overlay[data-phase="trading"] ~ #game-board { display: flex; }
+
+/* ── 헤더 ── */
+.tb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  background: var(--surface-low);
+  border-bottom: 1px solid #1c2026;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.tb-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tb-header-center { flex: 1; text-align: center; }
+.tb-header-right { display: flex; align-items: center; gap: 16px; }
+
+.game-title-badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+  background: rgba(0, 218, 243, 0.1);
+  border: 1px solid rgba(0, 218, 243, 0.3);
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.stock-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.current-price {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.top-player-badge {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-dim);
+  background: rgba(195, 245, 255, 0.08);
+  padding: 6px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(195, 245, 255, 0.15);
+}
+
+.timer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.timer-label {
+  font-size: 0.65rem;
+  color: var(--on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timer-value {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.04em;
+}
+
+/* ── 차트 ── */
+.chart-container {
+  flex: 1;
+  min-height: 0;
+  background: var(--surface);
+  position: relative;
+}
+
+/* ── 카운트다운 ── */
+.countdown-display {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 8rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-shadow: 0 0 60px rgba(0, 218, 243, 0.6);
+  background: rgba(16, 20, 26, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.countdown-display.hidden { display: none; }
+
+/* ── 플레이어 패널 ── */
+.player-panels {
+  display: flex;
+  flex-shrink: 0;
+  background: var(--surface-low);
+  border-top: 1px solid #1c2026;
+  height: 100px;
+  overflow: hidden;
+}
+
+.player-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border-right: 1px solid #1c2026;
+  position: relative;
+  transition: background 0.3s;
+}
+
+.player-panel:last-child { border-right: none; }
+
+.player-panel.first-place {
+  background: rgba(0, 218, 243, 0.06);
+  box-shadow: inset 0 1px 0 rgba(0, 218, 243, 0.3);
+}
+
+.player-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--player-color, transparent);
+  opacity: 0.7;
+}
+
+.player-rank {
+  position: absolute;
+  top: 6px; left: 8px;
+  font-size: 0.65rem;
+  color: var(--on-surface-dim);
+  font-weight: 600;
+}
+
+.player-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.player-balance {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-dim);
+}
+
+.player-pnl {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.player-pnl.positive { color: var(--positive); }
+.player-pnl.negative { color: var(--negative); }
+
+.player-pos {
+  font-size: 0.7rem;
+  color: var(--on-surface-dim);
+}
+
+/* ── 오버레이 공통 ── */
+.tb-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+}
+
+.tb-overlay.hidden { display: none; }
+
+/* ── 결과 화면 ── */
+.result-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: min(600px, 90vw);
+  background: var(--surface-low);
+  border-radius: 16px;
+  padding: 40px;
+  border: 1px solid rgba(0, 218, 243, 0.2);
+  box-shadow: 0 0 80px rgba(0, 218, 243, 0.08);
+}
+
+.result-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0;
+}
+
+.result-rankings {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--surface-high);
+  border-radius: 10px;
+}
+
+.result-row.winner {
+  background: rgba(0, 218, 243, 0.08);
+  border: 1px solid rgba(0, 218, 243, 0.3);
+}
+
+.result-medal { font-size: 1.5rem; }
+.result-name { flex: 1; font-weight: 600; font-size: 1.1rem; }
+.result-equity { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary-dim); }
+.result-pnl { font-weight: 700; font-size: 1rem; min-width: 80px; text-align: right; }
+.result-pnl.positive { color: var(--positive); }
+.result-pnl.negative { color: var(--negative); }
+
+.btn-restart {
+  background: rgba(0, 218, 243, 0.15);
+  border: 1px solid rgba(0, 218, 243, 0.4);
+  color: var(--primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 40px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-restart:hover {
+  background: rgba(0, 218, 243, 0.25);
+  box-shadow: 0 0 20px rgba(0, 218, 243, 0.2);
+}
+
+/* ── 게임보드 표시 제어 ── */
+/* 트레이딩 페이즈: overlay 없으므로 game-board 표시 */
+body:not(:has(.tb-overlay:not(.hidden))) .game-board {
+  display: flex !important;
+}
