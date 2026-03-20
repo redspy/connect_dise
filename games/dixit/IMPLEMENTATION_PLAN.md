@@ -8,7 +8,7 @@
 
 | 항목 | 상태 |
 |------|------|
-| 카드 에셋 | ✅ 48장 완료 (card_001~048) |
+| 카드 에셋 | ✅ 54장 완료 (card_001~054) |
 | `shared/constants.js` | ✅ 완료 |
 | `shared/deck.js` | ✅ 완료 |
 | `shared/scoring.js` | ✅ 완료 |
@@ -29,7 +29,7 @@
 - 지원 인원: **3~8명**
 - 손패 크기: 3인 7장 / 4인 이상 6장
 - 게임 종료: 30점 도달 또는 덱 소진
-- 카드 수: **48장** (card_001.png ~ card_048.png)
+- 카드 수: **54장** (card_001.png ~ card_054.png)
 
 ---
 
@@ -58,7 +58,7 @@
 MIN_PLAYERS = 3
 MAX_PLAYERS = 8
 WIN_SCORE   = 30
-CARD_COUNT  = 48
+CARD_COUNT  = 54
 getHandSize(playerCount)  // 3인 → 7, 나머지 → 6
 ```
 
@@ -70,11 +70,11 @@ getHandSize(playerCount)  // 3인 → 7, 나머지 → 6
 games/dixit/
 ├── IMPLEMENTATION_PLAN.md
 ├── assets/
-│   └── cards/              # card_001.png ~ card_048.png (48장)
+│   └── cards/              # card_001.png ~ card_054.png (54장)
 ├── cards/
 │   └── IMAGE_PROMPTS_100.md
 ├── shared/
-│   ├── constants.js        # 상수 (CARD_COUNT=48, WIN_SCORE=30 등)
+│   ├── constants.js        # 상수 (CARD_COUNT=54, WIN_SCORE=30 등)
 │   ├── deck.js             # DeckManager, buildCardList, shuffle
 │   └── scoring.js          # calculateRoundScores 순수 함수
 ├── host/
