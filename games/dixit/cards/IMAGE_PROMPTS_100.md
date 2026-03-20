@@ -60,19 +60,19 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 041. A gramophone where the music becomes a physical spiral of colorful flowers. (DONE)
 042. A telescope that brings the moon so close you can touch it with a finger. (DONE)
 043. A birdcage full of origami birds that are starting to take flight. (DONE)
-044. A chess board where the pieces are miniature kingdoms battling with magic.
-045. A sewing machine stitching together pieces of the night sky into a quilt.
+044. A chess board where the pieces are miniature kingdoms battling with magic. (DONE)
+045. A sewing machine stitching together pieces of the night sky into a quilt. (DONE)
 
 ### [Fantasy & Dreams]
-046. A child riding a giant moth over a city made of glowing crystal towers.
-047. A mermaid sitting on a rock, combing her hair which flows into a waterfall.
-048. A centaur librarian reading a massive book by the light of a magic lantern.
-049. A castle built inside a giant translucent bubble floating over a dark forest.
-050. A dragon made of autumn leaves guarding a hoard of golden acorns.
-051. An owl wearing a wizard's hat, perched on a pile of floating scrolls.
-052. A bridge of stars connecting the earth to a distant, glowing planet.
-053. A giant's boot used as a cozy village house with smoke rising from the chimney.
-054. A pegasus drinking from a fountain of liquid moonlight in a secret garden.
+046. A child riding a giant moth over a city made of glowing crystal towers. (DONE)
+047. A mermaid sitting on a rock, combing her hair which flows into a waterfall. (DONE)
+048. A centaur librarian reading a massive book by the light of a magic lantern. (DONE)
+049. A castle built inside a giant translucent bubble floating over a dark forest. (DONE)
+050. A dragon made of autumn leaves guarding a hoard of golden acorns. (DONE)
+051. An owl wearing a wizard's hat, perched on a pile of floating scrolls. (DONE)
+052. A bridge of stars connecting the earth to a distant, glowing planet. (DONE)
+053. A giant's boot used as a cozy village house with smoke rising from the chimney. (DONE)
+054. A pegasus drinking from a fountain of liquid moonlight in a secret garden. (DONE)
 055. A wizard's tower that is actually a giant living tree with windows in the trunk.
 056. A group of forest spirits dancing around a bonfire made of blue flames.
 057. A ship with wings instead of sails, flying alongside a pod of sky-whales.
