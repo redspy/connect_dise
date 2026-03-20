@@ -17,12 +17,7 @@ export function buildCardList(count = CARD_COUNT) {
 
 export class DeckManager {
   constructor(cardCount = CARD_COUNT) {
-    // 카드가 부족한 경우 반복 사용 (테스트용 — 카드 84장 이상 시 제거)
-    const base   = buildCardList(cardCount);
-    const target = Math.max(84, base.length);
-    const extended = [];
-    while (extended.length < target) extended.push(...base);
-    this._drawPile    = shuffle(extended.slice(0, target));
+    this._drawPile    = shuffle(buildCardList(cardCount));
     this._discardPile = [];
   }
 

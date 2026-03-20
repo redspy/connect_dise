@@ -48,18 +48,18 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 
 ### [Objects & Symbols]
 031. A grandfather clock that leaks golden sand, forming a beach inside a living room. (DONE)
-032. A suit of armor filled with blooming rose bushes instead of a knight.
-033. A pair of old spectacles that show a vibrant garden when looking at a gray wall.
-034. A teacup containing a tiny, perfect ocean with a miniature lighthouse and boat.
-035. A lightbulb where the filament is a glowing, trapped phoenix.
-036. A giant quill pen writing a story on the surface of a still pond.
-037. A compass where the needle points towards a floating golden castle in the clouds.
-038. A hand mirror reflecting a starry night sky instead of the viewer's face.
-039. A padlock made of ice, melting to reveal a glowing golden heart.
-040. A stack of vintage luggage that transforms into a luxury train as it opens.
-041. A gramophone where the music becomes a physical spiral of colorful flowers.
-042. A telescope that brings the moon so close you can touch it with a finger.
-043. A birdcage full of origami birds that are starting to take flight.
+032. A suit of armor filled with blooming rose bushes instead of a knight. (DONE)
+033. A pair of old spectacles that show a vibrant garden when looking at a gray wall. (DONE)
+034. A teacup containing a tiny, perfect ocean with a miniature lighthouse and boat. (DONE)
+035. A lightbulb where the filament is a glowing, trapped phoenix. (DONE)
+036. A giant quill pen writing a story on the surface of a still pond. (DONE)
+037. A compass where the needle points towards a floating golden castle in the clouds. (DONE)
+038. A hand mirror reflecting a starry night sky instead of the viewer's face. (DONE)
+039. A padlock made of ice, melting to reveal a glowing golden heart. (DONE)
+040. A stack of vintage luggage that transforms into a luxury train as it opens. (DONE)
+041. A gramophone where the music becomes a physical spiral of colorful flowers. (DONE)
+042. A telescope that brings the moon so close you can touch it with a finger. (DONE)
+043. A birdcage full of origami birds that are starting to take flight. (DONE)
 044. A chess board where the pieces are miniature kingdoms battling with magic.
 045. A sewing machine stitching together pieces of the night sky into a quilt.
 
