@@ -73,12 +73,12 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 052. A bridge of stars connecting the earth to a distant, glowing planet. (DONE)
 053. A giant's boot used as a cozy village house with smoke rising from the chimney. (DONE)
 054. A pegasus drinking from a fountain of liquid moonlight in a secret garden. (DONE)
-055. A wizard's tower that is actually a giant living tree with windows in the trunk.
-056. A group of forest spirits dancing around a bonfire made of blue flames.
-057. A ship with wings instead of sails, flying alongside a pod of sky-whales.
-058. A stone golem covered in flowers, gently holding a tiny bird in its hand.
-059. A path through the woods where the trees bow down to form a living tunnel.
-060. A child discovering a door in a tree that leads to a miniature fairy banquet.
+055. A wizard's tower that is actually a giant living tree with windows in the trunk. (DONE)
+056. A group of forest spirits dancing around a bonfire made of blue flames. (DONE)
+057. A ship with wings instead of sails, flying alongside a pod of sky-whales. (DONE)
+058. A stone golem covered in flowers, gently holding a tiny bird in its hand. (DONE)
+059. A path through the woods where the trees bow down to form a living tunnel. (DONE)
+060. A child discovering a door in a tree that leads to a miniature fairy banquet. (DONE)
 
 ### [Abstract & Whimsical]
 061. A rain of colorful paints falling onto a city, turning it into a masterpiece.
