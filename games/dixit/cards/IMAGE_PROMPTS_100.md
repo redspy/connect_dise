@@ -81,16 +81,16 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 060. A child discovering a door in a tree that leads to a miniature fairy banquet. (DONE)
 
 ### [Abstract & Whimsical]
-061. A rain of colorful paints falling onto a city, turning it into a masterpiece.
-062. A giant hand reaching down from the sky to adjust a single star.
-063. A clock whose numbers are flying away like scared birds.
-064. A heart made of different shaped gears and clockwork, ticking softly.
-065. A city where the houses are stacked on top of each other like a game of Jenga.
-066. A labyrinth of bookshelves where the paths shift and change like a dream.
-067. A person walking on a tightrope made of golden thread between two clouds.
-068. A giant eye in the sky, reflecting a peaceful valley within its pupil.
-069. A tapestry that is being unraveled, with the threads turning into real landscape.
-070. A jar of captured memories, each glowing with a different color and scene.
+061. A rain of colorful paints falling onto a city, turning it into a masterpiece. (DONE)
+062. A giant hand reaching down from the sky to adjust a single star. (DONE)
+063. A clock whose numbers are flying away like scared birds. (DONE)
+064. A heart made of different shaped gears and clockwork, ticking softly. (DONE)
+065. A city where the houses are stacked on top of each other like a game of Jenga. (DONE)
+066. A labyrinth of bookshelves where the paths shift and change like a dream. (DONE)
+067. A person walking on a tightrope made of golden thread between two clouds. (DONE)
+068. A giant eye in the sky, reflecting a peaceful valley within its pupil. (DONE)
+069. A tapestry that is being unraveled, with the threads turning into real landscape. (DONE)
+070. A jar of captured memories, each glowing with a different color and scene. (DONE)
 071. A staircase that leads to nowhere but is surrounded by beautiful floating doors.
 072. A shadow of a person that is more colorful and detailed than the person themselves.
 073. A key that unlocks the seasons, with each tooth representing a different leaf or flake.
