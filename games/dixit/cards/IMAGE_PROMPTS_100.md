@@ -91,18 +91,18 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 068. A giant eye in the sky, reflecting a peaceful valley within its pupil. (DONE)
 069. A tapestry that is being unraveled, with the threads turning into real landscape. (DONE)
 070. A jar of captured memories, each glowing with a different color and scene. (DONE)
-071. A staircase that leads to nowhere but is surrounded by beautiful floating doors.
-072. A shadow of a person that is more colorful and detailed than the person themselves.
-073. A key that unlocks the seasons, with each tooth representing a different leaf or flake.
-074. A puzzle piece that fits perfectly into a missing part of the horizon.
-075. A fountain of ink that writes poetry on the air as it splashes.
+071. A staircase that leads to nowhere but is surrounded by beautiful floating doors. (DONE)
+072. A shadow of a person that is more colorful and detailed than the person themselves. (DONE)
+073. A key that unlocks the seasons, with each tooth representing a different leaf or flake. (DONE)
+074. A puzzle piece that fits perfectly into a missing part of the horizon. (DONE)
+075. A fountain of ink that writes poetry on the air as it splashes. (DONE)
 
 ### [Animals & Creatures]
-076. A rabbit in a tuxedo, checking a pocket watch while hurrying through a rose garden.
-077. An elephant with butterfly ears, gently trumpeting towards a field of flowers.
-078. A wolf made of constellations, howling at a moon made of cheese.
-079. A squirrel gathering glowing stars instead of acorns for the winter.
-080. A penguin wearing a tropical hat, surfing on a wave of rainbow fruit juice.
+076. A rabbit in a tuxedo, checking a pocket watch while hurrying through a rose garden. (DONE)
+077. An elephant with butterfly ears, gently trumpeting towards a field of flowers. (DONE)
+078. A wolf made of constellations, howling at a moon made of cheese. (DONE)
+079. A squirrel gathering glowing stars instead of acorns for the winter. (DONE)
+080. A penguin wearing a tropical hat, surfing on a wave of rainbow fruit juice. (DONE)
 081. A lion whose mane is a vibrant garden of exotic flowers and vines.
 082. A giraffe whose neck reaches up to graze on the leaves of a cloud-tree.
 083. A sea turtle with a miniature tropical island paradise on its shell.
