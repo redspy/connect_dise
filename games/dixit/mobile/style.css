@@ -146,10 +146,11 @@ body.dixit-mobile {
   display:       block;
   transition:    border-color .2s, transform .2s, box-shadow .2s;
 }
-/* 보드 투표 화면: 셀을 꽉 채우도록 aspect-ratio 해제 */
+/* 보드 투표 화면: 셀 높이를 채우되 이미지 전체가 보이도록 contain 사용 */
 .dx-board-container .dx-card-img {
   aspect-ratio: unset;
   height:       100%;
+  object-fit:   contain;
 }
 .dx-card-img:hover:not(.my-submitted) { transform: scale(1.04); }
 .dx-card-img.selected {
