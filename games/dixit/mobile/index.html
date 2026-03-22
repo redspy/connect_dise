@@ -38,9 +38,12 @@
 
   <!-- 3. Storyteller Clue Input -->
   <div class="dx-screen hidden" data-screen="storyteller-clue">
-    <div class="dx-phase-header">
-      <h2>이야기꾼의 턴</h2>
-      <p>카드를 한 장 고르고 힌트를 입력하세요.</p>
+    <div class="dx-phase-header-row">
+      <div class="dx-phase-header">
+        <h2>이야기꾼의 턴</h2>
+        <p>카드를 한 장 고르고 힌트를 입력하세요.</p>
+      </div>
+      <div id="dx-timer-clue" class="dx-timer hidden"></div>
     </div>
     <div class="dx-hand-container" id="storyteller-hand"></div>
     <div class="dx-clue-input-area">
@@ -51,9 +54,12 @@
 
   <!-- 4. Card Selection (Followers) -->
   <div class="dx-screen hidden" data-screen="card-select">
-    <div class="dx-clue-banner">
-      <span class="dx-label">힌트</span>
-      <h2 id="current-clue" class="dx-clue-text">"..."</h2>
+    <div class="dx-phase-header-row">
+      <div class="dx-clue-banner">
+        <span class="dx-label">힌트</span>
+        <h2 id="current-clue" class="dx-clue-text">"..."</h2>
+      </div>
+      <div id="dx-timer-card" class="dx-timer hidden"></div>
     </div>
     <p class="dx-instruction">이 힌트와 가장 어울리는 내 카드를 한 장 제출하세요.</p>
     <div class="dx-hand-container" id="follower-hand"></div>
@@ -62,9 +68,12 @@
 
   <!-- 5. Voting -->
   <div class="dx-screen hidden" data-screen="vote">
-    <div class="dx-clue-banner">
-      <span class="dx-label">힌트</span>
-      <h2 id="voting-clue" class="dx-clue-text">"..."</h2>
+    <div class="dx-phase-header-row">
+      <div class="dx-clue-banner">
+        <span class="dx-label">힌트</span>
+        <h2 id="voting-clue" class="dx-clue-text">"..."</h2>
+      </div>
+      <div id="dx-timer-vote" class="dx-timer hidden"></div>
     </div>
     <p class="dx-instruction">이야기꾼의 카드는 무엇일까요? 한 장을 선택하세요.</p>
     <div class="dx-board-container" id="voting-board"></div>

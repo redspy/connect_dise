@@ -43,6 +43,11 @@ export class HostSDK extends EventTarget {
       this._emit('playerLeave', playerId);
     });
 
+    // 플레이어 일시 연결 끊김 (grace period 시작)
+    socket.on('platform:playerDisconnected', ({ playerId }) => {
+      this._emit('playerDisconnect', { playerId });
+    });
+
     // 재연결: 플레이어 Map 갱신 후 게임에 알림
     socket.on('platform:playerRejoined', ({ player }) => {
       this._players.set(player.id, player);

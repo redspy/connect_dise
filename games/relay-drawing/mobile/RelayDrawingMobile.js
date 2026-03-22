@@ -32,11 +32,27 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this.showScreen('setup');
   }
 
+  onRejoin() {
+    const nickname = localStorage.getItem('rd_nickname');
+    if (nickname) {
+      const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+      this.sendToHost('setProfile', { nickname, avatar });
+    }
+    this.showScreen('waiting');
+  }
+
   onReset() {
     this._clearTimer();
     this._hasSubmitted = false;
     document.getElementById('readyBtn')?.classList.remove('hidden');
     document.getElementById('readyStatus')?.classList.add('hidden');
+
+    const nickname = localStorage.getItem('rd_nickname');
+    if (nickname) {
+      document.getElementById('myNameDisplay').textContent = nickname;
+      const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+      this.sendToHost('setProfile', { nickname, avatar });
+    }
     this.showScreen('waiting');
   }
 
@@ -126,12 +142,13 @@ export class RelayDrawingMobile extends MobileBaseGame {
     if (!canvas) return;
     this._profileCtx = canvas.getContext('2d');
 
-    // 고정 크기
-    canvas.width = 120;
-    canvas.height = 120;
+    // 래퍼 크기에 맞춰 캔버스 해상도 설정
+    const size = Math.min(200, Math.round(window.innerWidth * 0.55));
+    canvas.width = size;
+    canvas.height = size;
 
     this._profileCtx.fillStyle = '#FFFFFF';
-    this._profileCtx.fillRect(0, 0, 120, 120);
+    this._profileCtx.fillRect(0, 0, size, size);
 
     const start = (e) => {
       e.preventDefault();
@@ -339,6 +356,21 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this.onMessage('showResults', () => {
       this._clearTimer();
       this.showScreen('spectate');
+    });
+
+    this.onMessage('rejoinState', ({ phase, assignment }) => {
+      if (phase === 'game' && assignment) {
+        this._hasSubmitted = false;
+        if (assignment.turnType === 'draw') {
+          this._setupDrawPhase(assignment.content, assignment.timeLimit);
+        } else {
+          this._setupWordPhase(assignment.content, assignment.timeLimit);
+        }
+      }
+    });
+
+    this.onMessage('roundSubmitted', () => {
+      this.showScreen('standby');
     });
   }
 

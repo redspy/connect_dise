@@ -108,6 +108,31 @@ export class TetrisMobile extends MobileBaseGame {
       this._gameActive = false;
       this._showResult(rankings);
     });
+
+    this.onMessage('rejoinState', ({ phase, showNextPiece, level, lines }) => {
+      if (phase !== 'playing') return;
+      this._showNextPiece = showNextPiece;
+      this._stopAllTimers();
+      this._engine     = new TetrisEngine();
+      this._level      = level;
+      this._totalLines = lines;
+      this._alive      = true;
+      this._gameActive = true;
+
+      const nextPanel = document.getElementById('next-panel');
+      if (nextPanel) nextPanel.style.display = this._showNextPiece ? 'flex' : 'none';
+
+      this.showScreen('game');
+      requestAnimationFrame(() => {
+        this._resizeCanvas();
+        this._engine.spawn();
+        this._render();
+        this._updateLevelUI();
+        this._startDropTimer();
+        this._startLevelTimer();
+        this._bindGestureControls();
+      });
+    });
   }
 
   // ─── UI 배선 ─────────────────────────────────────────────────────────────

@@ -19,6 +19,8 @@ export class DixitMobile extends MobileBaseGame {
     this._boardCards      = [];
     this._myScore         = 0;
 
+    this._clientTimerInterval = null;
+
     this._wireUI();
     this._wireMessages();
     this._prefillNickname();
@@ -35,6 +37,7 @@ export class DixitMobile extends MobileBaseGame {
   }
 
   onReset() {
+    this._clearClientTimer();
     this._isStoryteller   = false;
     this._hand            = [];
     this._selectedCard    = null;
@@ -161,7 +164,12 @@ export class DixitMobile extends MobileBaseGame {
       }
     });
 
+    this.onMessage('phaseTimer', ({ duration, phase }) => {
+      this._startClientTimer(duration, phase);
+    });
+
     this.onMessage('roundResult', ({ deltas, totals }) => {
+      this._clearClientTimer();
       const delta   = deltas[this.playerId] ?? 0;
       this._myScore = totals[this.playerId] ?? this._myScore;
       this._showRoundResultScreen(delta, false);
@@ -321,12 +329,54 @@ export class DixitMobile extends MobileBaseGame {
     return img;
   }
 
+  // ── Client Timer ──────────────────────────────────────────────────────────
+
+  _startClientTimer(duration, phase) {
+    this._clearClientTimer();
+    const timerIds = {
+      'storytelling':  'dx-timer-clue',
+      'card-selection': 'dx-timer-card',
+      'voting':         'dx-timer-vote',
+    };
+    const timerId = timerIds[phase];
+    if (!timerId) return;
+    const el = document.getElementById(timerId);
+    if (!el) return;
+
+    let remaining = Math.ceil(duration);
+    const update = () => {
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      el.textContent = `⏱ ${mins}:${secs.toString().padStart(2, '0')}`;
+      el.classList.remove('hidden');
+      el.classList.toggle('dx-timer-warning', remaining <= 30);
+    };
+    update();
+
+    this._clientTimerInterval = setInterval(() => {
+      remaining--;
+      update();
+      if (remaining <= 0) this._clearClientTimer();
+    }, 1000);
+  }
+
+  _clearClientTimer() {
+    if (this._clientTimerInterval) {
+      clearInterval(this._clientTimerInterval);
+      this._clientTimerInterval = null;
+    }
+    ['dx-timer-clue', 'dx-timer-card', 'dx-timer-vote'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.classList.add('hidden'); el.textContent = ''; }
+    });
+  }
+
   // ── Rejoin ────────────────────────────────────────────────────────────────
 
   _applyRejoinState({
     phase, players, round, storytellerId, clue, hand,
     boardCards, alreadySubmitted, alreadyVoted, mySubmittedCard,
-    myProfile, totals,
+    myProfile, totals, phaseTimerRemaining,
   }) {
     if (players)          { this._players = players; this._renderWaitingPlayers(); }
     if (round)              this._round           = round;
@@ -358,6 +408,7 @@ export class DixitMobile extends MobileBaseGame {
     if (phase === 'storytelling') {
       if (this._isStoryteller) this._showStorytellerClueScreen();
       else { this._setWaitingHint('이야기꾼이 힌트를 고르는 중...'); this.showScreen('waiting'); }
+      if (phaseTimerRemaining > 0) this._startClientTimer(phaseTimerRemaining, 'storytelling');
       return;
     }
 
@@ -372,6 +423,7 @@ export class DixitMobile extends MobileBaseGame {
       } else {
         this._showCardSelectScreen();
       }
+      if (phaseTimerRemaining > 0) this._startClientTimer(phaseTimerRemaining, 'card-selection');
       return;
     }
 
@@ -386,6 +438,7 @@ export class DixitMobile extends MobileBaseGame {
       } else {
         this._showVoteScreen();
       }
+      if (phaseTimerRemaining > 0) this._startClientTimer(phaseTimerRemaining, 'voting');
       return;
     }
 

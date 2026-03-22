@@ -16,7 +16,7 @@
 
 /* ── Overlay ───────────────────────────────────────────────────────────────── */
 .dx-overlay {
-  position:   absolute;
+  position:   fixed;
   inset:      0;
   display:    flex;
   flex-direction: column;
@@ -24,6 +24,12 @@
   box-sizing: border-box;
   animation:  fadeIn 0.4s ease-out;
   overflow-y: auto;
+}
+
+.dx-overlay[data-phase="lobby"] {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 /* ── Phase containers ──────────────────────────────────────────────────────── */
@@ -230,6 +236,62 @@
 .dx-rank-dot   { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .dx-rank-name  { flex: 1; font-size: 18px; font-weight: 600; }
 .dx-rank-score { font-size: 20px; font-weight: 700; color: var(--dx-gold); }
+
+/* ── Lobby Settings ────────────────────────────────────────────────────────── */
+.dx-lobby-settings {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.dx-setting-row {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+}
+.dx-setting-label {
+  font-size:  14px;
+  opacity:    .75;
+  flex:       1;
+}
+.dx-select {
+  background:    rgba(255,255,255,.1);
+  color:         white;
+  border:        1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  padding:       6px 10px;
+  font-size:     14px;
+  cursor:        pointer;
+  outline:       none;
+}
+.dx-select option { background: #302b63; }
+
+/* ── Phase Timer (Host, floating bottom-right) ─────────────────────────────── */
+.dx-host-timer {
+  position:      fixed;
+  bottom:        24px;
+  right:         24px;
+  z-index:       200;
+  background:    rgba(10,8,30,.88);
+  border:        2px solid rgba(108,92,231,.5);
+  border-radius: 16px;
+  padding:       10px 20px;
+  font-size:     28px;
+  font-weight:   700;
+  color:         #a29bfe;
+  letter-spacing: 2px;
+  backdrop-filter: blur(8px);
+  box-shadow:    0 4px 20px rgba(0,0,0,.5);
+  transition:    color .3s, border-color .3s;
+}
+.dx-host-timer.dx-timer-warning {
+  color:         #fd79a8;
+  border-color:  rgba(253,121,168,.6);
+  animation:     timerPulse .8s ease-in-out infinite;
+}
+@keyframes timerPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
 .dx-btn-primary {

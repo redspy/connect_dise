@@ -84,6 +84,25 @@ export class PuzzleMobile extends MobileBaseGame {
       this._gameActive = false;
       this._showResult(winner, rankings);
     });
+
+    this.onMessage('rejoinState', ({ phase, board, currentBoard, moves, seconds }) => {
+      if (phase !== 'playing') return;
+      this._initBoard(board);
+      // Restore player's actual progress
+      this._board = [...currentBoard];
+      this._emptyIndex = this._board.indexOf(0);
+      this._moves   = moves;
+      this._seconds = seconds;
+      document.getElementById('game-moves').textContent = moves;
+      document.getElementById('game-timer').textContent = this._formatTime(seconds);
+      this._gameActive = moves > 0; // timer resumes on next move
+      this.showScreen('game');
+      requestAnimationFrame(() => {
+        this._createTileElements();
+        this._renderBoard(false);
+        this._bindBoardEvents();
+      });
+    });
   }
 
   // ─── UI setup ────────────────────────────────────────────────────────────
