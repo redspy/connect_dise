@@ -2,7 +2,7 @@ import { HostSDK }       from '../../../platform/client/HostSDK.js';
 import { HostBaseGame }  from '../../../platform/client/HostBaseGame.js';
 import { DeckManager }   from '../shared/deck.js';
 import { calculateRoundScores } from '../shared/scoring.js';
-import { getHandSize, WIN_SCORE, MIN_PLAYERS } from '../shared/constants.js';
+import { getHandSize, WIN_SCORE, MIN_PLAYERS, CARD_COUNT } from '../shared/constants.js';
 
 class DixitGame extends HostBaseGame {
   constructor(sdk) {
@@ -44,6 +44,8 @@ class DixitGame extends HostBaseGame {
       .addEventListener('click', () => this._nextRound());
     document.getElementById('restart-btn')
       .addEventListener('click', () => this.resetSession());
+
+    this._initCardGallery();
     this.setPhase('lobby');
   }
 
@@ -423,6 +425,70 @@ class DixitGame extends HostBaseGame {
         </div>
       `;
     }).join('');
+  }
+
+  // ── Card Gallery ──────────────────────────────────────────────────────────
+
+  _initCardGallery() {
+    const overlay  = document.getElementById('dx-card-gallery');
+    const grid     = document.getElementById('dx-gallery-grid');
+    const zoomEl   = document.getElementById('dx-card-zoom');
+    const zoomImg  = document.getElementById('dx-zoom-img');
+    const zoomLbl  = document.getElementById('dx-zoom-label');
+
+    // 카드 그리드 채우기 (lazy: 첫 오픈 시 1회만)
+    let built = false;
+    const buildGrid = () => {
+      if (built) return;
+      built = true;
+      for (let i = 1; i <= CARD_COUNT; i++) {
+        const id  = `card_${String(i).padStart(3, '0')}`;
+        const src = `/games/dixit/assets/cards/${id}.png`;
+
+        const card = document.createElement('div');
+        card.className = 'dx-gallery-card';
+        card.innerHTML = `
+          <img src="${src}" alt="${id}" loading="lazy">
+          <div class="dx-gallery-card-num">${i}</div>
+        `;
+        card.addEventListener('click', () => {
+          zoomImg.src = src;
+          zoomLbl.textContent = `카드 #${i}`;
+          zoomEl.classList.remove('hidden');
+        });
+        grid.appendChild(card);
+      }
+    };
+
+    // 열기
+    document.getElementById('btn-view-all-cards')
+      .addEventListener('click', () => {
+        buildGrid();
+        overlay.classList.remove('hidden');
+      });
+
+    // 닫기 — X 버튼
+    document.getElementById('btn-close-gallery')
+      .addEventListener('click', () => overlay.classList.add('hidden'));
+
+    // 닫기 — 오버레이 배경 클릭
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.add('hidden');
+    });
+
+    // 줌 닫기 — 클릭
+    zoomEl.addEventListener('click', () => zoomEl.classList.add('hidden'));
+
+    // ESC 닫기
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (!zoomEl.classList.contains('hidden')) {
+          zoomEl.classList.add('hidden');
+        } else {
+          overlay.classList.add('hidden');
+        }
+      }
+    });
   }
 
   // ── Phase Timer ───────────────────────────────────────────────────────────

@@ -123,29 +123,29 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 095. A swing hanging from a crescent moon, over a sea of soft fluffy clouds. (DONE)
 096. A child blowing bubbles, and inside each bubble is a different tiny world. (DONE)
 097. A robot made of old clock parts, handing a fresh flower to a tiny bird. (DONE)
-098. A garden where the flowers are made of delicate colorful paper.
-099. A lighthouse that shines a beam of darkness into a bright sunny sky.
-100. A cozy cottage inside a giant glass bottle, floating on a sea of stars.
+098. A garden where the flowers are made of delicate colorful paper. (DONE)
+099. A lighthouse that shines a beam of darkness into a bright sunny sky. (DONE)
+100. A cozy cottage inside a giant glass bottle, floating on a sea of stars. (DONE)
 
 ---
 
 ### [NEW: Detailed & Abstract expansion (101-200)]
 
 ### [Abstract & Metaphysical]
-101. A human heart made of intricate stained glass, refracting sunlight into a kaleidoscope of lost memories on a stone wall.
-102. A face dissolving into a thousand white origami birds, each carrying a tiny silver lantern into a void.
-103. A giant hourglass where the top half is a vibrant jungle and the bottom half is a silent, crystalline desert.
-104. A person made of intertwined musical notes, playing a piano where the keys are frozen moments in time.
-105. A mirror reflecting a version of the world where gravity works horizontally, with trees growing sideways into the sunset.
-106. A shadow that has detached from its owner and is busy planting glowing seeds in a field of darkness.
-107. A labyrinth where the walls are made of translucent silk curtains, rippling with the colors of a distant nebula.
-108. A giant's teardrop containing a miniature universe where stars are born from the ripples of the fall.
-109. A brain made of glowing fiber-optic cables, with each pulse of light transforming into a fluttering butterfly.
-110. A doorway carved into a giant redwood, opening into a library where the books are made of liquid light.
-111. A chessboard where the black and white squares are alternating patches of day and night, with players made of mist.
-112. A bridge made of whispers, solidifying only when walked upon by a person carrying a secret.
-113. A giant eye floating in a storm, whose iris is a spinning galaxy drawing in the fragments of broken clocks.
-114. A person unzipping the fabric of the sky to reveal a hidden layer of golden clockwork and celestial gears.
+101. A human heart made of intricate stained glass, refracting sunlight into a kaleidoscope of lost memories on a stone wall. (DONE)
+102. A face dissolving into a thousand white origami birds, each carrying a tiny silver lantern into a void. (DONE)
+103. A giant hourglass where the top half is a vibrant jungle and the bottom half is a silent, crystalline desert. (DONE)
+104. A person made of intertwined musical notes, playing a piano where the keys are frozen moments in time. (DONE)
+105. A mirror reflecting a version of the world where gravity works horizontally, with trees growing sideways into the sunset. (DONE)
+106. A shadow that has detached from its owner and is busy planting glowing seeds in a field of darkness. (DONE)
+107. A labyrinth where the walls are made of translucent silk curtains, rippling with the colors of a distant nebula. (DONE)
+108. A giant's teardrop containing a miniature universe where stars are born from the ripples of the fall. (DONE)
+109. A brain made of glowing fiber-optic cables, with each pulse of light transforming into a fluttering butterfly. (DONE)
+110. A doorway carved into a giant redwood, opening into a library where the books are made of liquid light. (DONE)
+111. A chessboard where the black and white squares are alternating patches of day and night, with players made of mist. (DONE)
+112. A bridge made of whispers, solidifying only when walked upon by a person carrying a secret. (DONE)
+113. A giant eye floating in a storm, whose iris is a spinning galaxy drawing in the fragments of broken clocks. (DONE)
+114. A person unzipping the fabric of the sky to reveal a hidden layer of golden clockwork and celestial gears. (DONE)
 115. A waterfall where the water turns into colorful silk ribbons as it falls, weaving itself into a giant tapestry at the bottom.
 116. A city of glass bubbles floating in a void, each bubble containing a different stage of a single dream.
 117. A compass that points not to north, but to the most beautiful memory of whoever holds it.
