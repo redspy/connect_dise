@@ -41,6 +41,11 @@
   flex-direction: column;
 }
 
+.rd-overlay[data-phase="lobby"] {
+  align-items: center;
+  justify-content: center;
+}
+
 .hidden {
   display: none !important;
 }

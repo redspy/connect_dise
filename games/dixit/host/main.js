@@ -23,6 +23,11 @@ class DixitGame extends HostBaseGame {
     this._gameStarted    = false;
     this._readyCount     = 0;
 
+    this._phaseTimeLimit    = 120;  // seconds (기본 2분)
+    this._phaseTimerTimeout = null;
+    this._phaseTimerInterval = null;
+    this._phaseTimerStart   = 0;
+
     this._wireHandlers();
   }
 
@@ -70,6 +75,7 @@ class DixitGame extends HostBaseGame {
   }
 
   onReset() {
+    this._clearPhaseTimer();
     this._profiles.clear();
     this._hands.clear();
     this._scores.clear();
@@ -109,10 +115,7 @@ class DixitGame extends HostBaseGame {
       this._clue = clue.trim();
       this._submissions.push({ playerId: player.id, cardId });
 
-      this.setPhase('card-selection');
-      document.getElementById('current-clue').textContent = `"${this._clue}"`;
-      this._renderSubmissionGrid();
-      this.broadcast('clueSubmitted', { clue: this._clue });
+      this._transitionToCardSelection();
     });
 
     this.onMessage('submitCard', (player, { cardId }) => {
@@ -149,6 +152,9 @@ class DixitGame extends HostBaseGame {
   // ── Game flow ─────────────────────────────────────────────────────────────
 
   _startGame() {
+    const timeSel = document.getElementById('sel-time-limit');
+    this._phaseTimeLimit = timeSel ? Number(timeSel.value) : 120;
+
     this._gameStarted = true;
     this._deck = new DeckManager();
 
@@ -192,6 +198,16 @@ class DixitGame extends HostBaseGame {
     for (const [id, hand] of this._hands) {
       this.sendToPlayer(id, 'dealHand', { hand });
     }
+
+    this._startPhaseTimer('storytelling');
+  }
+
+  _transitionToCardSelection() {
+    this.setPhase('card-selection');
+    document.getElementById('current-clue').textContent = `"${this._clue}"`;
+    this._renderSubmissionGrid();
+    this.broadcast('clueSubmitted', { clue: this._clue });
+    this._startPhaseTimer('card-selection');
   }
 
   _startVoting() {
@@ -208,9 +224,12 @@ class DixitGame extends HostBaseGame {
       clue: this._clue,
       boardCards: this._boardCards,
     });
+
+    this._startPhaseTimer('voting');
   }
 
   _revealResults() {
+    this._clearPhaseTimer();
     const allPlayerIds = [...this.players.keys()];
     const { deltas, scoringCase } = calculateRoundScores(
       this._storytellerId, this._submissions, this._votes, allPlayerIds
@@ -406,6 +425,99 @@ class DixitGame extends HostBaseGame {
     }).join('');
   }
 
+  // ── Phase Timer ───────────────────────────────────────────────────────────
+
+  _startPhaseTimer(phase) {
+    this._clearPhaseTimer();
+    if (!this._phaseTimeLimit) return;
+
+    this._phaseTimerStart = Date.now();
+    this.broadcast('phaseTimer', { duration: this._phaseTimeLimit, phase });
+
+    let remaining = this._phaseTimeLimit;
+    this._updateHostTimerDisplay(remaining);
+
+    this._phaseTimerInterval = setInterval(() => {
+      remaining--;
+      this._updateHostTimerDisplay(remaining);
+      if (remaining <= 0) {
+        clearInterval(this._phaseTimerInterval);
+        this._phaseTimerInterval = null;
+      }
+    }, 1000);
+
+    this._phaseTimerTimeout = setTimeout(() => {
+      this._phaseTimerTimeout = null;
+      this._onPhaseTimeout(phase);
+    }, this._phaseTimeLimit * 1000);
+  }
+
+  _clearPhaseTimer() {
+    if (this._phaseTimerTimeout) {
+      clearTimeout(this._phaseTimerTimeout);
+      this._phaseTimerTimeout = null;
+    }
+    if (this._phaseTimerInterval) {
+      clearInterval(this._phaseTimerInterval);
+      this._phaseTimerInterval = null;
+    }
+    this._updateHostTimerDisplay(0, true);
+  }
+
+  _updateHostTimerDisplay(remaining, hide = false) {
+    const el = document.getElementById('dx-host-timer');
+    if (!el) return;
+    if (hide || remaining <= 0) {
+      el.classList.add('hidden');
+      return;
+    }
+    const mins = Math.floor(remaining / 60);
+    const secs = remaining % 60;
+    el.textContent = `⏱ ${mins}:${secs.toString().padStart(2, '0')}`;
+    el.classList.remove('hidden');
+    el.classList.toggle('dx-timer-warning', remaining <= 30);
+  }
+
+  _onPhaseTimeout(phase) {
+    if (phase === 'storytelling') {
+      if (this.phase !== 'storytelling') return;
+      // 이야기꾼이 제출하지 않았으면 랜덤 카드로 자동 처리
+      if (!this._submissions.find(s => s.playerId === this._storytellerId)) {
+        const hand = this._hands.get(this._storytellerId) ?? [];
+        if (hand.length === 0) return;
+        const cardId = hand[Math.floor(Math.random() * hand.length)];
+        this._clue = '(시간 초과)';
+        this._submissions.push({ playerId: this._storytellerId, cardId });
+      }
+      this._transitionToCardSelection();
+
+    } else if (phase === 'card-selection') {
+      if (this.phase !== 'card-selection') return;
+      // 미제출 플레이어 랜덤 카드로 자동 처리
+      for (const [id, hand] of this._hands) {
+        if (id === this._storytellerId) continue;
+        if (this._submissions.find(s => s.playerId === id)) continue;
+        const used = new Set(this._submissions.map(s => s.cardId));
+        const available = hand.filter(c => !used.has(c));
+        const cardId = available.length > 0
+          ? available[Math.floor(Math.random() * available.length)]
+          : hand[0];
+        if (cardId) this._submissions.push({ playerId: id, cardId });
+      }
+      this._renderSubmissionGrid();
+      this._startVoting();
+
+    } else if (phase === 'voting') {
+      if (this.phase !== 'voting') return;
+      this._revealResults();
+    }
+  }
+
+  _getPhaseTimerRemaining() {
+    if (!this._phaseTimerStart || !this._phaseTimeLimit || !this._phaseTimerTimeout) return null;
+    return Math.max(0, Math.ceil((this._phaseTimerStart + this._phaseTimeLimit * 1000 - Date.now()) / 1000));
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   _broadcastPlayerList() {
@@ -435,19 +547,20 @@ class DixitGame extends HostBaseGame {
     }
     const storyCardId = this._submissions.find(s => s.playerId === this._storytellerId)?.cardId;
     this.sendToPlayer(playerId, 'rejoinState', {
-      phase:           this.phase,
-      players:         this._buildPlayerList(),
-      round:           this._round,
-      storytellerId:   this._storytellerId,
-      clue:            this._clue,
-      hand:            this._hands.get(playerId) ?? [],
-      boardCards:      (this.phase === 'voting' || this.phase === 'round-result') ? this._boardCards : [],
-      alreadySubmitted: this._submissions.some(s => s.playerId === playerId),
-      alreadyVoted:    this._votes.some(v => v.voterId === playerId),
-      mySubmittedCard: this._submissions.find(s => s.playerId === playerId)?.cardId ?? null,
-      myProfile:       this._profiles.get(playerId) ?? null,
-      totals:          Object.fromEntries(this._scores),
-      storyCardId:     this.phase === 'round-result' ? storyCardId : null,
+      phase:              this.phase,
+      players:            this._buildPlayerList(),
+      round:              this._round,
+      storytellerId:      this._storytellerId,
+      clue:               this._clue,
+      hand:               this._hands.get(playerId) ?? [],
+      boardCards:         (this.phase === 'voting' || this.phase === 'round-result') ? this._boardCards : [],
+      alreadySubmitted:   this._submissions.some(s => s.playerId === playerId),
+      alreadyVoted:       this._votes.some(v => v.voterId === playerId),
+      mySubmittedCard:    this._submissions.find(s => s.playerId === playerId)?.cardId ?? null,
+      myProfile:          this._profiles.get(playerId) ?? null,
+      totals:             Object.fromEntries(this._scores),
+      storyCardId:        this.phase === 'round-result' ? storyCardId : null,
+      phaseTimerRemaining: this._getPhaseTimerRemaining(),
     });
   }
 }

@@ -5,7 +5,8 @@ body.dixit-mobile {
   background:   linear-gradient(135deg, #0f0c29, #302b63, #24243e);
   color:        #ffffff;
   font-family:  'Pretendard', -apple-system, sans-serif;
-  min-height:   100svh;
+  height:       100dvh;
+  overflow:     hidden;
   overscroll-behavior: none;
 }
 
@@ -13,11 +14,13 @@ body.dixit-mobile {
 
 /* ── Screens ───────────────────────────────────────────────────────────────── */
 .dx-screen {
-  min-height:     100svh;
+  height:         100dvh;
+  overflow:       hidden;
   display:        flex;
   flex-direction: column;
   padding:        28px 16px env(safe-area-inset-bottom, 16px);
   gap:            16px;
+  box-sizing:     border-box;
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
@@ -92,10 +95,42 @@ body.dixit-mobile {
 }
 .dx-player-score { opacity: .65; font-size: 14px; }
 
+/* ── Phase header row (header + timer) ──────────────────────────────────────── */
+.dx-phase-header-row {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+  flex-shrink: 0;
+}
+.dx-phase-header-row > :first-child { flex: 1; }
+
 /* ── Phase header ──────────────────────────────────────────────────────────── */
 .dx-phase-header { text-align: center; }
 .dx-phase-header h2 { font-size: 20px; font-weight: 700; }
 .dx-phase-header p  { opacity: .7; margin-top: 6px; font-size: 14px; }
+
+/* ── Phase Timer (Mobile) ───────────────────────────────────────────────────── */
+.dx-timer {
+  background:    rgba(255,255,255,.1);
+  border:        1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  padding:       6px 12px;
+  font-size:     18px;
+  font-weight:   700;
+  color:         #a29bfe;
+  letter-spacing: 1px;
+  white-space:   nowrap;
+  flex-shrink:   0;
+}
+.dx-timer.dx-timer-warning {
+  color:           #fd79a8;
+  border-color:    rgba(253,121,168,.5);
+  animation:       mobilePulse .8s ease-in-out infinite;
+}
+@keyframes mobilePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: .6; }
+}
 
 /* ── Clue banner ───────────────────────────────────────────────────────────── */
 .dx-clue-banner   { text-align: center; }

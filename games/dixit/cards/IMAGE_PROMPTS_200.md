@@ -1,0 +1,242 @@
+# Dixit 200 Card Prompts Guide
+
+이 문서는 Dixit 게임에 사용할 **200장의 카드**를 위한 일관된 스타일의 프롬프트 목록입니다.
+101~200번 프롬프트는 더욱 디테일하고 추상적인 테마를 담고 있습니다.
+
+## 1) 생성 가이드 (Nano Banana용)
+
+- Aspect ratio: `3:4` (Vertical)
+- Template:
+```text
+Dreamy storybook illustration, whimsical surrealism, soft painterly texture, rich but gentle colors, clean silhouette, centered composition, 3:4 vertical card art, no text, no watermark, no logo, no frame, no border. Scene: {SCENE_PROMPT}
+```
+
+---
+
+## 2) 프롬프트 목록 (200개)
+
+### [Nature & Seasons]
+001. A tiny lighthouse growing from the back of a sleeping whale under a moonlit sea. (DONE)
+002. A child in a red coat opening an umbrella that blooms into a forest of glowing mushrooms. (DONE)
+003. A giant key floating in the sky, unlocking a cloud-shaped door with stars pouring out. (DONE)
+004. A fox wearing a paper crown, painting the sunrise with a golden brush. (DONE)
+005. A floating library island where books flap like birds around a lantern tower. (DONE)
+006. A clockwork deer with flowers growing from its antlers in a misty meadow. (DONE)
+007. A paper boat sailing on a river of ink between towering origami mountains. (DONE)
+008. A girl climbing a ladder made of violins to reach a glowing crescent moon. (DONE)
+009. A masked cat conducting an orchestra of fireflies in an old theater. (DONE)
+010. A tree with glass leaves reflecting four different seasons at once. (DONE)
+011. A train made of teacups traveling through the night sky on a ribbon track. (DONE)
+012. A giant snail carrying a miniature city lit by warm lanterns. (DONE)
+013. A child releasing a kite shaped like a whale above a desert of mirrors. (DONE)
+014. A staircase spiraling around a sleeping giant made of stone and moss. (DONE)
+015. A jellyfish-shaped hot air balloon drifting above a silent snow village. (DONE)
+016. A knight made of porcelain sharing tea with a dragon made of clouds. (DONE)
+017. A doorway standing alone in a field, opening to an underwater coral world. (DONE)
+018. A tiny moon gardener trimming constellations with silver scissors. (DONE)
+019. A puppet theater where shadows become real animals stepping off the stage. (DONE)
+020. A mountain-sized sleeping cat with villages glowing softly on its back. (DONE)
+021. Autumn leaves transforming into golden goldfish as they touch the water. (DONE)
+022. A frozen waterfall made of liquid diamonds with a fire bird nesting at the top. (DONE)
+023. A field of sunflowers where each flower is a golden clock ticking in unison. (DONE)
+024. A storm cloud captured inside a birdcage, leaking tiny lightning bolts. (DONE)
+025. A bridge made of rainbow silk connecting two floating islands over a sea of milk. (DONE)
+026. A desert where the sand is made of tiny colorful buttons and dunes are giant cushions. (DONE)
+027. A forest of giant dandelions where the seeds are tiny white umbrellas drifting upwards. (DONE)
+028. A polar bear wearing a warm knitted sweater, ice-skating on a frozen lake of starlight. (DONE)
+029. An ancient tree whose roots are tangling around a forgotten underwater castle. (DONE)
+030. A volcano erupting with a fountain of colorful butterflies instead of lava. (DONE)
+
+### [Objects & Symbols]
+031. A grandfather clock that leaks golden sand, forming a beach inside a living room. (DONE)
+032. A suit of armor filled with blooming rose bushes instead of a knight. (DONE)
+033. A pair of old spectacles that show a vibrant garden when looking at a gray wall. (DONE)
+034. A teacup containing a tiny, perfect ocean with a miniature lighthouse and boat. (DONE)
+035. A lightbulb where the filament is a glowing, trapped phoenix. (DONE)
+036. A giant quill pen writing a story on the surface of a still pond. (DONE)
+037. A compass where the needle points towards a floating golden castle in the clouds. (DONE)
+038. A hand mirror reflecting a starry night sky instead of the viewer's face. (DONE)
+039. A padlock made of ice, melting to reveal a glowing golden heart. (DONE)
+040. A stack of vintage luggage that transforms into a luxury train as it opens. (DONE)
+041. A gramophone where the music becomes a physical spiral of colorful flowers. (DONE)
+042. A telescope that brings the moon so close you can touch it with a finger. (DONE)
+043. A birdcage full of origami birds that are starting to take flight. (DONE)
+044. A chess board where the pieces are miniature kingdoms battling with magic. (DONE)
+045. A sewing machine stitching together pieces of the night sky into a quilt. (DONE)
+
+### [Fantasy & Dreams]
+046. A child riding a giant moth over a city made of glowing crystal towers. (DONE)
+047. A mermaid sitting on a rock, combing her hair which flows into a waterfall. (DONE)
+048. A centaur librarian reading a massive book by the light of a magic lantern. (DONE)
+049. A castle built inside a giant translucent bubble floating over a dark forest. (DONE)
+050. A dragon made of autumn leaves guarding a hoard of golden acorns. (DONE)
+051. An owl wearing a wizard's hat, perched on a pile of floating scrolls. (DONE)
+052. A bridge of stars connecting the earth to a distant, glowing planet. (DONE)
+053. A giant's boot used as a cozy village house with smoke rising from the chimney. (DONE)
+054. A pegasus drinking from a fountain of liquid moonlight in a secret garden. (DONE)
+055. A wizard's tower that is actually a giant living tree with windows in the trunk. (DONE)
+056. A group of forest spirits dancing around a bonfire made of blue flames. (DONE)
+057. A ship with wings instead of sails, flying alongside a pod of sky-whales. (DONE)
+058. A stone golem covered in flowers, gently holding a tiny bird in its hand. (DONE)
+059. A path through the woods where the trees bow down to form a living tunnel. (DONE)
+060. A child discovering a door in a tree that leads to a miniature fairy banquet. (DONE)
+
+### [Abstract & Whimsical]
+061. A rain of colorful paints falling onto a city, turning it into a masterpiece. (DONE)
+062. A giant hand reaching down from the sky to adjust a single star. (DONE)
+063. A clock whose numbers are flying away like scared birds. (DONE)
+064. A heart made of different shaped gears and clockwork, ticking softly. (DONE)
+065. A city where the houses are stacked on top of each other like a game of Jenga. (DONE)
+066. A labyrinth of bookshelves where the paths shift and change like a dream. (DONE)
+067. A person walking on a tightrope made of golden thread between two clouds. (DONE)
+068. A giant eye in the sky, reflecting a peaceful valley within its pupil. (DONE)
+069. A tapestry that is being unraveled, with the threads turning into real landscape. (DONE)
+070. A jar of captured memories, each glowing with a different color and scene. (DONE)
+071. A staircase that leads to nowhere but is surrounded by beautiful floating doors. (DONE)
+072. A shadow of a person that is more colorful and detailed than the person themselves. (DONE)
+073. A key that unlocks the seasons, with each tooth representing a different leaf or flake. (DONE)
+074. A puzzle piece that fits perfectly into a missing part of the horizon. (DONE)
+075. A fountain of ink that writes poetry on the air as it splashes. (DONE)
+
+### [Animals & Creatures]
+076. A rabbit in a tuxedo, checking a pocket watch while hurrying through a rose garden. (DONE)
+077. An elephant with butterfly ears, gently trumpeting towards a field of flowers. (DONE)
+078. A wolf made of constellations, howling at a moon made of cheese. (DONE)
+079. A squirrel gathering glowing stars instead of acorns for the winter. (DONE)
+080. A penguin wearing a tropical hat, surfing on a wave of rainbow fruit juice. (DONE)
+081. A lion whose mane is a vibrant garden of exotic flowers and vines. (DONE)
+082. A giraffe whose neck reaches up to graze on the leaves of a cloud-tree. (DONE)
+083. A sea turtle with a miniature tropical island paradise on its shell. (DONE)
+084. A hedgehog whose spines are actually colorful pencils of all different lengths. (DONE)
+085. A cat batting at a ball of yarn that is actually a swirling galaxy. (DONE)
+086. A fox and a crow sharing a meal in a tree made of silver and gold. (DONE)
+087. A spider weaving a web made of diamond threads that catch the morning sun. (DONE)
+088. A caterpillar wearing many shoes, walking along a branch of giant berries. (DONE)
+089. An octopus playing eight different musical instruments at once in a coral hall. (DONE)
+090. A peacock whose tail feathers are all different stained-glass windows. (DONE)
+
+### [Final Mix]
+091. A hot air balloon powered by a giant glowing dandelion puff. (DONE)
+092. A train station inside a giant hollowed-out pumpkin with mice as porters. (DONE)
+093. A girl painting the spots onto a ladybug with a tiny silver brush. (DONE)
+094. A book that opens to reveal a pop-up world that is partially real and coming to life. (DONE)
+095. A swing hanging from a crescent moon, over a sea of soft fluffy clouds. (DONE)
+096. A child blowing bubbles, and inside each bubble is a different tiny world. (DONE)
+097. A robot made of old clock parts, handing a fresh flower to a tiny bird. (DONE)
+098. A garden where the flowers are made of delicate colorful paper.
+099. A lighthouse that shines a beam of darkness into a bright sunny sky.
+100. A cozy cottage inside a giant glass bottle, floating on a sea of stars.
+
+---
+
+### [NEW: Detailed & Abstract expansion (101-200)]
+
+### [Abstract & Metaphysical]
+101. A human heart made of intricate stained glass, refracting sunlight into a kaleidoscope of lost memories on a stone wall.
+102. A face dissolving into a thousand white origami birds, each carrying a tiny silver lantern into a void.
+103. A giant hourglass where the top half is a vibrant jungle and the bottom half is a silent, crystalline desert.
+104. A person made of intertwined musical notes, playing a piano where the keys are frozen moments in time.
+105. A mirror reflecting a version of the world where gravity works horizontally, with trees growing sideways into the sunset.
+106. A shadow that has detached from its owner and is busy planting glowing seeds in a field of darkness.
+107. A labyrinth where the walls are made of translucent silk curtains, rippling with the colors of a distant nebula.
+108. A giant's teardrop containing a miniature universe where stars are born from the ripples of the fall.
+109. A brain made of glowing fiber-optic cables, with each pulse of light transforming into a fluttering butterfly.
+110. A doorway carved into a giant redwood, opening into a library where the books are made of liquid light.
+111. A chessboard where the black and white squares are alternating patches of day and night, with players made of mist.
+112. A bridge made of whispers, solidifying only when walked upon by a person carrying a secret.
+113. A giant eye floating in a storm, whose iris is a spinning galaxy drawing in the fragments of broken clocks.
+114. A person unzipping the fabric of the sky to reveal a hidden layer of golden clockwork and celestial gears.
+115. A waterfall where the water turns into colorful silk ribbons as it falls, weaving itself into a giant tapestry at the bottom.
+116. A city of glass bubbles floating in a void, each bubble containing a different stage of a single dream.
+117. A compass that points not to north, but to the most beautiful memory of whoever holds it.
+118. A giant tree whose leaves are various sized antique keys, jangling softly in a wind made of forgotten songs.
+119. A person made of water, standing in a desert, slowly turning into a statue of salt as the sun rises.
+120. A vast ocean of ink where giant brushes act as whales, creating waves of calligraphy that tell the history of the world.
+
+### [Temporal & Memories]
+121. An antique clock whose hands are actual human fingers, pointing to hours represented by different stages of a flower's life.
+122. A library where the books are jars of colored mists, each representing a specific scent from a childhood summer.
+123. A staircase that leads back to the same spot, but every time you arrive, the season has changed by a hundred years.
+124. A child blowing a dandelion, and each seed becomes a tiny, glowing clock ticking away at a different speed.
+125. A field of rusted anchors in the middle of a desert, with ghostly ships floating miles above them in the heat haze.
+126. A person combing their hair, and each strand becomes a silver thread weaving a map of a city that hasn't been built yet.
+127. A giant sundial where the shadow is a living shadow-cat that chases the passing birds of time.
+128. A room full of floating doors, and through each keyhole, you can see a different version of the same person's life.
+129. A tree that grows backwards, with its roots reaching for the stars and its branches burrowing into the deep earth.
+130. A train station where the passengers are all made of smoke, waiting for a train made of solid moonlight.
+131. A grandfather clock that occasionally spits out small, polished stones engraved with dates from the future.
+132. A person trying to catch falling autumn leaves, but each leaf turns into a photograph of a lost friend upon contact.
+133. A giant's pocket watch lying open in a field, with a forest growing inside the mechanism and birds nesting on the gears.
+134. A lantern that casts shadows of things that are no longer there, like a fallen tree or a long-gone house.
+135. A bridge made of solid light that only appears when someone hums a specific, long-forgotten tune.
+136. A person knitting a scarf that turns into a paved road behind them, stretching across a void into the unknown.
+137. A giant eye looking through a telescope at a tiny, miniature earth contained within a drop of dew.
+138. A field of stone statues that slowly turn into real people whenever the moon is full, only to freeze again at dawn.
+139. A lighthouse whose beam turns whatever it touches into gold, leaving a trail of shimmering landscape in the dark.
+140. A giant book whose pages are made of different types of fabric, each telling a story through texture and pattern.
+
+### [Surreal Architectures]
+141. A city built entirely on the backs of giant, slow-moving tortoises migrating across a world of mirrors.
+142. A cathedral where the pillars are giant redwood trees and the stained glass windows are made of frozen butterfly wings.
+143. A house made of giant playing cards, swaying gently in a wind that carries the scent of old paper and peppermint.
+144. A bridge connecting two mountain peaks, made of nothing but a single, massive, horizontal bolt of lightning.
+145. A village where the houses are carved into giant, floating water lilies on a lake of liquid emerald.
+146. A skyscraper made of stacked antique birdcages, with a different climate and ecosystem inside each cage.
+147. A staircase built by wrapping a giant iron chain around a floating island, leading up to a palace made of ivory.
+148. A city where the streets are made of flowing water and the cars are giant, colorful paper boats propelled by fans.
+149. A castle whose towers are giant telescopes, all pointing at different parts of a giant, glowing clockwork sun.
+150. A village built inside the ribs of a giant, ancient creature, with glowing moss for streetlights and paths made of pearl.
+151. A library where the shelves spiral infinitely upwards into a sky filled with multiple moons and shooting stars.
+152. A house where every room is a different season, and you have to cross a snowy hallway to get to a sunny kitchen.
+153. A city made of giant musical instruments, where the wind playing through the buildings creates a continuous symphony.
+154. A bridge made of giant's fingers, holding up a road of woven silver that stretches across a canyon of clouds.
+155. A palace made entirely of ice that never melts, containing a garden of tropical flowers also made of colored ice.
+156. A village where the houses are giant pumpkins, lit from within by a thousand dancing fireflies.
+157. A city built on a giant, spinning gear, with smaller gears acting as rotating platforms and elevators.
+158. A house that is actually a giant, hollowed-out book, with a balcony made of an open page and a roof made of the spine.
+159. A bridge made of a single, massive, fallen tree that is still alive and growing fruit as it spans the abyss.
+160. A city of light, where the buildings are only solid when people are looking at them, and dissolve into mist at night.
+
+### [Celestial & Cosmic]
+161. A person fishing from the edge of a crescent moon, pulling up glowing stars from a sea of purple space-dust.
+162. A giant's hand scattering a handful of galaxies like seeds into a dark, fertile field of the cosmos.
+163. A comet whose tail is a vibrant garden of cosmic flowers, trailing petals across the night sky.
+164. A person using a giant silver spoon to stir a pot of swirling nebula, creating new stars in the steam.
+165. A moon that is actually a giant, silver eye, watching over a world of sleeping giants made of stardust.
+166. A staircase made of shooting stars, leading up to a throne made of pure, white sunlight in the center of a black hole.
+167. A person painting the constellations onto a giant, black dome, with each star being a tiny, glowing diamond.
+168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide.
+169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation.
+170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss.
+171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares.
+172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds.
+173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity.
+174. A person using a giant telescope to look at their own reflection in a mirror on the other side of the universe.
+175. A garden on a rogue planet, where the plants grow from starlight and the rain is made of liquid gems.
+176. A person weaving a quilt out of the Aurora Borealis, with the colors shifting and moving even after it's finished.
+177. A giant, silver tree growing in the center of a galaxy, with planets as its fruit and stars as its blossoms.
+178. A person skating on a frozen lake of liquid mercury, reflecting a sky filled with multiple, overlapping suns.
+179. A gateway made of two giant, leaning pillars of light, leading into a realm where the stars are close enough to touch.
+180. A person standing on the edge of a planet, watching a sunset where the sun is swallowed by a giant, cosmic whale.
+
+### [Botanical & Elemental]
+181. A flower whose petals are made of different types of fabric, with lace edges and velvet centers, growing from a spool of thread.
+182. A tree whose fruits are glowing glass jars, each containing a different captured storm—thunder, lightning, or rain.
+183. A person tending a garden where the plants are made of fire, but the ground is made of ice that never melts.
+184. A giant lily pad on a lake of mercury, supporting a small, white gazebo made of intricate bone-carvings.
+185. A forest where the trees are giant, colorful mushrooms that release spores that turn into tiny, glowing fairies.
+186. A person walking through a field of wheat made of gold, with the wind carrying the sound of a thousand tiny bells.
+187. A tree whose roots are made of copper pipes, leaking steam that turns into colorful flowers as it hits the cold air.
+188. A person holding a handful of water that has solidified into a beautiful, complex crystalline sculpture.
+189. A field of blue roses that only bloom when someone tells them a secret, turning a darker shade of indigo with each word.
+190. A tree whose leaves are various sized clocks, all showing different times and ticking in a chaotic, musical rhythm.
+191. A person breathing out a cloud of butterflies that then transform into a vibrant, living sunset in the sky.
+192. A giant cactus whose spines are actually tiny, silver needles that play music when the wind blows through them.
+193. A forest where the ground is a giant, plush carpet of moss and the trees are made of giant, twisted candy canes.
+194. A person planting a single, glowing seed in a pot of dark soil, which instantly grows into a miniature tree of light.
+195. A tree whose branches are made of intertwined silver and gold wire, with leaves made of emeralds and rubies.
+196. A person walking on water that is so clear it looks like they are floating over a vibrant, underwater jungle.
+197. A field of various colored glasses, with the sun shining through them to create a mosaic of light on the ground.
+198. A tree whose bark is made of overlapping dragon scales, with a nest of fire-birds in its highest branches.
+199. A person holding a lantern that emits a beam of green light, turning everything it touches into lush, vibrant plants.
+200. A giant, translucent dandelion whose seeds are tiny, glowing parachutes carrying small, sleeping creatures to the ground.

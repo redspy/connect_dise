@@ -17,6 +17,18 @@
   <!-- 1. 로비 -->
   <div class="dx-overlay" data-phase="lobby">
     <game-lobby title="🖼️ Dixit" min-players="3">
+      <div class="dx-lobby-settings">
+        <div class="dx-setting-row">
+          <span class="dx-setting-label">제출 제한 시간</span>
+          <select id="sel-time-limit" class="dx-select">
+            <option value="60">1분</option>
+            <option value="120" selected>2분</option>
+            <option value="180">3분</option>
+            <option value="240">4분</option>
+            <option value="300">5분</option>
+          </select>
+        </div>
+      </div>
       <div class="dx-rules">
         <div class="dx-rules-title">게임 방법</div>
         <ul class="dx-rules-list">
@@ -30,6 +42,9 @@
       </div>
     </game-lobby>
   </div>
+
+  <!-- 공유 타이머 (제출 페이즈에서 표시) -->
+  <div id="dx-host-timer" class="dx-host-timer hidden"></div>
 
   <!-- 2. Storytelling Phase -->
   <div class="dx-overlay hidden" data-phase="storytelling">

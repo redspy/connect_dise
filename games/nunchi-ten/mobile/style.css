@@ -22,15 +22,15 @@ body.nunchi-mobile {
   color: var(--nm-text);
   font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
   margin: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
+  height: 100dvh;
+  overflow: hidden;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 
 /* ── 화면 전환 ──────────────────────────────────────────────────────────────── */
 
-.n-screen { display: flex; flex-direction: column; min-height: 100vh; }
+.n-screen { display: flex; flex-direction: column; height: 100dvh; overflow-y: auto; }
 .n-screen.hidden { display: none; }
 
 /* ── 공통 타이포 ─────────────────────────────────────────────────────────────── */
@@ -264,6 +264,10 @@ body.nunchi-mobile {
   gap: 8px;
   padding: 0 16px;
   margin-bottom: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
 }
 
 .card-btn {
