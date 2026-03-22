@@ -115,13 +115,13 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 090. A peacock whose tail feathers are all different stained-glass windows. (DONE)
 
 ### [Final Mix]
-091. A hot air balloon powered by a giant glowing dandelion puff.
-092. A train station inside a giant hollowed-out pumpkin with mice as porters.
-093. A girl painting the spots onto a ladybug with a tiny silver brush.
-094. A book that opens to reveal a pop-up world that is partially real and coming to life.
-095. A swing hanging from a crescent moon, over a sea of soft fluffy clouds.
-096. A child blowing bubbles, and inside each bubble is a different tiny world.
-097. A robot made of old clock parts, handing a fresh flower to a tiny bird.
+091. A hot air balloon powered by a giant glowing dandelion puff. (DONE)
+092. A train station inside a giant hollowed-out pumpkin with mice as porters. (DONE)
+093. A girl painting the spots onto a ladybug with a tiny silver brush. (DONE)
+094. A book that opens to reveal a pop-up world that is partially real and coming to life. (DONE)
+095. A swing hanging from a crescent moon, over a sea of soft fluffy clouds. (DONE)
+096. A child blowing bubbles, and inside each bubble is a different tiny world. (DONE)
+097. A robot made of old clock parts, handing a fresh flower to a tiny bird. (DONE)
 098. A garden where the flowers are made of delicate colorful paper.
 099. A lighthouse that shines a beam of darkness into a bright sunny sky.
 100. A cozy cottage inside a giant glass bottle, floating on a sea of stars.
