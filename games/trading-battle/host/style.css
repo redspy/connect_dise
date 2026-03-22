@@ -36,10 +36,14 @@
   gap: 0;
 }
 
-.game-board.hidden { display: none; }
+.game-board.hidden {
+  display: none;
+}
 
 /* 트레이딩 페이즈에서 게임보드 표시 */
-.tb-overlay[data-phase="trading"] ~ #game-board { display: flex; }
+.tb-overlay[data-phase='trading'] ~ #game-board {
+  display: flex;
+}
 
 /* ── 헤더 ── */
 .tb-header {
@@ -59,8 +63,15 @@
   gap: 16px;
 }
 
-.tb-header-center { flex: 1; text-align: center; }
-.tb-header-right { display: flex; align-items: center; gap: 16px; }
+.tb-header-center {
+  flex: 1;
+  text-align: center;
+}
+.tb-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
 .game-title-badge {
   font-family: 'Space Grotesk', sans-serif;
@@ -82,12 +93,42 @@
   color: var(--on-surface);
 }
 
+.price-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .current-price {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.2rem;
   font-weight: 700;
-  color: var(--primary);
   letter-spacing: 0.02em;
+}
+
+.current-price.positive {
+  color: var(--positive);
+}
+.current-price.negative {
+  color: var(--negative);
+}
+
+.price-change {
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.price-change.positive {
+  color: var(--positive);
+  background: rgba(64, 229, 108, 0.1);
+}
+
+.price-change.negative {
+  color: var(--negative);
+  background: rgba(255, 180, 171, 0.1);
 }
 
 .top-player-badge {
@@ -123,6 +164,38 @@
   letter-spacing: 0.04em;
 }
 
+.btn-quit-game {
+  background: rgba(180, 0, 43, 0.15);
+  border: 1px solid rgba(180, 0, 43, 0.4);
+  color: var(--danger);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-quit-game:hover {
+  background: rgba(180, 0, 43, 0.25);
+  box-shadow: 0 0 20px rgba(180, 0, 43, 0.2);
+}
+
+/* 시간 progress bar */
+.timer-progress-bar {
+  height: 3px;
+  background: var(--surface-high);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.timer-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  transition: width linear;
+}
+
 /* ── 차트 ── */
 .chart-container {
   flex: 1;
@@ -149,7 +222,9 @@
   pointer-events: none;
 }
 
-.countdown-display.hidden { display: none; }
+.countdown-display.hidden {
+  display: none;
+}
 
 /* ── 플레이어 패널 ── */
 .player-panels {
@@ -164,17 +239,19 @@
 .player-panel {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 12px;
   border-right: 1px solid #1c2026;
   position: relative;
   transition: background 0.3s;
 }
 
-.player-panel:last-child { border-right: none; }
+.player-panel:last-child {
+  border-right: none;
+}
 
 .player-panel.first-place {
   background: rgba(0, 218, 243, 0.06);
@@ -184,46 +261,119 @@
 .player-panel::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 2px;
   background: var(--player-color, transparent);
   opacity: 0.7;
 }
 
 .player-rank {
+  display: none;
+}
+
+.player-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.player-avatar-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.player-crown {
   position: absolute;
-  top: 6px; left: 8px;
-  font-size: 0.65rem;
-  color: var(--on-surface-dim);
-  font-weight: 600;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 3rem;
+  line-height: 1;
+  z-index: 1;
+}
+
+.player-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-high);
+  border: 2px solid var(--player-color);
+  flex-shrink: 0;
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-middle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  margin: 0 12px;
 }
 
 .player-name {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--on-surface);
-  text-align: center;
-  margin-top: 8px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .player-balance {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1rem;
+  font-size: 1.35rem;
   font-weight: 700;
   color: var(--primary-dim);
+  white-space: nowrap;
+  line-height: 1;
 }
 
 .player-pnl {
-  font-size: 0.8rem;
+  font-size: 1.15rem;
   font-weight: 600;
+  white-space: nowrap;
 }
-.player-pnl.positive { color: var(--positive); }
-.player-pnl.negative { color: var(--negative); }
+.player-pnl.positive {
+  color: var(--positive);
+}
+.player-pnl.negative {
+  color: var(--negative);
+}
 
 .player-pos {
-  font-size: 0.7rem;
+  font-size: 1.05rem;
   color: var(--on-surface-dim);
+  text-align: right;
+  white-space: nowrap;
 }
 
 /* ── 오버레이 공통 ── */
@@ -237,7 +387,9 @@
   background: var(--surface);
 }
 
-.tb-overlay.hidden { display: none; }
+.tb-overlay.hidden {
+  display: none;
+}
 
 /* ── 결과 화면 ── */
 .result-panel {
@@ -282,12 +434,32 @@
   border: 1px solid rgba(0, 218, 243, 0.3);
 }
 
-.result-medal { font-size: 1.5rem; }
-.result-name { flex: 1; font-weight: 600; font-size: 1.1rem; }
-.result-equity { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary-dim); }
-.result-pnl { font-weight: 700; font-size: 1rem; min-width: 80px; text-align: right; }
-.result-pnl.positive { color: var(--positive); }
-.result-pnl.negative { color: var(--negative); }
+.result-medal {
+  font-size: 1.5rem;
+}
+.result-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.result-equity {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--primary-dim);
+}
+.result-pnl {
+  font-weight: 700;
+  font-size: 1rem;
+  min-width: 80px;
+  text-align: right;
+}
+.result-pnl.positive {
+  color: var(--positive);
+}
+.result-pnl.negative {
+  color: var(--negative);
+}
 
 .btn-restart {
   background: rgba(0, 218, 243, 0.15);
@@ -304,6 +476,89 @@
 .btn-restart:hover {
   background: rgba(0, 218, 243, 0.25);
   box-shadow: 0 0 20px rgba(0, 218, 243, 0.2);
+}
+
+/* ── 개발 모드 패널 ── */
+#dev-mode-overlay {
+  align-items: flex-start;
+  justify-content: flex-start;
+  z-index: 101;
+}
+
+.dev-panel {
+  width: 320px;
+  height: 100dvh;
+  background: var(--surface-low);
+  border-right: 2px solid rgba(0, 218, 243, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.dev-panel-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(0, 218, 243, 0.2);
+}
+
+.dev-panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 20px;
+}
+
+.dev-setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--on-surface);
+}
+
+.radio-label input[type='radio'] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.btn-dev-start {
+  margin-top: auto;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 218, 243, 0.2),
+    rgba(2, 201, 83, 0.2)
+  );
+  border: 1px solid rgba(0, 218, 243, 0.4);
+  color: var(--primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-dev-start:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 218, 243, 0.3),
+    rgba(2, 201, 83, 0.3)
+  );
+  box-shadow: 0 0 30px rgba(0, 218, 243, 0.2);
 }
 
 /* ── 게임보드 표시 제어 ── */

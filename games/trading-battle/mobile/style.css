@@ -62,8 +62,53 @@
 .setup-sub {
   color: var(--on-surface-dim);
   font-size: 0.9rem;
-  margin: 0;
+  margin: 0 0 24px;
 }
+
+.avatar-section-title {
+  font-size: 0.65rem;
+  color: var(--on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.avatar-btn {
+  background: var(--surface-high);
+  border: 2px solid #3b494c;
+  border-radius: 14px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-btn.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 218, 243, 0.2);
+  transform: scale(1.08);
+  background: rgba(0, 218, 243, 0.1);
+}
+
+.avatar-btn:active { transform: scale(0.95); }
 
 .nickname-input {
   width: 100%;
@@ -128,6 +173,55 @@
   font-size: 0.9rem;
   text-align: center;
   line-height: 1.6;
+}
+
+/* ── 차트 분석 화면 ── */
+.chart-analysis-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 24px;
+  background: linear-gradient(135deg, rgba(0, 218, 243, 0.08) 0%, rgba(2, 201, 83, 0.08) 100%);
+}
+
+.chart-analysis-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.chart-analysis-hint {
+  text-align: center;
+  color: var(--on-surface-dim);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.chart-analysis-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.analysis-countdown {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 5rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(0, 218, 243, 0.3);
+}
+
+.analysis-timer-label {
+  font-size: 0.9rem;
+  color: var(--on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* ── 트레이딩 화면 ── */
@@ -276,6 +370,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .sell-btn-wrap.hidden { display: none; }
@@ -286,12 +381,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 180px;
-  height: 180px;
+  gap: 12px;
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 1;
   background: rgba(186, 201, 204, 0.08);
   border: 2px solid rgba(186, 201, 204, 0.25);
-  border-radius: 20px;
+  border-radius: 24px;
   color: var(--on-surface-dim);
   font-family: 'Space Grotesk', sans-serif;
   cursor: pointer;
@@ -303,9 +399,9 @@
   background: rgba(186, 201, 204, 0.15);
 }
 
-.order-btn-sell .order-btn-icon { font-size: 2.5rem; }
-.order-btn-sell .order-btn-name { font-size: 1.1rem; font-weight: 700; }
-.order-btn-sell .order-btn-sub { font-size: 0.7rem; opacity: 0.7; }
+.order-btn-sell .order-btn-icon { font-size: 4rem; }
+.order-btn-sell .order-btn-name { font-size: 1.6rem; font-weight: 700; }
+.order-btn-sell .order-btn-sub { font-size: 0.85rem; opacity: 0.7; }
 
 .order-btn {
   display: flex;
@@ -447,3 +543,53 @@
 .result-row-equity { font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; color: var(--on-surface-dim); }
 .positive { color: var(--positive); }
 .negative { color: var(--negative); }
+
+/* 포지션 수익률 바 */
+.position-pnl-bar {
+  background: var(--surface-low);
+  border-top: 1px solid #1c2026;
+  border-bottom: 2px solid #1c2026;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.position-pnl-bar.hidden { display: none; }
+
+.position-pnl-label {
+  font-size: 0.65rem;
+  color: var(--on-surface-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.position-pnl-values {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.position-pnl-pct {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: right;
+}
+
+.position-pnl-amount {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--on-surface-dim);
+}
+
+.position-pnl-pct.positive,
+.position-pnl-amount.positive { color: var(--positive); }
+
+.position-pnl-pct.negative,
+.position-pnl-amount.negative { color: var(--negative); }

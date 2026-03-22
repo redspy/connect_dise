@@ -176,6 +176,10 @@ game-lobby {
   height: 100%;
   object-fit: cover;
 }
+.lp-emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+}
 .lp-initial {
   font-size: 1.4rem;
   font-weight: 700;

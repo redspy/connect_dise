@@ -120,13 +120,16 @@ export class LobbyPanel extends HTMLElement {
     for (const [id, player] of playersMap) {
       const profile = profilesMap?.get(id) ?? null;
       const avatarUrl = profile?.avatarUrl ?? null;
+      const avatarEmoji = profile?.avatarEmoji ?? null;
       const initial = (profile?.nickname ?? '?').charAt(0).toUpperCase();
       const card = document.createElement('div');
       card.className = 'lobby-player-card';
       card.dataset.playerId = id;
       card.innerHTML = `
         <div class="lp-avatar" style="border-color:${player.color}">
-          ${avatarUrl
+          ${avatarEmoji
+            ? `<span class="lp-emoji">${avatarEmoji}</span>`
+            : avatarUrl
             ? `<img src="${avatarUrl}" alt="">`
             : `<span class="lp-initial" style="color:${player.color}">${initial}</span>`
           }
