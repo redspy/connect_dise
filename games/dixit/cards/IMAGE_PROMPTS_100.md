@@ -103,16 +103,16 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 078. A wolf made of constellations, howling at a moon made of cheese. (DONE)
 079. A squirrel gathering glowing stars instead of acorns for the winter. (DONE)
 080. A penguin wearing a tropical hat, surfing on a wave of rainbow fruit juice. (DONE)
-081. A lion whose mane is a vibrant garden of exotic flowers and vines.
-082. A giraffe whose neck reaches up to graze on the leaves of a cloud-tree.
-083. A sea turtle with a miniature tropical island paradise on its shell.
-084. A hedgehog whose spines are actually colorful pencils of all different lengths.
-085. A cat batting at a ball of yarn that is actually a swirling galaxy.
-086. A fox and a crow sharing a meal in a tree made of silver and gold.
-087. A spider weaving a web made of diamond threads that catch the morning sun.
-088. A caterpillar wearing many shoes, walking along a branch of giant berries.
-089. An octopus playing eight different musical instruments at once in a coral hall.
-090. A peacock whose tail feathers are all different stained-glass windows.
+081. A lion whose mane is a vibrant garden of exotic flowers and vines. (DONE)
+082. A giraffe whose neck reaches up to graze on the leaves of a cloud-tree. (DONE)
+083. A sea turtle with a miniature tropical island paradise on its shell. (DONE)
+084. A hedgehog whose spines are actually colorful pencils of all different lengths. (DONE)
+085. A cat batting at a ball of yarn that is actually a swirling galaxy. (DONE)
+086. A fox and a crow sharing a meal in a tree made of silver and gold. (DONE)
+087. A spider weaving a web made of diamond threads that catch the morning sun. (DONE)
+088. A caterpillar wearing many shoes, walking along a branch of giant berries. (DONE)
+089. An octopus playing eight different musical instruments at once in a coral hall. (DONE)
+090. A peacock whose tail feathers are all different stained-glass windows. (DONE)
 
 ### [Final Mix]
 091. A hot air balloon powered by a giant glowing dandelion puff.
