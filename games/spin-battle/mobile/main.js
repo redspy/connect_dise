@@ -55,6 +55,14 @@ mobile.on('join', (player) => {
   btnReady.classList.remove('hidden');
 });
 
+mobile.on('rejoin', (player) => {
+  connectionStatus.classList.add('connected');
+  myColorDot.style.background = player.color;
+  myColorDot.style.boxShadow = `0 0 12px ${player.color}`;
+  myColorDot.classList.remove('hidden');
+  // Host will re-send battleStart if game is in progress
+});
+
 mobile.on('allReady', () => {
   currentPhase = 'launch';
   _showPhase('phase-launch');

@@ -56,6 +56,17 @@ export class SpinGame extends HostBaseGame {
     this.updateLobbyReady(this._readyCount);
   }
 
+  onPlayerRejoin(player) {
+    if (this.phase === 'battle' || this.phase === 'countdown') {
+      const players = [...this.players.values()].map(p => ({
+        id:    p.id,
+        color: p.color,
+        rpm:   this._launchRpms.get(p.id) || 1000,
+      }));
+      this.sendToPlayer(player.id, 'battleStart', { players });
+    }
+  }
+
   onPlayerLeave(_playerId) {
     this.renderLobbyPlayers();
     this.updateLobbyReady(this._readyCount);

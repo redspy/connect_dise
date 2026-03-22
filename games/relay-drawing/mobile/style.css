@@ -118,8 +118,8 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   border: 3px solid var(--rdm-border);
   border-radius: 50%;
   overflow: hidden;
-  width: 120px;
-  height: 120px;
+  width: min(200px, 55vw);
+  height: min(200px, 55vw);
   touch-action: none;
 }
 #profileCanvas {

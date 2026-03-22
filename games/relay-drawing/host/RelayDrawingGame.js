@@ -115,6 +115,30 @@ export class RelayDrawingGame extends HostBaseGame {
     this._updateLobbyPlayers();
   }
 
+  onPlayerRejoin(player) {
+    if (this.phase === 'game') {
+      const p = this.players.get(player.id);
+      if (p?._hasSubmitted) {
+        this.sendToPlayer(player.id, 'roundSubmitted', {});
+        return;
+      }
+      const chain = this._storyChains.find(c => c.currentHolderId === player.id);
+      if (!chain) return;
+      const isDrawTurn = (this._currentRound % 2 !== 0);
+      const lastStep   = chain.steps[chain.steps.length - 1];
+      this.sendToPlayer(player.id, 'rejoinState', {
+        phase: 'game',
+        assignment: {
+          turnType:  this._currentRound === 1 ? 'draw' : (isDrawTurn ? 'draw' : 'word'),
+          timeLimit: isDrawTurn ? this._timeLimitDraw : this._timeLimitText,
+          content:   this._currentRound === 1 ? chain.initialPrompt : lastStep?.content ?? '',
+        },
+      });
+    } else if (this.phase === 'result' || this.phase === 'final') {
+      this.sendToPlayer(player.id, 'showResults', {});
+    }
+  }
+
   onPlayerLeave(playerId) {
     this._profiles.delete(playerId);
     this._updateLobbyPlayers();
@@ -142,10 +166,9 @@ export class RelayDrawingGame extends HostBaseGame {
 
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname, avatar }) => {
-      this._profiles.set(player.id, {
-        nickname: nickname.trim() || '익명',
-        avatar: avatar || null
-      });
+      const name = nickname.trim() || '익명';
+      this._profiles.set(player.id, { nickname: name, avatar: avatar || null });
+      this.setPlayerName(player.id, name);
       this._updateLobbyPlayers();
       this._broadcastPlayerList();
     });

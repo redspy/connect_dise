@@ -72,10 +72,29 @@ export class TetrisGame extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
-    if (this._gameStarted) {
-      // 재연결된 플레이어에게 게임 시작 메시지 재전송
-      this.sendToPlayer(player.id, 'gameStarted', { showNextPiece: this._showNextPiece });
+    if (!this._gameStarted && this.phase === 'result') {
+      const finalRankings = this._buildFinalRankings();
+      this.sendToPlayer(player.id, 'gameFinished', { rankings: finalRankings });
+      return;
     }
+    if (!this._gameStarted) return;
+
+    const data = this._playerData.get(player.id);
+    if (!data) return;
+
+    if (!data.alive) {
+      // Already eliminated — let them know the game is over if finished
+      const finalRankings = this._buildFinalRankings();
+      this.sendToPlayer(player.id, 'gameFinished', { rankings: finalRankings });
+      return;
+    }
+
+    this.sendToPlayer(player.id, 'rejoinState', {
+      phase:         'playing',
+      showNextPiece: this._showNextPiece,
+      level:         data.level,
+      lines:         data.lines,
+    });
   }
 
   onPlayerLeave(playerId) {
@@ -119,6 +138,7 @@ export class TetrisGame extends HostBaseGame {
     // 닉네임 설정
     this.onMessage('setProfile', (player, { nickname }) => {
       this._profiles.set(player.id, { nickname });
+      this.setPlayerName(player.id, nickname);
       if (!this._gameStarted) {
         this._renderLobby();
         this._broadcastPlayerList();

@@ -43,7 +43,15 @@ export class HostBaseGame {
     this._qrContainerId = qrContainerId;
     this._players = new Map(); // id → player object
     this._phase = 'loading';
+
+    // 재연결 배너용 상태
+    this._disconnectedPlayers = new Set();   // 현재 연결 끊긴 플레이어 id
+    this._disconnectedColors  = new Map();   // id → color (leave 후에도 색상 유지)
+    this._playerNicknames     = new Map();   // id → nickname (게임이 setPlayerName으로 등록)
+    this._reconnectBannerQrDone = false;
+
     this._wireSDK();
+    this._initReconnectBanner();
   }
 
   // ─── Internal ────────────────────────────────────────────────────────────
@@ -67,8 +75,18 @@ export class HostBaseGame {
       this.onPlayerJoin(player);
     });
 
+    this.sdk.on('playerDisconnect', ({ playerId }) => {
+      const player = this._players.get(playerId);
+      if (player) this._disconnectedColors.set(playerId, player.color);
+      this._disconnectedPlayers.add(playerId);
+      this._refreshReconnectBanner();
+      this.onPlayerDisconnect(playerId);
+    });
+
     this.sdk.on('playerLeave', (playerId) => {
       this._players.delete(playerId);
+      this._disconnectedPlayers.delete(playerId);
+      this._refreshReconnectBanner();
       this.onPlayerLeave(playerId);
 
       // 게임 진행 중 모든 플레이어가 퇴장하면 세션을 자동 리셋하여 로비로 복귀
@@ -90,6 +108,8 @@ export class HostBaseGame {
 
     this.sdk.on('playerRejoin', (player) => {
       this._players.set(player.id, player);
+      this._disconnectedPlayers.delete(player.id);
+      this._refreshReconnectBanner();
       this.onPlayerRejoin(player);
     });
 
@@ -99,9 +119,119 @@ export class HostBaseGame {
       for (const p of this.sdk.getPlayers()) {
         this._players.set(p.id, p);
       }
+      this._disconnectedPlayers.clear();
+      this._refreshReconnectBanner();
       this._phase = 'lobby';
       this.onReset();
     });
+  }
+
+  // ─── Reconnect banner ────────────────────────────────────────────────────
+
+  /** 플레이어 닉네임을 등록하면 배너에 이름이 표시됩니다. 게임에서 setProfile 수신 시 호출하세요. */
+  setPlayerName(id, name) {
+    this._playerNicknames.set(id, name);
+  }
+
+  _initReconnectBanner() {
+    const style = document.createElement('style');
+    style.textContent = `
+      #_hbg-banner {
+        position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+        background: rgba(10, 12, 18, 0.96);
+        border: 2px solid rgba(251, 191, 36, 0.6);
+        border-radius: 14px; padding: 12px 14px;
+        display: flex; align-items: center; gap: 12px;
+        max-width: 300px;
+        box-shadow: 0 6px 28px rgba(0,0,0,0.65), 0 0 18px rgba(251,191,36,0.1);
+        backdrop-filter: blur(16px);
+        animation: _hbg-in 0.25s ease;
+        font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif;
+        color: #f1f5f9;
+      }
+      #_hbg-banner.hidden { display: none !important; }
+      @keyframes _hbg-in {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      ._hbg-qr-wrap { flex-shrink: 0; }
+      ._hbg-qr-wrap canvas, ._hbg-qr-wrap img { border-radius: 6px; display: block; }
+      ._hbg-info { flex: 1; min-width: 0; }
+      ._hbg-label {
+        font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+        text-transform: uppercase; color: rgba(251,191,36,0.9); margin-bottom: 6px;
+      }
+      ._hbg-dots { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px; }
+      ._hbg-pdot {
+        width: 14px; height: 14px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.2); flex-shrink: 0;
+        animation: _hbg-blink 1.4s ease-in-out infinite;
+      }
+      @keyframes _hbg-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+      ._hbg-pname { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 4px; line-height: 1.35; word-break: keep-all; }
+      ._hbg-hint  { font-size: 10px; color: rgba(255,255,255,0.38); }
+    `;
+    document.head.appendChild(style);
+
+    const el = document.createElement('div');
+    el.id = '_hbg-banner';
+    el.className = 'hidden';
+    el.innerHTML = `
+      <div class="_hbg-qr-wrap" id="_hbg-qr"></div>
+      <div class="_hbg-info">
+        <div class="_hbg-label">연결 끊김</div>
+        <div class="_hbg-dots" id="_hbg-dots"></div>
+        <div class="_hbg-pname" id="_hbg-pname">재접속 대기 중...</div>
+        <div class="_hbg-hint">QR 스캔으로 재접속</div>
+      </div>
+    `;
+    document.body.appendChild(el);
+  }
+
+  async _refreshReconnectBanner() {
+    const el = document.getElementById('_hbg-banner');
+    if (!el) return;
+
+    if (this._disconnectedPlayers.size === 0) {
+      el.classList.add('hidden');
+      return;
+    }
+
+    // QR을 처음 한 번만 렌더링
+    if (!this._reconnectBannerQrDone) {
+      this._reconnectBannerQrDone = true;
+      const qrEl = document.getElementById('_hbg-qr');
+      if (qrEl) {
+        try { await renderQR(qrEl, this.getQRUrl(), { width: 76 }); } catch (_) {}
+      }
+    }
+
+    // 연결 끊긴 플레이어 색상 점
+    const dotsEl = document.getElementById('_hbg-dots');
+    if (dotsEl) {
+      dotsEl.innerHTML = [...this._disconnectedPlayers].map(id => {
+        const color = this._disconnectedColors.get(id) ?? this._players.get(id)?.color ?? '#888';
+        const name  = this._playerNicknames.get(id) ?? '';
+        return `<div class="_hbg-pdot" style="background:${color};box-shadow:0 0 6px ${color}80" title="${name}"></div>`;
+      }).join('');
+    }
+
+    // 이름 텍스트
+    const nameEl = document.getElementById('_hbg-pname');
+    if (nameEl) {
+      const names = [...this._disconnectedPlayers]
+        .map(id => this._playerNicknames.get(id))
+        .filter(Boolean);
+      nameEl.textContent = names.length
+        ? `${names.join(', ')} 재접속 대기 중...`
+        : '재접속 대기 중...';
+    }
+
+    el.classList.remove('hidden');
+    // 재등장 애니메이션 재실행
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
   }
 
   // ─── Phase / overlay ─────────────────────────────────────────────────────
@@ -187,6 +317,12 @@ export class HostBaseGame {
    * @param {{ id: string, color: string }} player
    */
   onPlayerJoin(player) {} // eslint-disable-line no-unused-vars
+
+  /**
+   * 플레이어 일시 연결 끊김 (grace period 시작, 아직 퇴장 아님).
+   * @param {string} playerId
+   */
+  onPlayerDisconnect(playerId) {} // eslint-disable-line no-unused-vars
 
   /**
    * 플레이어 재연결 (grace period 이내 복귀).

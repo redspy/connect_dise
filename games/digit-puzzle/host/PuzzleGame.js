@@ -49,12 +49,18 @@ export class PuzzleGame extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
-    // 재연결 시 현재 상태 전송
     if (this._gameStarted) {
-      const profile = this._profiles.get(player.id);
-      if (profile) {
-        this.sendToPlayer(player.id, 'gameStarted', { board: this._board });
-      }
+      const prog = this._progress.get(player.id);
+      this.sendToPlayer(player.id, 'rejoinState', {
+        phase:        'playing',
+        board:        this._board,
+        currentBoard: prog?.board ?? [...this._board],
+        moves:        prog?.moves ?? 0,
+        seconds:      prog?.seconds ?? 0,
+      });
+    } else if (this.phase === 'result' && this._winner) {
+      const rankings = this._buildRankings();
+      this.sendToPlayer(player.id, 'gameFinished', { winner: this._winner, rankings });
     }
   }
 
@@ -96,7 +102,9 @@ export class PuzzleGame extends HostBaseGame {
 
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname }) => {
-      this._profiles.set(player.id, { nickname: nickname.trim() || '익명' });
+      const name = nickname.trim() || '익명';
+      this._profiles.set(player.id, { nickname: name });
+      this.setPlayerName(player.id, name);
       this._renderLobby();
       this._broadcastPlayerList();
     });

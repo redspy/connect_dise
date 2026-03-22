@@ -121,7 +121,9 @@ export class NunchiGame extends HostBaseGame {
 
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname, avatarId }) => {
-      this._profiles.set(player.id, { nickname: nickname.trim() || '익명', avatarId: Number(avatarId) || 1 });
+      const name = nickname.trim() || '익명';
+      this._profiles.set(player.id, { nickname: name, avatarId: Number(avatarId) || 1 });
+      this.setPlayerName(player.id, name);
       this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
       // 게임 진행 중에 합류한 경우 → 즉시 게임 상태 전송

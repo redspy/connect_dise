@@ -105,7 +105,9 @@ export class TradingBattleGame extends HostBaseGame {
 
   _wireMessages() {
     this.onMessage('setProfile', (player, { nickname }) => {
-      this._profiles.set(player.id, { nickname: nickname?.trim() || '익명' });
+      const name = nickname?.trim() || '익명';
+      this._profiles.set(player.id, { nickname: name });
+      this.setPlayerName(player.id, name);
       this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
       if (this._gameStarted) this._sendRejoinState(player.id);

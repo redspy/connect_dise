@@ -70,6 +70,33 @@ export class DobbleGame extends HostBaseGame {
     this.updateLobbyReady(readyCount);
   }
 
+  onPlayerRejoin(player) {
+    if (this._gameStarted) {
+      const myCard = this._playerCards.get(player.id);
+      this.sendToPlayer(player.id, 'rejoinState', {
+        phase:         'playing',
+        mode:          this._mode,
+        winScore:      this._winScore,
+        myCard:        myCard ?? [],
+        centerCard:    this._centerCard,
+        score:         this._scores.get(player.id) ?? 0,
+        frozenPlayers: [...this._frozen],
+        scores:        Object.fromEntries(this._scores),
+        players:       this._buildPlayerList(),
+      });
+    } else if (this.phase === 'result') {
+      const rankings = [...this.players.values()]
+        .map(p => ({
+          id:       p.id,
+          color:    p.color,
+          nickname: this._profiles.get(p.id)?.nickname ?? '익명',
+          score:    this._scores.get(p.id) ?? 0,
+        }))
+        .sort((a, b) => b.score - a.score);
+      this.sendToPlayer(player.id, 'gameFinished', { rankings });
+    }
+  }
+
   onAllReady() {
     if (!this._gameStarted) this._startGame();
   }
@@ -100,7 +127,9 @@ export class DobbleGame extends HostBaseGame {
 
   _wireMessages() {
     this.onMessage('setProfile', (player, { nickname }) => {
-      this._profiles.set(player.id, { nickname: (nickname || '').trim() || '익명' });
+      const name = (nickname || '').trim() || '익명';
+      this._profiles.set(player.id, { nickname: name });
+      this.setPlayerName(player.id, name);
       this._renderLobby();
       this._broadcastPlayerList();
     });

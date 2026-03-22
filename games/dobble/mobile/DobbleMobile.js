@@ -100,6 +100,10 @@ export class DobbleMobile extends MobileBaseGame {
     this.onMessage('playerListUpdated', ({ players }) => {
       this._renderWaitingPlayers(players);
     });
+
+    this.onMessage('rejoinState', (payload) => {
+      this._applyRejoinState(payload);
+    });
   }
 
   // ─── UI wiring ────────────────────────────────────────────────────────────
@@ -265,6 +269,28 @@ export class DobbleMobile extends MobileBaseGame {
           <span>${p.nickname}</span>
         </div>
       `).join('');
+  }
+
+  // ─── Rejoin state ─────────────────────────────────────────────────────────
+
+  _applyRejoinState({ phase, mode, winScore, myCard, centerCard, score, frozenPlayers }) {
+    if (phase !== 'playing') return;
+    this._mode     = mode;
+    this._winScore = winScore;
+    this._myCard   = myCard ?? [];
+    this._score    = score ?? 0;
+    this._updateScore();
+
+    if (frozenPlayers && frozenPlayers.includes(this.playerId)) {
+      this._applyFreeze(FREEZE_MS);
+    } else {
+      this._clearFreeze();
+    }
+
+    if (this._myCard.length > 0) {
+      this._renderCard();
+      this.showScreen('game');
+    }
   }
 
   // ─── Result ──────────────────────────────────────────────────────────────
