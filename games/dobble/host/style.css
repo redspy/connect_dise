@@ -101,12 +101,13 @@ body.host-board {
   background: var(--db-panel);
   border: 2px solid var(--db-border);
   border-radius: 20px;
-  padding: 14px;
+  padding: 10px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 10px;
-  width: min(540px, 58vw);
+  gap: 8px;
+  /* 화면 너비와 높이 모두 고려해 카드 크기 결정 */
+  width: min(min(74vw, 900px), calc(2 * (100vh - 200px)));
   aspect-ratio: 4 / 2;
   box-sizing: border-box;
 }
@@ -194,8 +195,8 @@ body.host-board {
 }
 
 .db-symbol-inner {
-  width: 80%;
-  height: 80%;
+  width: 92%;
+  height: 92%;
   display: flex;
   align-items: center;
   justify-content: center;
