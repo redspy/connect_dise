@@ -411,12 +411,15 @@ class DixitGame extends HostBaseGame {
   }
 
   _buildPlayerList() {
-    return [...this.players.values()].map(p => ({
-      id:       p.id,
-      color:    p.color,
-      nickname: this._profiles.get(p.id)?.nickname ?? '익명',
-      score:    this._scores.get(p.id) ?? 0,
-    }));
+    // 프로필을 아직 보내지 않은 플레이어는 목록에서 제외 (새로 접속 중인 플레이어의 '익명' 노출 방지)
+    return [...this.players.values()]
+      .filter(p => this._profiles.has(p.id))
+      .map(p => ({
+        id:       p.id,
+        color:    p.color,
+        nickname: this._profiles.get(p.id).nickname,
+        score:    this._scores.get(p.id) ?? 0,
+      }));
   }
 
   _sendRejoinState(playerId) {

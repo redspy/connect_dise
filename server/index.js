@@ -19,8 +19,8 @@ const io = new Server(httpServer, {
 
 const sm = new SessionManager();
 
-// 플레이어 연결 끊김 후 실제 제거까지의 유예 시간
-const RECONNECT_GRACE_MS = 30_000;
+// 플레이어 연결 끊김 후 실제 제거까지의 유예 시간 (뒤로가기/백그라운드 전환 후 재접속 허용)
+const RECONNECT_GRACE_MS = 5 * 60_000; // 5분
 const disconnectTimers = new Map(); // playerId → timer
 
 io.on('connection', (socket) => {

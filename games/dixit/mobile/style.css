@@ -116,15 +116,23 @@ body.dixit-mobile {
 /* ── Instruction ───────────────────────────────────────────────────────────── */
 .dx-instruction { opacity: .75; font-size: 14px; text-align: center; }
 
-/* ── Hand / board containers ───────────────────────────────────────────────── */
-.dx-hand-container,
-.dx-board-container {
+/* ── Hand container (scrollable, portrait cards) ───────────────────────────── */
+.dx-hand-container {
   display:               grid;
   grid-template-columns: repeat(3, 1fr);
   gap:                   10px;
   flex:                  1;
   overflow-y:            auto;
   align-content:         start;
+}
+
+/* ── Board container (fills screen, no scroll) ──────────────────────────────── */
+.dx-board-container {
+  display:  grid;
+  gap:      10px;
+  flex:     1;
+  overflow: hidden;
+  /* grid-template-columns & grid-auto-rows set dynamically by JS */
 }
 
 /* ── Card images ───────────────────────────────────────────────────────────── */
@@ -137,6 +145,11 @@ body.dixit-mobile {
   cursor:        pointer;
   display:       block;
   transition:    border-color .2s, transform .2s, box-shadow .2s;
+}
+/* 보드 투표 화면: 셀을 꽉 채우도록 aspect-ratio 해제 */
+.dx-board-container .dx-card-img {
+  aspect-ratio: unset;
+  height:       100%;
 }
 .dx-card-img:hover:not(.my-submitted) { transform: scale(1.04); }
 .dx-card-img.selected {

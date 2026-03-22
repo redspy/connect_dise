@@ -265,6 +265,13 @@ export class DixitMobile extends MobileBaseGame {
     btn.disabled    = true;
     btn.textContent = '투표하기';
 
+    // 카드 수에 따라 그리드 열·행 동적 설정
+    const n    = this._boardCards.length;
+    const cols = (n === 4) ? 2 : 3;
+    const rows = Math.ceil(n / cols);
+    boardEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    boardEl.style.gridAutoRows        = rows > 1 ? '1fr' : 'auto';
+
     for (const cardId of this._boardCards) {
       const isMine = cardId === this._mySubmittedCard;
       const img    = this._createCardImg(cardId, isMine ? null : () => {

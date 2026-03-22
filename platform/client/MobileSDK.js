@@ -81,6 +81,21 @@ export class MobileSDK extends EventTarget {
       this._showScanBtn();
     });
 
+    // Safari BFCache 복원 시 소켓이 stale 상태가 될 수 있으므로 강제 재연결
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) {
+        socket.disconnect();
+        socket.connect();
+      }
+    });
+
+    // iOS 백그라운드 복귀 후 소켓이 끊긴 경우 재연결
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && !socket.connected && this._sessionId) {
+        socket.connect();
+      }
+    });
+
     socket.on('game:fromHost', ({ type, payload }) => {
       const handler = this._messageHandlers.get(type);
       if (handler) handler(payload);
