@@ -165,25 +165,25 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 129. A tree that grows backwards, with its roots reaching for the stars and its branches burrowing into the deep earth. (DONE)
 130. A train station where the passengers are all made of smoke, waiting for a train made of solid moonlight. (DONE)
 131. A grandfather clock that occasionally spits out small, polished stones engraved with dates from the future. (DONE)
-132. A person trying to catch falling autumn leaves, but each leaf turns into a photograph of a lost friend upon contact.
-133. A giant's pocket watch lying open in a field, with a forest growing inside the mechanism and birds nesting on the gears.
-134. A lantern that casts shadows of things that are no longer there, like a fallen tree or a long-gone house.
-135. A bridge made of solid light that only appears when someone hums a specific, long-forgotten tune.
-136. A person knitting a scarf that turns into a paved road behind them, stretching across a void into the unknown.
-137. A giant eye looking through a telescope at a tiny, miniature earth contained within a drop of dew.
-138. A field of stone statues that slowly turn into real people whenever the moon is full, only to freeze again at dawn.
-139. A lighthouse whose beam turns whatever it touches into gold, leaving a trail of shimmering landscape in the dark.
-140. A giant book whose pages are made of different types of fabric, each telling a story through texture and pattern.
+132. A person trying to catch falling autumn leaves, but each leaf turns into a photograph of a lost friend upon contact. (DONE)
+133. A giant's pocket watch lying open in a field, with a forest growing inside the mechanism and birds nesting on the gears. (DONE)
+134. A lantern that casts shadows of things that are no longer there, like a fallen tree or a long-gone house. (DONE)
+135. A bridge made of solid light that only appears when someone hums a specific, long-forgotten tune. (DONE)
+136. A person knitting a scarf that turns into a paved road behind them, stretching across a void into the unknown. (DONE)
+137. A giant eye looking through a telescope at a tiny, miniature earth contained within a drop of dew. (DONE)
+138. A field of stone statues that slowly turn into real people whenever the moon is full, only to freeze again at dawn. (DONE)
+139. A lighthouse whose beam turns whatever it touches into gold, leaving a trail of shimmering landscape in the dark. (DONE)
+140. A giant book whose pages are made of different types of fabric, each telling a story through texture and pattern. (DONE)
 
 ### [Surreal Architectures]
-141. A city built entirely on the backs of giant, slow-moving tortoises migrating across a world of mirrors.
-142. A cathedral where the pillars are giant redwood trees and the stained glass windows are made of frozen butterfly wings.
-143. A house made of giant playing cards, swaying gently in a wind that carries the scent of old paper and peppermint.
-144. A bridge connecting two mountain peaks, made of nothing but a single, massive, horizontal bolt of lightning.
-145. A village where the houses are carved into giant, floating water lilies on a lake of liquid emerald.
-146. A skyscraper made of stacked antique birdcages, with a different climate and ecosystem inside each cage.
-147. A staircase built by wrapping a giant iron chain around a floating island, leading up to a palace made of ivory.
-148. A city where the streets are made of flowing water and the cars are giant, colorful paper boats propelled by fans.
+141. A city built entirely on the backs of giant, slow-moving tortoises migrating across a world of mirrors. (DONE)
+142. A cathedral where the pillars are giant redwood trees and the stained glass windows are made of frozen butterfly wings. (DONE)
+143. A house made of giant playing cards, swaying gently in a wind that carries the scent of old paper and peppermint. (DONE)
+144. A bridge connecting two mountain peaks, made of nothing but a single, massive, horizontal bolt of lightning. (DONE)
+145. A village where the houses are carved into giant, floating water lilies on a lake of liquid emerald. (DONE)
+146. A skyscraper made of stacked antique birdcages, with a different climate and ecosystem inside each cage. (DONE)
+147. A staircase built by wrapping a giant iron chain around a floating island, leading up to a palace made of ivory. (DONE)
+148. A city where the streets are made of flowing water and the cars are giant, colorful paper boats propelled by fans. (DONE)
 149. A castle whose towers are giant telescopes, all pointing at different parts of a giant, glowing clockwork sun.
 150. A village built inside the ribs of a giant, ancient creature, with glowing moss for streetlights and paths made of pearl.
 151. A library where the shelves spiral infinitely upwards into a sky filled with multiple moons and shooting stars.
