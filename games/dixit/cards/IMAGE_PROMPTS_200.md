@@ -208,11 +208,11 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide. (DONE)
 169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation. (DONE)
 170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss. (DONE)
-171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares.
-172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds.
-173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity.
-174. A person using a giant telescope to look at their own reflection in a mirror on the other side of the universe.
-175. A garden on a rogue planet, where the plants grow from starlight and the rain is made of liquid gems.
+171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares. (DONE)
+172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds. (DONE)
+173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity. (DONE)
+174. A carriage pulled by a team of matching, glowing comets, racing across the night sky towards a castle of clouds. (DONE)
+175. A fountain where the water flows upwards, turning into a spiral of stars that slowly drift away into space. (DONE)
 176. A person weaving a quilt out of the Aurora Borealis, with the colors shifting and moving even after it's finished.
 177. A giant, silver tree growing in the center of a galaxy, with planets as its fruit and stars as its blossoms.
 178. A person skating on a frozen lake of liquid mercury, reflecting a sky filled with multiple, overlapping suns.
