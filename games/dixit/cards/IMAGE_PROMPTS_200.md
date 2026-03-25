@@ -194,20 +194,20 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 156. A village where the houses are giant pumpkins, lit from within by a thousand dancing fireflies. (DONE)
 157. A city built on a giant, spinning gear, with smaller gears acting as rotating platforms and elevators. (DONE)
 158. A house that is actually a giant, hollowed-out book, with a balcony made of an open page and a roof made of the spine. (DONE)
-159. A bridge made of a single, massive, fallen tree that is still alive and growing fruit as it spans the abyss.
-160. A city of light, where the buildings are only solid when people are looking at them, and dissolve into mist at night.
+159. A bridge made of a single, massive, fallen tree that is still alive and growing fruit as it spans the abyss. (DONE)
+160. A city of light, where the buildings are only solid when people are looking at them, and dissolve into mist at night. (DONE)
 
 ### [Celestial & Cosmic]
-161. A person fishing from the edge of a crescent moon, pulling up glowing stars from a sea of purple space-dust.
-162. A giant's hand scattering a handful of galaxies like seeds into a dark, fertile field of the cosmos.
-163. A comet whose tail is a vibrant garden of cosmic flowers, trailing petals across the night sky.
-164. A person using a giant silver spoon to stir a pot of swirling nebula, creating new stars in the steam.
-165. A moon that is actually a giant, silver eye, watching over a world of sleeping giants made of stardust.
-166. A staircase made of shooting stars, leading up to a throne made of pure, white sunlight in the center of a black hole.
-167. A person painting the constellations onto a giant, black dome, with each star being a tiny, glowing diamond.
-168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide.
-169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation.
-170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss.
+161. A person fishing from the edge of a crescent moon, pulling up glowing stars from a sea of purple space-dust. (DONE)
+162. A giant's hand scattering a handful of galaxies like seeds into a dark, fertile field of the cosmos. (DONE)
+163. A comet whose tail is a vibrant garden of cosmic flowers, trailing petals across the night sky. (DONE)
+164. A person using a giant silver spoon to stir a pot of swirling nebula, creating new stars in the steam. (DONE)
+165. A moon that is actually a giant, silver eye, watching over a world of sleeping giants made of stardust. (DONE)
+166. A staircase made of shooting stars, leading up to a throne made of pure, white sunlight in the center of a black hole. (DONE)
+167. A person painting the constellations onto a giant, black dome, with each star being a tiny, glowing diamond. (DONE)
+168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide. (DONE)
+169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation. (DONE)
+170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss. (DONE)
 171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares.
 172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds.
 173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity.
