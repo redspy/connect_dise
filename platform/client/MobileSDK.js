@@ -17,8 +17,8 @@ export class MobileSDK extends EventTarget {
     this._p2p = null;
     this._setup();
 
-    // 연결 전(빨간 상태)에는 항상 스캔 버튼 표시
-    this._showScanBtn();
+    // 연결 전(빨간 상태)에는 항상 재연결 UI 표시
+    this._showReconnectUI();
   }
 
   _setup() {
@@ -36,7 +36,7 @@ export class MobileSDK extends EventTarget {
       this._player = player;
       // stable player ID를 sessionStorage에 저장 (탭 생존 기간 동안 유지)
       sessionStorage.setItem(RECONNECT_KEY(this._sessionId), player.id);
-      this._hideScanBtn();
+      this._hideReconnectUI();
 
       if (reconnected) {
         // 화면 전환 없이 조용히 재연결 — 게임 계속
@@ -66,8 +66,15 @@ export class MobileSDK extends EventTarget {
       this._emit('reset', {});
     });
 
+    socket.on('platform:kicked', () => {
+      sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
+      this._p2p?.closeAll();
+      this._emit('kicked', {});
+      this._showReconnectUI();
+    });
+
     socket.on('disconnect', () => {
-      this._showScanBtn();
+      this._showReconnectUI();
     });
 
     socket.on('connect', () => {
@@ -78,7 +85,7 @@ export class MobileSDK extends EventTarget {
       sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
       this._p2p?.closeAll();
       this._emit('hostDisconnect', {});
-      this._showScanBtn();
+      this._showReconnectUI();
     });
 
     // Safari BFCache 복원 시 소켓이 stale 상태가 될 수 있으므로 강제 재연결
@@ -181,40 +188,213 @@ export class MobileSDK extends EventTarget {
     if (url) window.location.href = url;
   }
 
-  _hideScanBtn() {
-    document.getElementById('_sdk-scan-btn')?.remove();
+  _hideReconnectUI() {
+    document.getElementById('_sdk-reconnect-ui')?.remove();
   }
 
-  _showScanBtn() {
-    if (document.getElementById('_sdk-scan-btn')) return;
+  _showReconnectUI() {
+    if (document.getElementById('_sdk-reconnect-ui')) return;
 
-    const btn = document.createElement('button');
-    btn.id = '_sdk-scan-btn';
-    btn.title = 'QR 코드 스캔';
-    btn.innerHTML = '&#x1F4F7;';
-    btn.style.cssText = [
-      'position:fixed;top:12px;right:12px;z-index:8000',
-      'width:44px;height:44px;border-radius:50%',
-      'background:rgba(0,238,255,0.18);border:2px solid rgba(0,238,255,0.7)',
-      'color:#00eeff;font-size:1.3rem',
-      'cursor:pointer;display:flex;align-items:center;justify-content:center',
-      'box-shadow:0 0 12px rgba(0,238,255,0.4)',
-      'animation:_sdk-pulse 1.8s ease infinite',
-    ].join(';');
-
-    if (!document.getElementById('_sdk-scan-style')) {
+    // 스타일 추가
+    if (!document.getElementById('_sdk-reconnect-style')) {
       const style = document.createElement('style');
-      style.id = '_sdk-scan-style';
+      style.id = '_sdk-reconnect-style';
       style.textContent = `
-        @keyframes _sdk-pulse {
-          0%,100% { box-shadow: 0 0 10px rgba(0,238,255,0.4); }
-          50%      { box-shadow: 0 0 22px rgba(0,238,255,0.85); }
+        #_sdk-reconnect-ui {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.85);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          animation: _sdk-fade-in 0.3s ease;
+        }
+        @keyframes _sdk-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        ._sdk-reconnect-modal {
+          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+          border: 2px solid rgba(0, 238, 255, 0.3);
+          border-radius: 20px;
+          padding: 40px;
+          width: min(90vw, 400px);
+          text-align: center;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+          animation: _sdk-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes _sdk-slide-up {
+          from { transform: translateY(40px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        ._sdk-reconnect-title {
+          font-size: 1.8rem;
+          font-weight: 700;
+          color: #e2e8f0;
+          margin-bottom: 32px;
+          letter-spacing: -0.5px;
+        }
+        ._sdk-input-section {
+          margin-bottom: 28px;
+        }
+        ._sdk-input-group {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+        ._sdk-input-group input {
+          flex: 1;
+          padding: 14px 16px;
+          border: 2px solid rgba(0, 238, 255, 0.4);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          color: #e2e8f0;
+          font-size: 1rem;
+          font-family: inherit;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          transition: all 0.2s;
+        }
+        ._sdk-input-group input::placeholder {
+          color: rgba(226, 232, 240, 0.5);
+          text-transform: none;
+          letter-spacing: normal;
+        }
+        ._sdk-input-group input:focus {
+          outline: none;
+          border-color: rgba(0, 238, 255, 0.8);
+          background: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 0 12px rgba(0, 238, 255, 0.2);
+        }
+        ._sdk-input-group button {
+          padding: 14px 24px;
+          background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%);
+          border: none;
+          border-radius: 12px;
+          color: #000;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+        ._sdk-input-group button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0, 238, 255, 0.4);
+        }
+        ._sdk-input-group button:active {
+          transform: translateY(0);
+        }
+        ._sdk-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 28px;
+          color: rgba(226, 232, 240, 0.5);
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+        ._sdk-divider::before,
+        ._sdk-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(to right, transparent, rgba(0, 238, 255, 0.3), transparent);
+        }
+        ._sdk-qr-btn {
+          width: 100%;
+          padding: 18px;
+          background: linear-gradient(135deg, rgba(0, 238, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
+          border: 2px solid rgba(0, 238, 255, 0.5);
+          border-radius: 12px;
+          color: #00eeff;
+          font-size: 1.1rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          letter-spacing: 0.5px;
+        }
+        ._sdk-qr-btn:hover {
+          border-color: rgba(0, 238, 255, 0.8);
+          background: linear-gradient(135deg, rgba(0, 238, 255, 0.25) 0%, rgba(0, 153, 255, 0.25) 100%);
+          box-shadow: 0 0 20px rgba(0, 238, 255, 0.3);
+        }
+        ._sdk-qr-btn:active {
+          transform: scale(0.98);
         }
       `;
       document.head.appendChild(style);
     }
 
-    btn.addEventListener('click', () => this.showQRScanner());
-    document.body.appendChild(btn);
+    // UI 생성
+    const ui = document.createElement('div');
+    ui.id = '_sdk-reconnect-ui';
+
+    const modal = document.createElement('div');
+    modal.className = '_sdk-reconnect-modal';
+
+    const title = document.createElement('div');
+    title.className = '_sdk-reconnect-title';
+    title.textContent = '방에 연결하기';
+    modal.appendChild(title);
+
+    // 방 코드 입력 섹션
+    const inputSection = document.createElement('div');
+    inputSection.className = '_sdk-input-section';
+
+    const inputGroup = document.createElement('div');
+    inputGroup.className = '_sdk-input-group';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '방 코드 입력 (예: ABC123)';
+    input.maxLength = 6;
+
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = '입장하기';
+    submitBtn.addEventListener('click', () => {
+      const code = input.value.trim().toUpperCase();
+      if (code) {
+        window.location.href = `${window.location.pathname}?session=${code}`;
+      }
+    });
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') submitBtn.click();
+    });
+
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(submitBtn);
+    inputSection.appendChild(inputGroup);
+    modal.appendChild(inputSection);
+
+    // 또는 구분선
+    const divider = document.createElement('div');
+    divider.className = '_sdk-divider';
+    divider.textContent = '또는';
+    modal.appendChild(divider);
+
+    // QR 스캔 버튼
+    const qrBtn = document.createElement('button');
+    qrBtn.className = '_sdk-qr-btn';
+    qrBtn.innerHTML = '📷 <span>QR 코드 스캔</span>';
+    qrBtn.addEventListener('click', () => this.showQRScanner());
+    modal.appendChild(qrBtn);
+
+    ui.appendChild(modal);
+
+    // 배경 클릭 시 닫기 (선택사항)
+    ui.addEventListener('click', (e) => {
+      if (e.target === ui) {
+        this._hideReconnectUI();
+      }
+    });
+
+    document.body.appendChild(ui);
   }
 }

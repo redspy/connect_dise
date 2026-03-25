@@ -279,6 +279,9 @@ export class HostBaseGame {
   /** 세션 리셋 (모든 플레이어에게 reset 이벤트 발송) */
   resetSession() { this.sdk.resetSession(); }
 
+  /** 특정 플레이어 강퇴 */
+  kickPlayer(playerId) { this.sdk.kickPlayer(playerId); }
+
   /** 현재 QR URL 반환 */
   getQRUrl() { return this.sdk.getQRUrl(); }
 

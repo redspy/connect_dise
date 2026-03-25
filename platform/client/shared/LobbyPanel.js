@@ -126,17 +126,27 @@ export class LobbyPanel extends HTMLElement {
       card.className = 'lobby-player-card';
       card.dataset.playerId = id;
       card.innerHTML = `
-        <div class="lp-avatar" style="border-color:${player.color}">
-          ${avatarEmoji
-            ? `<span class="lp-emoji">${avatarEmoji}</span>`
-            : avatarUrl
-            ? `<img src="${avatarUrl}" alt="">`
-            : `<span class="lp-initial" style="color:${player.color}">${initial}</span>`
-          }
+        <div class="lp-avatar-wrap">
+          <div class="lp-avatar" style="border-color:${player.color}">
+            ${avatarEmoji
+              ? `<span class="lp-emoji">${avatarEmoji}</span>`
+              : avatarUrl
+              ? `<img src="${avatarUrl}" alt="">`
+              : `<span class="lp-initial" style="color:${player.color}">${initial}</span>`
+            }
+          </div>
+          <button class="lp-kick-btn" data-player-id="${id}" title="강퇴">✕</button>
         </div>
         <div class="lp-name">${profile?.nickname ?? '대기 중...'}</div>
       `;
       grid.appendChild(card);
+
+      // 강퇴 버튼 클릭 이벤트
+      const kickBtn = card.querySelector('.lp-kick-btn');
+      kickBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this._onKickFn) this._onKickFn(id);
+      });
     }
   }
 
@@ -188,6 +198,14 @@ export class LobbyPanel extends HTMLElement {
     } else {
       this._pendingOnStart = fn;
     }
+  }
+
+  /**
+   * 강퇴 버튼 클릭 콜백을 설정합니다.
+   * @param {Function} fn (playerId: string) => void
+   */
+  set onKick(fn) {
+    this._onKickFn = fn;
   }
 }
 

@@ -150,6 +150,10 @@ export class HostSDK extends EventTarget {
     this._socket.emit('platform:reset', { sessionId: this._sessionId });
   }
 
+  kickPlayer(playerId) {
+    this._socket.emit('platform:kickPlayer', { sessionId: this._sessionId, playerId });
+  }
+
   getPlayers() {
     return [...this._players.values()];
   }

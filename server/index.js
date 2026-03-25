@@ -84,6 +84,36 @@ io.on('connection', (socket) => {
     console.log(`[${sessionId}] Session reset`);
   });
 
+  socket.on('platform:kickPlayer', ({ sessionId, playerId }) => {
+    const session = sm.getSession(sessionId);
+    if (!session) return;
+
+    // 플레이어의 현재 소켓 ID 조회
+    const socketId = sm.getSocketId(sessionId, playerId);
+    if (!socketId) return;
+
+    // 세션에서 플레이어 강제 제거
+    const idx = session.players.findIndex(p => p.id === playerId);
+    if (idx !== -1) {
+      const player = session.players[idx];
+      session.players.splice(idx, 1);
+      session.readyPlayers.delete(playerId);
+      sm.socketToSession.delete(player.socketId);
+
+      // 플레이어 클라이언트에 강퇴 알림
+      io.to(socketId).emit('platform:kicked', {});
+
+      // 호스트에 플레이어 제거 알림
+      io.to(session.hostSocketId).emit('platform:playerLeft', { playerId });
+      io.to(session.hostSocketId).emit('platform:readyUpdate', {
+        readyCount: session.readyPlayers.size,
+        totalCount: session.players.length,
+      });
+
+      console.log(`[${sessionId}] Player ${playerId} kicked`);
+    }
+  });
+
   // ─── Game message routing ─────────────────────────────────────────────────
 
   socket.on('game:toHost', ({ sessionId, type, payload }) => {

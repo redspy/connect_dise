@@ -61,6 +61,10 @@ export class MobileBaseGame {
     this.sdk.on('hostDisconnect', () => {
       this.onHostDisconnect();
     });
+
+    this.sdk.on('kicked', () => {
+      this.onKicked();
+    });
   }
 
   // ─── Screen management ───────────────────────────────────────────────────
@@ -139,4 +143,10 @@ export class MobileBaseGame {
    * 기본 동작 없음 (MobileSDK가 QR 스캔 버튼을 자동으로 표시합니다).
    */
   onHostDisconnect() {}
+
+  /**
+   * 호스트에 의해 강퇴됨.
+   * 기본 동작 없음 (MobileSDK가 QR 스캔 버튼을 자동으로 표시합니다).
+   */
+  onKicked() {}
 }

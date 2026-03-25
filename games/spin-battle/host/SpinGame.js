@@ -43,6 +43,7 @@ export class SpinGame extends HostBaseGame {
         this.setPhase('launching');
         this._startLaunchCountdown();
       };
+      this._lobbyEl.onKick = (playerId) => this.kickPlayer(playerId);
     }
     document.getElementById('btn-restart').addEventListener('click', () => {
       this._readyCount = 0;

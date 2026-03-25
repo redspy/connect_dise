@@ -58,7 +58,9 @@ export class NunchiGame extends HostBaseGame {
     roundEl.textContent = 'Round - / 10';
     this._appbar.prependRight(roundEl);
 
-    document.querySelector('game-lobby').onStart = () => this._startGame();
+    const lobby = document.querySelector('game-lobby');
+    lobby.onStart = () => this._startGame();
+    lobby.onKick = (playerId) => this.kickPlayer(playerId);
     document.getElementById('btn-restart').addEventListener('click', () => {
       this.resetSession();
     });
