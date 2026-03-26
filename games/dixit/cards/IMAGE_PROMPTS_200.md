@@ -123,96 +123,96 @@ Dreamy storybook illustration, whimsical surrealism, soft painterly texture, ric
 095. A swing hanging from a crescent moon, over a sea of soft fluffy clouds. (DONE)
 096. A child blowing bubbles, and inside each bubble is a different tiny world. (DONE)
 097. A robot made of old clock parts, handing a fresh flower to a tiny bird. (DONE)
-098. A garden where the flowers are made of delicate colorful paper.
-099. A lighthouse that shines a beam of darkness into a bright sunny sky.
-100. A cozy cottage inside a giant glass bottle, floating on a sea of stars.
+098. A garden where the flowers are made of delicate colorful paper. (DONE)
+099. A lighthouse that shines a beam of darkness into a bright sunny sky. (DONE)
+100. A cozy cottage inside a giant glass bottle, floating on a sea of stars. (DONE)
 
 ---
 
 ### [NEW: Detailed & Abstract expansion (101-200)]
 
 ### [Abstract & Metaphysical]
-101. A human heart made of intricate stained glass, refracting sunlight into a kaleidoscope of lost memories on a stone wall.
-102. A face dissolving into a thousand white origami birds, each carrying a tiny silver lantern into a void.
-103. A giant hourglass where the top half is a vibrant jungle and the bottom half is a silent, crystalline desert.
-104. A person made of intertwined musical notes, playing a piano where the keys are frozen moments in time.
-105. A mirror reflecting a version of the world where gravity works horizontally, with trees growing sideways into the sunset.
-106. A shadow that has detached from its owner and is busy planting glowing seeds in a field of darkness.
-107. A labyrinth where the walls are made of translucent silk curtains, rippling with the colors of a distant nebula.
-108. A giant's teardrop containing a miniature universe where stars are born from the ripples of the fall.
-109. A brain made of glowing fiber-optic cables, with each pulse of light transforming into a fluttering butterfly.
-110. A doorway carved into a giant redwood, opening into a library where the books are made of liquid light.
-111. A chessboard where the black and white squares are alternating patches of day and night, with players made of mist.
-112. A bridge made of whispers, solidifying only when walked upon by a person carrying a secret.
-113. A giant eye floating in a storm, whose iris is a spinning galaxy drawing in the fragments of broken clocks.
-114. A person unzipping the fabric of the sky to reveal a hidden layer of golden clockwork and celestial gears.
-115. A waterfall where the water turns into colorful silk ribbons as it falls, weaving itself into a giant tapestry at the bottom.
-116. A city of glass bubbles floating in a void, each bubble containing a different stage of a single dream.
-117. A compass that points not to north, but to the most beautiful memory of whoever holds it.
-118. A giant tree whose leaves are various sized antique keys, jangling softly in a wind made of forgotten songs.
-119. A person made of water, standing in a desert, slowly turning into a statue of salt as the sun rises.
-120. A vast ocean of ink where giant brushes act as whales, creating waves of calligraphy that tell the history of the world.
+101. A human heart made of intricate stained glass, refracting sunlight into a kaleidoscope of lost memories on a stone wall. (DONE)
+102. A face dissolving into a thousand white origami birds, each carrying a tiny silver lantern into a void. (DONE)
+103. A giant hourglass where the top half is a vibrant jungle and the bottom half is a silent, crystalline desert. (DONE)
+104. A person made of intertwined musical notes, playing a piano where the keys are frozen moments in time. (DONE)
+105. A mirror reflecting a version of the world where gravity works horizontally, with trees growing sideways into the sunset. (DONE)
+106. A shadow that has detached from its owner and is busy planting glowing seeds in a field of darkness. (DONE)
+107. A labyrinth where the walls are made of translucent silk curtains, rippling with the colors of a distant nebula. (DONE)
+108. A giant's teardrop containing a miniature universe where stars are born from the ripples of the fall. (DONE)
+109. A brain made of glowing fiber-optic cables, with each pulse of light transforming into a fluttering butterfly. (DONE)
+110. A doorway carved into a giant redwood, opening into a library where the books are made of liquid light. (DONE)
+111. A chessboard where the black and white squares are alternating patches of day and night, with players made of mist. (DONE)
+112. A bridge made of whispers, solidifying only when walked upon by a person carrying a secret. (DONE)
+113. A giant eye floating in a storm, whose iris is a spinning galaxy drawing in the fragments of broken clocks. (DONE)
+114. A person unzipping the fabric of the sky to reveal a hidden layer of golden clockwork and celestial gears. (DONE)
+115. A waterfall where the water turns into colorful silk ribbons as it falls, weaving itself into a giant tapestry at the bottom. (DONE)
+116. A city of glass bubbles floating in a void, each bubble containing a different stage of a single dream. (DONE)
+117. A compass that points not to north, but to the most beautiful memory of whoever holds it. (DONE)
+118. A giant tree whose leaves are various sized antique keys, jangling softly in a wind made of forgotten songs. (DONE)
+119. A person made of water, standing in a desert, slowly turning into a statue of salt as the sun rises. (DONE)
+120. A vast ocean of ink where giant brushes act as whales, creating waves of calligraphy that tell the history of the world. (DONE)
 
 ### [Temporal & Memories]
-121. An antique clock whose hands are actual human fingers, pointing to hours represented by different stages of a flower's life.
-122. A library where the books are jars of colored mists, each representing a specific scent from a childhood summer.
-123. A staircase that leads back to the same spot, but every time you arrive, the season has changed by a hundred years.
-124. A child blowing a dandelion, and each seed becomes a tiny, glowing clock ticking away at a different speed.
-125. A field of rusted anchors in the middle of a desert, with ghostly ships floating miles above them in the heat haze.
-126. A person combing their hair, and each strand becomes a silver thread weaving a map of a city that hasn't been built yet.
-127. A giant sundial where the shadow is a living shadow-cat that chases the passing birds of time.
-128. A room full of floating doors, and through each keyhole, you can see a different version of the same person's life.
-129. A tree that grows backwards, with its roots reaching for the stars and its branches burrowing into the deep earth.
-130. A train station where the passengers are all made of smoke, waiting for a train made of solid moonlight.
-131. A grandfather clock that occasionally spits out small, polished stones engraved with dates from the future.
-132. A person trying to catch falling autumn leaves, but each leaf turns into a photograph of a lost friend upon contact.
-133. A giant's pocket watch lying open in a field, with a forest growing inside the mechanism and birds nesting on the gears.
-134. A lantern that casts shadows of things that are no longer there, like a fallen tree or a long-gone house.
-135. A bridge made of solid light that only appears when someone hums a specific, long-forgotten tune.
-136. A person knitting a scarf that turns into a paved road behind them, stretching across a void into the unknown.
-137. A giant eye looking through a telescope at a tiny, miniature earth contained within a drop of dew.
-138. A field of stone statues that slowly turn into real people whenever the moon is full, only to freeze again at dawn.
-139. A lighthouse whose beam turns whatever it touches into gold, leaving a trail of shimmering landscape in the dark.
-140. A giant book whose pages are made of different types of fabric, each telling a story through texture and pattern.
+121. An antique clock whose hands are actual human fingers, pointing to hours represented by different stages of a flower's life. (DONE)
+122. A library where the books are jars of colored mists, each representing a specific scent from a childhood summer. (DONE)
+123. A staircase that leads back to the same spot, but every time you arrive, the season has changed by a hundred years. (DONE)
+124. A child blowing a dandelion, and each seed becomes a tiny, glowing clock ticking away at a different speed. (DONE)
+125. A field of rusted anchors in the middle of a desert, with ghostly ships floating miles above them in the heat haze. (DONE)
+126. A person combing their hair, and each strand becomes a silver thread weaving a map of a city that hasn't been built yet. (DONE)
+127. A giant sundial where the shadow is a living shadow-cat that chases the passing birds of time. (DONE)
+128. A room full of floating doors, and through each keyhole, you can see a different version of the same person's life. (DONE)
+129. A tree that grows backwards, with its roots reaching for the stars and its branches burrowing into the deep earth. (DONE)
+130. A train station where the passengers are all made of smoke, waiting for a train made of solid moonlight. (DONE)
+131. A grandfather clock that occasionally spits out small, polished stones engraved with dates from the future. (DONE)
+132. A person trying to catch falling autumn leaves, but each leaf turns into a photograph of a lost friend upon contact. (DONE)
+133. A giant's pocket watch lying open in a field, with a forest growing inside the mechanism and birds nesting on the gears. (DONE)
+134. A lantern that casts shadows of things that are no longer there, like a fallen tree or a long-gone house. (DONE)
+135. A bridge made of solid light that only appears when someone hums a specific, long-forgotten tune. (DONE)
+136. A person knitting a scarf that turns into a paved road behind them, stretching across a void into the unknown. (DONE)
+137. A giant eye looking through a telescope at a tiny, miniature earth contained within a drop of dew. (DONE)
+138. A field of stone statues that slowly turn into real people whenever the moon is full, only to freeze again at dawn. (DONE)
+139. A lighthouse whose beam turns whatever it touches into gold, leaving a trail of shimmering landscape in the dark. (DONE)
+140. A giant book whose pages are made of different types of fabric, each telling a story through texture and pattern. (DONE)
 
 ### [Surreal Architectures]
-141. A city built entirely on the backs of giant, slow-moving tortoises migrating across a world of mirrors.
-142. A cathedral where the pillars are giant redwood trees and the stained glass windows are made of frozen butterfly wings.
-143. A house made of giant playing cards, swaying gently in a wind that carries the scent of old paper and peppermint.
-144. A bridge connecting two mountain peaks, made of nothing but a single, massive, horizontal bolt of lightning.
-145. A village where the houses are carved into giant, floating water lilies on a lake of liquid emerald.
-146. A skyscraper made of stacked antique birdcages, with a different climate and ecosystem inside each cage.
-147. A staircase built by wrapping a giant iron chain around a floating island, leading up to a palace made of ivory.
-148. A city where the streets are made of flowing water and the cars are giant, colorful paper boats propelled by fans.
-149. A castle whose towers are giant telescopes, all pointing at different parts of a giant, glowing clockwork sun.
-150. A village built inside the ribs of a giant, ancient creature, with glowing moss for streetlights and paths made of pearl.
-151. A library where the shelves spiral infinitely upwards into a sky filled with multiple moons and shooting stars.
-152. A house where every room is a different season, and you have to cross a snowy hallway to get to a sunny kitchen.
-153. A city made of giant musical instruments, where the wind playing through the buildings creates a continuous symphony.
-154. A bridge made of giant's fingers, holding up a road of woven silver that stretches across a canyon of clouds.
-155. A palace made entirely of ice that never melts, containing a garden of tropical flowers also made of colored ice.
-156. A village where the houses are giant pumpkins, lit from within by a thousand dancing fireflies.
-157. A city built on a giant, spinning gear, with smaller gears acting as rotating platforms and elevators.
-158. A house that is actually a giant, hollowed-out book, with a balcony made of an open page and a roof made of the spine.
-159. A bridge made of a single, massive, fallen tree that is still alive and growing fruit as it spans the abyss.
-160. A city of light, where the buildings are only solid when people are looking at them, and dissolve into mist at night.
+141. A city built entirely on the backs of giant, slow-moving tortoises migrating across a world of mirrors. (DONE)
+142. A cathedral where the pillars are giant redwood trees and the stained glass windows are made of frozen butterfly wings. (DONE)
+143. A house made of giant playing cards, swaying gently in a wind that carries the scent of old paper and peppermint. (DONE)
+144. A bridge connecting two mountain peaks, made of nothing but a single, massive, horizontal bolt of lightning. (DONE)
+145. A village where the houses are carved into giant, floating water lilies on a lake of liquid emerald. (DONE)
+146. A skyscraper made of stacked antique birdcages, with a different climate and ecosystem inside each cage. (DONE)
+147. A staircase built by wrapping a giant iron chain around a floating island, leading up to a palace made of ivory. (DONE)
+148. A city where the streets are made of flowing water and the cars are giant, colorful paper boats propelled by fans. (DONE)
+149. A castle whose towers are giant telescopes, all pointing at different parts of a giant, glowing clockwork sun. (DONE)
+150. A village built inside the ribs of a giant, ancient creature, with glowing moss for streetlights and paths made of pearl. (DONE)
+151. A library where the shelves spiral infinitely upwards into a sky filled with multiple moons and shooting stars. (DONE)
+152. A house where every room is a different season, and you have to cross a snowy hallway to get to a sunny kitchen. (DONE)
+153. A city made of giant musical instruments, where the wind playing through the buildings creates a continuous symphony. (DONE)
+154. A bridge made of giant's fingers, holding up a road of woven silver that stretches across a canyon of clouds. (DONE)
+155. A palace made entirely of ice that never melts, containing a garden of tropical flowers also made of colored ice. (DONE)
+156. A village where the houses are giant pumpkins, lit from within by a thousand dancing fireflies. (DONE)
+157. A city built on a giant, spinning gear, with smaller gears acting as rotating platforms and elevators. (DONE)
+158. A house that is actually a giant, hollowed-out book, with a balcony made of an open page and a roof made of the spine. (DONE)
+159. A bridge made of a single, massive, fallen tree that is still alive and growing fruit as it spans the abyss. (DONE)
+160. A city of light, where the buildings are only solid when people are looking at them, and dissolve into mist at night. (DONE)
 
 ### [Celestial & Cosmic]
-161. A person fishing from the edge of a crescent moon, pulling up glowing stars from a sea of purple space-dust.
-162. A giant's hand scattering a handful of galaxies like seeds into a dark, fertile field of the cosmos.
-163. A comet whose tail is a vibrant garden of cosmic flowers, trailing petals across the night sky.
-164. A person using a giant silver spoon to stir a pot of swirling nebula, creating new stars in the steam.
-165. A moon that is actually a giant, silver eye, watching over a world of sleeping giants made of stardust.
-166. A staircase made of shooting stars, leading up to a throne made of pure, white sunlight in the center of a black hole.
-167. A person painting the constellations onto a giant, black dome, with each star being a tiny, glowing diamond.
-168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide.
-169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation.
-170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss.
-171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares.
-172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds.
-173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity.
-174. A person using a giant telescope to look at their own reflection in a mirror on the other side of the universe.
-175. A garden on a rogue planet, where the plants grow from starlight and the rain is made of liquid gems.
+161. A person fishing from the edge of a crescent moon, pulling up glowing stars from a sea of purple space-dust. (DONE)
+162. A giant's hand scattering a handful of galaxies like seeds into a dark, fertile field of the cosmos. (DONE)
+163. A comet whose tail is a vibrant garden of cosmic flowers, trailing petals across the night sky. (DONE)
+164. A person using a giant silver spoon to stir a pot of swirling nebula, creating new stars in the steam. (DONE)
+165. A moon that is actually a giant, silver eye, watching over a world of sleeping giants made of stardust. (DONE)
+166. A staircase made of shooting stars, leading up to a throne made of pure, white sunlight in the center of a black hole. (DONE)
+167. A person painting the constellations onto a giant, black dome, with each star being a tiny, glowing diamond. (DONE)
+168. A planet where the rings are made of giant, multi-colored crystals that chime like bells as they collide. (DONE)
+169. A giant owl whose wings span across the entire night sky, with each feather containing a different constellation. (DONE)
+170. A person riding a bike made of wire and stars across a tightrope made of moonlight, over a dark abyss. (DONE)
+171. A gateway between two suns, made of intricate golden geometry and guarded by creatures made of solar flares. (DONE)
+172. A person blowing bubbles in space, and each bubble contains a miniature solar system that lives for only a few seconds. (DONE)
+173. A giant, celestial clock that governs the movement of all the planets, with gears made of pure gravity. (DONE)
+174. A carriage pulled by a team of matching, glowing comets, racing across the night sky towards a castle of clouds. (DONE)
+175. A fountain where the water flows upwards, turning into a spiral of stars that slowly drift away into space. (DONE)
 176. A person weaving a quilt out of the Aurora Borealis, with the colors shifting and moving even after it's finished.
 177. A giant, silver tree growing in the center of a galaxy, with planets as its fruit and stars as its blossoms.
 178. A person skating on a frozen lake of liquid mercury, reflecting a sky filled with multiple, overlapping suns.

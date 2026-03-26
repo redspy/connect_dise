@@ -40,11 +40,28 @@
           <li>먼저 <b>30점</b>을 달성하면 승리!</li>
         </ul>
       </div>
+      <button id="btn-view-all-cards" class="dx-btn-view-cards">🃏 모든 카드 보기 (97장)</button>
     </game-lobby>
   </div>
 
   <!-- 공유 타이머 (제출 페이즈에서 표시) -->
   <div id="dx-host-timer" class="dx-host-timer hidden"></div>
+
+  <!-- 카드 갤러리 팝업 -->
+  <div id="dx-card-gallery" class="dx-gallery-overlay hidden">
+    <div class="dx-gallery-panel">
+      <div class="dx-gallery-header">
+        <h2 class="dx-gallery-title">🃏 Dixit 카드 전체 목록 <span class="dx-gallery-count">97장</span></h2>
+        <button id="btn-close-gallery" class="dx-gallery-close">✕</button>
+      </div>
+      <div id="dx-gallery-grid" class="dx-gallery-grid"></div>
+    </div>
+    <!-- 카드 확대 뷰 -->
+    <div id="dx-card-zoom" class="dx-card-zoom hidden">
+      <img id="dx-zoom-img" src="" alt="">
+      <div id="dx-zoom-label" class="dx-zoom-label"></div>
+    </div>
+  </div>
 
   <!-- 2. Storytelling Phase -->
   <div class="dx-overlay hidden" data-phase="storytelling">
