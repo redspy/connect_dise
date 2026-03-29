@@ -170,6 +170,24 @@ body.dixit-mobile {
   /* grid-template-columns & grid-auto-rows set dynamically by JS */
 }
 
+/* ── 투표 보드 카드 wrapper ──────────────────────────────────────────────────── */
+/* 그리드 셀을 채우면서 카드 비율을 유지해 border가 실제 카드와 정확히 일치 */
+.dx-vote-card-wrap {
+  height:          100%;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  cursor:          pointer;
+  border-radius:   10px;
+  transition:      transform .2s;
+}
+.dx-vote-card-wrap.my-submitted {
+  cursor:  not-allowed;
+  opacity: .4;
+}
+.dx-vote-card-wrap:hover:not(.my-submitted) { transform: scale(1.04); }
+.dx-vote-card-wrap.selected                 { transform: scale(1.06); }
+
 /* ── Card images ───────────────────────────────────────────────────────────── */
 .dx-card-img {
   width:         100%;
@@ -179,14 +197,21 @@ body.dixit-mobile {
   border:        3px solid transparent;
   cursor:        pointer;
   display:       block;
-  transition:    border-color .2s, transform .2s, box-shadow .2s;
+  transition:    border-color .2s, box-shadow .2s;
 }
-/* 보드 투표 화면: 셀 높이를 채우되 이미지 전체가 보이도록 contain 사용 */
+
+/* 투표 보드: wrapper가 flex 중앙 배치, 이미지는 셀 높이에 맞춰 자연스러운 3:4 비율 유지 */
 .dx-board-container .dx-card-img {
-  aspect-ratio: unset;
-  height:       100%;
-  object-fit:   contain;
+  /* width: auto + max-width/max-height 100% + aspect-ratio로
+     element 크기 = 실제 보이는 카드 크기 → border가 정확히 카드를 감쌈 */
+  width:       auto;
+  height:      auto;
+  max-height:  100%;
+  max-width:   100%;
+  aspect-ratio: 3/4;
+  object-fit:   cover;
 }
+
 .dx-card-img:hover:not(.my-submitted) { transform: scale(1.04); }
 .dx-card-img.selected {
   border-color: #ffeaa7;
@@ -196,6 +221,12 @@ body.dixit-mobile {
 .dx-card-img.my-submitted {
   opacity: .4;
   cursor:  not-allowed;
+}
+
+/* 투표 보드 wrapper 선택 시 내부 img에 하이라이트 */
+.dx-vote-card-wrap.selected .dx-card-img {
+  border-color: #ffeaa7;
+  box-shadow:   0 0 18px rgba(255,234,167,.55);
 }
 
 /* ── Clue input area ───────────────────────────────────────────────────────── */

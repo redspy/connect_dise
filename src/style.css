@@ -252,7 +252,7 @@ canvas {
 body.mobile-controller {
   background-color: #1a1a1a;
   color: var(--text-light);
-  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   user-select: none;

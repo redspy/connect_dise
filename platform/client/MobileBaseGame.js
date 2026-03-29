@@ -34,6 +34,7 @@ export class MobileBaseGame {
     this._screenClass = screenClass;
     this._player = null;
     this._wireSDK();
+    this._injectHomeButton();
   }
 
   // ─── Internal ────────────────────────────────────────────────────────────
@@ -65,6 +66,47 @@ export class MobileBaseGame {
     this.sdk.on('kicked', () => {
       this.onKicked();
     });
+  }
+
+  // ─── Home button (탈출 버튼) ─────────────────────────────────────────────
+
+  /**
+   * 모든 게임 화면에 공통으로 나타나는 작은 "홈으로" 버튼을 삽입합니다.
+   * 준비 완료 대기 중이거나 게임 도중 나가고 싶을 때 언제든 사용 가능합니다.
+   */
+  _injectHomeButton() {
+    if (document.getElementById('_mbg-home')) return;
+
+    const btn = document.createElement('button');
+    btn.id = '_mbg-home';
+    btn.title = '게임 선택으로 돌아가기';
+    btn.innerHTML = '&#x2302;'; // ⌂
+    btn.style.cssText = [
+      'position:fixed;bottom:max(env(safe-area-inset-bottom,0px) + 12px, 16px);left:12px',
+      'z-index:7900',
+      'width:34px;height:34px;border-radius:50%',
+      'background:rgba(0,0,0,0.22);border:1px solid rgba(255,255,255,0.18)',
+      'color:rgba(255,255,255,0.38);font-size:14px',
+      'cursor:pointer;display:flex;align-items:center;justify-content:center',
+      'transition:background .2s,color .2s',
+      'box-shadow:0 2px 6px rgba(0,0,0,0.25)',
+    ].join(';');
+
+    btn.addEventListener('pointerenter', () => {
+      btn.style.background = 'rgba(0,0,0,0.55)';
+      btn.style.color = 'rgba(255,255,255,0.75)';
+    });
+    btn.addEventListener('pointerleave', () => {
+      btn.style.background = 'rgba(0,0,0,0.22)';
+      btn.style.color = 'rgba(255,255,255,0.38)';
+    });
+    btn.addEventListener('click', () => {
+      if (window.confirm('게임을 나가시겠습니까?\n게임 선택 화면으로 이동합니다.')) {
+        window.location.href = '/';
+      }
+    });
+
+    document.body.appendChild(btn);
   }
 
   // ─── Screen management ───────────────────────────────────────────────────

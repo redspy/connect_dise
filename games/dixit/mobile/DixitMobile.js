@@ -282,15 +282,28 @@ export class DixitMobile extends MobileBaseGame {
 
     for (const cardId of this._boardCards) {
       const isMine = cardId === this._mySubmittedCard;
-      const img    = this._createCardImg(cardId, isMine ? null : () => {
-        this._selectedVote = cardId;
-        boardEl.querySelectorAll('.dx-card-img').forEach(c => c.classList.remove('selected'));
-        img.classList.add('selected');
-        btn.disabled    = false;
-        btn.textContent = '이 카드에 투표';
-      });
-      if (isMine) img.classList.add('my-submitted');
-      boardEl.appendChild(img);
+
+      // wrapper div: 그리드 셀을 채우면서 이미지를 정중앙에 배치
+      // border/transform은 wrapper에 적용해 실제 카드 크기와 정확히 일치시킴
+      const wrap = document.createElement('div');
+      wrap.className = 'dx-vote-card-wrap';
+      if (isMine) wrap.classList.add('my-submitted');
+
+      const img = this._createCardImg(cardId, null);
+      // _createCardImg는 onClick=null이면 cursor:not-allowed를 인라인 설정하므로 선택 가능 카드는 초기화
+      if (!isMine) img.style.cursor = '';
+      wrap.appendChild(img);
+
+      if (!isMine) {
+        wrap.addEventListener('click', () => {
+          this._selectedVote = cardId;
+          boardEl.querySelectorAll('.dx-vote-card-wrap').forEach(c => c.classList.remove('selected'));
+          wrap.classList.add('selected');
+          btn.disabled    = false;
+          btn.textContent = '이 카드에 투표';
+        });
+      }
+      boardEl.appendChild(wrap);
     }
     this.showScreen('vote');
   }

@@ -386,6 +386,31 @@ export class MobileSDK extends EventTarget {
     qrBtn.addEventListener('click', () => this.showQRScanner());
     modal.appendChild(qrBtn);
 
+    // 게임 나가기 버튼 — 연결 끊김 시 로비로 돌아갈 수 있는 탈출구
+    const homeBtn = document.createElement('button');
+    homeBtn.className = '_sdk-home-btn';
+    homeBtn.innerHTML = '⌂ 게임 선택으로 돌아가기';
+    homeBtn.style.cssText = [
+      'margin-top:16px;width:100%;padding:12px',
+      'background:transparent;border:1px solid rgba(255,255,255,0.2)',
+      'border-radius:10px;color:rgba(255,255,255,0.45);font-size:0.88rem',
+      'cursor:pointer;transition:color .2s,border-color .2s',
+    ].join(';');
+    homeBtn.addEventListener('pointerenter', () => {
+      homeBtn.style.color = 'rgba(255,255,255,0.75)';
+      homeBtn.style.borderColor = 'rgba(255,255,255,0.45)';
+    });
+    homeBtn.addEventListener('pointerleave', () => {
+      homeBtn.style.color = 'rgba(255,255,255,0.45)';
+      homeBtn.style.borderColor = 'rgba(255,255,255,0.2)';
+    });
+    homeBtn.addEventListener('click', () => {
+      if (window.confirm('게임을 나가시겠습니까?\n게임 선택 화면으로 이동합니다.')) {
+        window.location.href = '/';
+      }
+    });
+    modal.appendChild(homeBtn);
+
     ui.appendChild(modal);
 
     // 배경 클릭 시 닫기 (선택사항)
