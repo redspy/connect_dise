@@ -436,6 +436,12 @@ class DixitGame extends HostBaseGame {
     const zoomImg  = document.getElementById('dx-zoom-img');
     const zoomLbl  = document.getElementById('dx-zoom-label');
 
+    // 버튼 텍스트 및 헤더 카운트를 CARD_COUNT 기준으로 동적 설정
+    const viewBtn   = document.getElementById('btn-view-all-cards');
+    const countSpan = document.getElementById('dx-gallery-count');
+    if (viewBtn)   viewBtn.textContent   = `🃏 모든 카드 보기 (${CARD_COUNT}장)`;
+    if (countSpan) countSpan.textContent = `${CARD_COUNT}장`;
+
     // 카드 그리드 채우기 (lazy: 첫 오픈 시 1회만)
     let built = false;
     const buildGrid = () => {
