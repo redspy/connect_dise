@@ -100,6 +100,7 @@
   justify-content: center;
 }
 .dx-submission-card {
+  position:       relative;
   display:        flex;
   flex-direction: column;
   align-items:    center;
@@ -114,6 +115,28 @@
 .dx-submission-card.done { background: rgba(85,239,196,.12); }
 .dx-ss-nick { font-size: 14px; font-weight: 600; }
 .dx-ss-icon { font-size: 20px; }
+
+/* ── Kick button (submission grid & vote chips) ────────────────────────────── */
+.dx-ss-kick {
+  position:        absolute;
+  top:             4px;
+  right:           4px;
+  background:      rgba(255,255,255,.1);
+  border:          none;
+  color:           rgba(255,255,255,.45);
+  border-radius:   50%;
+  width:           20px;
+  height:          20px;
+  font-size:       11px;
+  cursor:          pointer;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  line-height:     1;
+  padding:         0;
+  transition:      background .15s, color .15s;
+}
+.dx-ss-kick:hover { background: rgba(239,68,68,.75); color: white; }
 
 /* ── Card board ────────────────────────────────────────────────────────────── */
 .dx-card-board {
@@ -137,18 +160,33 @@
 /* ── Vote progress ─────────────────────────────────────────────────────────── */
 .dx-vote-progress {
   display:         flex;
-  gap:             12px;
+  gap:             10px;
   justify-content: center;
   flex-wrap:       wrap;
 }
-.vote-dot {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background:    var(--color, #fff);
-  opacity:       .35;
-  transition:    opacity .3s, transform .3s;
+.dx-vote-chip {
+  position:    relative;
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  padding:     5px 28px 5px 12px;
+  border:      2px solid;
+  border-radius: 20px;
+  background:  rgba(255,255,255,.05);
+  opacity:     .45;
+  transition:  opacity .3s, background .3s;
 }
-.vote-dot.voted { opacity: 1; transform: scale(1.3); }
+.dx-vote-chip.voted {
+  opacity:    1;
+  background: rgba(85,239,196,.1);
+}
+.dx-vote-chip .dx-ss-kick {
+  position: static;
+  width:    18px;
+  height:   18px;
+  font-size: 10px;
+}
+.dx-vote-chip-name { font-size: 13px; font-weight: 600; }
 
 /* ── Round Result ──────────────────────────────────────────────────────────── */
 .dx-conclusion {

@@ -43,7 +43,15 @@ class DixitGame extends HostBaseGame {
     if (appbar) appbar.onRestart = () => this.resetSession();
 
     const lobby = document.querySelector('game-lobby');
-    if (lobby) lobby.onStart = () => this._startGame();
+    if (lobby) {
+      lobby.onStart = () => this._startGame();
+      lobby.onKick = (playerId) => {
+        const nick = this._profiles.get(playerId)?.nickname ?? '이 플레이어';
+        if (confirm(`"${nick}"를 방에서 제외하시겠습니까?`)) {
+          this.kickPlayer(playerId);
+        }
+      };
+    }
 
     document.getElementById('next-round-btn')
       .addEventListener('click', () => this._nextRound());
@@ -64,8 +72,26 @@ class DixitGame extends HostBaseGame {
     this._profiles.delete(playerId);
     this._scores.delete(playerId);
     this._hands.delete(playerId);
-    this.renderLobbyPlayers(this._getLobbyProfiles());
-    this.updateLobbyReady(this._readyCount);
+    this._readyPlayers.delete(playerId);
+
+    if (!this._gameStarted) {
+      this.renderLobbyPlayers(this._getLobbyProfiles());
+      this.updateLobbyReady(this._readyCount);
+      return;
+    }
+
+    if (this.phase === 'storytelling' && playerId === this._storytellerId) {
+      this._nextRound();
+    } else if (this.phase === 'card-selection') {
+      this._renderSubmissionGrid();
+      this._broadcastSubmissionStatus();
+      if (this._submissions.length >= this.playerCount) this._startVoting();
+    } else if (this.phase === 'voting') {
+      const nonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
+      this._renderVoteProgress();
+      this._broadcastVoteStatus();
+      if (this._votes.length >= nonStorytellers.length) this._revealResults();
+    }
   }
 
   onReadyUpdate({ readyCount }) {
@@ -390,9 +416,15 @@ class DixitGame extends HostBaseGame {
       el.className    = `dx-submission-card ${submitted ? 'done' : 'waiting'}`;
       el.style.borderColor = player.color;
       el.innerHTML = `
+        <button class="dx-ss-kick" title="${nick} 제외">✕</button>
         <span class="dx-ss-nick">${nick}</span>
         <span class="dx-ss-icon">${isStory ? '✍️' : (submitted ? '✅' : '⌛')}</span>
       `;
+      el.querySelector('.dx-ss-kick').addEventListener('click', () => {
+        if (confirm(`"${nick}"를 게임에서 제외하시겠습니까?`)) {
+          this.kickPlayer(id);
+        }
+      });
       grid.appendChild(el);
     }
   }
@@ -413,13 +445,23 @@ class DixitGame extends HostBaseGame {
   _renderVoteProgress() {
     const bar = document.getElementById('vote-progress');
     if (!bar) return;
+    bar.innerHTML = '';
     const nonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
-    bar.innerHTML = nonStorytellers.map(id => {
+    for (const id of nonStorytellers) {
       const nick  = this._profiles.get(id)?.nickname ?? '익명';
       const voted = this._votes.some(v => v.voterId === id);
       const color = this.players.get(id)?.color ?? '#fff';
-      return `<span class="vote-dot ${voted ? 'voted' : ''}" style="--color:${color}" title="${nick}"></span>`;
-    }).join('');
+      const chip  = document.createElement('span');
+      chip.className = `dx-vote-chip ${voted ? 'voted' : ''}`;
+      chip.style.borderColor = color;
+      chip.innerHTML = `<span class="dx-vote-chip-name">${nick}</span><button class="dx-ss-kick" title="${nick} 제외">✕</button>`;
+      chip.querySelector('.dx-ss-kick').addEventListener('click', () => {
+        if (confirm(`"${nick}"를 게임에서 제외하시겠습니까?`)) {
+          this.kickPlayer(id);
+        }
+      });
+      bar.appendChild(chip);
+    }
   }
 
   _renderRoundResult(scoringCase, deltas, totals, cardOwnerMap, votesOnCard) {
