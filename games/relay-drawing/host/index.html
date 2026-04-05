@@ -26,11 +26,12 @@
       <div class="setting-item">
         <label for="timeLimit">그림 제한 시간</label>
         <select id="timeLimit">
+          <option value="0" selected>제한 없음 (추천)</option>
           <option value="45">45초 (빠르게)</option>
-          <option value="60" selected>60초 (기본)</option>
+          <option value="60">60초 (기본)</option>
           <option value="90">90초 (여유롭게)</option>
         </select>
-        <small class="hint">단어 설명 시간은 그림 시간의 절반으로 설정됩니다.</small>
+        <small class="hint">시간 제한이 있으면 종료 시 작성 중인 그림/단어가 자동으로 제출됩니다.</small>
       </div>
     </game-lobby>
   </div>

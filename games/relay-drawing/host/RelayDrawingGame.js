@@ -81,9 +81,11 @@ export class RelayDrawingGame extends HostBaseGame {
     this._storyChains     = [];
     this._currentRound    = 0;
     this._totalRounds     = 0;
-    this._timeLimitDraw   = 60;
-    this._timeLimitText   = 30;
+    this._timeLimitDraw   = 0;
+    this._timeLimitText   = 0;
     this._timerInterval   = null;
+    this._forceEndTimeout = null;
+    this._readyPlayers    = new Set(); // 준비 완료한 플레이어 ID
     this._currentStoryIndex = 0;
     this._presentationTimeouts = [];
 
@@ -156,7 +158,10 @@ export class RelayDrawingGame extends HostBaseGame {
     this._profiles.clear();
     this._storyChains = [];
     this._currentRound = 0;
+    this._readyPlayers.clear();
     clearInterval(this._timerInterval);
+    clearTimeout(this._forceEndTimeout);
+    this._forceEndTimeout = null;
     this._updateLobbyPlayers();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
@@ -170,6 +175,11 @@ export class RelayDrawingGame extends HostBaseGame {
       this._profiles.set(player.id, { nickname: name, avatar: avatar || null });
       this.setPlayerName(player.id, name);
       this._updateLobbyPlayers();
+      this._broadcastPlayerList();
+    });
+
+    this.onMessage('playerReady', (player) => {
+      this._readyPlayers.add(player.id);
       this._broadcastPlayerList();
     });
 
@@ -195,9 +205,27 @@ export class RelayDrawingGame extends HostBaseGame {
   _broadcastPlayerList() {
     const players = [];
     this.players.forEach(p => {
-      players.push({ id: p.id, color: p.color, nickname: this._profiles.get(p.id)?.nickname ?? '익명' });
+      players.push({
+        id:       p.id,
+        color:    p.color,
+        nickname: this._profiles.get(p.id)?.nickname ?? '익명',
+        ready:    this._readyPlayers.has(p.id),
+      });
     });
     this.broadcast('playerListUpdated', { players });
+  }
+
+  _broadcastSubmissionStatus() {
+    const players = [];
+    this.players.forEach(p => {
+      players.push({
+        id:        p.id,
+        color:     p.color,
+        nickname:  this._profiles.get(p.id)?.nickname ?? '익명',
+        submitted: p._hasSubmitted ?? false,
+      });
+    });
+    this.broadcast('submissionStatus', { players });
   }
 
   // ─── 게임 흐름 ────────────────────────────────────────────────────────────
@@ -231,8 +259,8 @@ export class RelayDrawingGame extends HostBaseGame {
     } else {
       this._totalRounds = Math.min(parseInt(rCountVal, 10), this.playerCount);
     }
-    this._timeLimitDraw = parseInt(document.getElementById('timeLimit')?.value || '60', 10);
-    this._timeLimitText = Math.max(15, Math.floor(this._timeLimitDraw / 2));
+    this._timeLimitDraw = parseInt(document.getElementById('timeLimit')?.value || '0', 10);
+    this._timeLimitText = this._timeLimitDraw > 0 ? Math.max(15, Math.floor(this._timeLimitDraw / 2)) : 0;
   }
 
   _initializeStoryChains() {
@@ -307,9 +335,16 @@ export class RelayDrawingGame extends HostBaseGame {
 
   _startRoundTimer(seconds) {
     clearInterval(this._timerInterval);
-    let timeLeft = seconds;
     const clockEl = document.getElementById('gameClock');
     const hurryEl = document.getElementById('hurryText');
+
+    if (seconds <= 0) {
+      if (clockEl) { clockEl.textContent = '∞'; clockEl.classList.remove('warning'); }
+      if (hurryEl) hurryEl.classList.add('hidden');
+      return; // 무제한 — 모든 플레이어 제출 시까지 대기
+    }
+
+    let timeLeft = seconds;
     if (clockEl) { clockEl.textContent = timeLeft; clockEl.classList.remove('warning'); }
     if (hurryEl) hurryEl.classList.add('hidden');
 
@@ -344,6 +379,7 @@ export class RelayDrawingGame extends HostBaseGame {
 
     p._hasSubmitted = true;
     this._updatePlayerStatusCard(playerId, true);
+    this._broadcastSubmissionStatus();
 
     this._checkTurnCompletion();
   }
@@ -365,38 +401,45 @@ export class RelayDrawingGame extends HostBaseGame {
     this.players.forEach(p => { if (!p._hasSubmitted) allDone = false; });
     if (allDone) {
       clearInterval(this._timerInterval);
+      // forceEndRound의 fallback timeout이 남아있으면 취소
+      if (this._forceEndTimeout) {
+        clearTimeout(this._forceEndTimeout);
+        this._forceEndTimeout = null;
+      }
       this._finishRound();
     }
   }
 
   _forceEndRound() {
     const isDrawTurn = (this._currentRound % 2 !== 0);
-    this._storyChains.forEach(chain => {
-      const p = this.players.get(chain.currentHolderId);
-      if (p && !p._hasSubmitted) {
-        chain.steps.push({
-          type:        isDrawTurn ? 'draw' : 'word',
-          content:     isDrawTurn ? this._createDummyCanvas() : '시간을 초과했습니다...',
-          authorId:    p.id,
-          roundNumber: this._currentRound,
-        });
-        p._hasSubmitted = true;
-        this._updatePlayerStatusCard(p.id, true);
-      }
-    });
-    this._finishRound();
+    // 모바일에 지금까지 입력한 내용 즉시 제출 요청
+    this.broadcast('forceSubmit', { type: isDrawTurn ? 'draw' : 'word' });
+    // 1.5초 후 네트워크 지연 등으로 미제출된 플레이어에게만 빈 내용으로 fallback
+    this._forceEndTimeout = setTimeout(() => {
+      this._forceEndTimeout = null;
+      this._storyChains.forEach(chain => {
+        const p = this.players.get(chain.currentHolderId);
+        if (p && !p._hasSubmitted) {
+          chain.steps.push({
+            type:        isDrawTurn ? 'draw' : 'word',
+            content:     isDrawTurn ? this._createBlankCanvas() : '',
+            authorId:    p.id,
+            roundNumber: this._currentRound,
+          });
+          p._hasSubmitted = true;
+          this._updatePlayerStatusCard(p.id, true);
+        }
+      });
+      this._finishRound();
+    }, 1500);
   }
 
-  _createDummyCanvas() {
+  _createBlankCanvas() {
     const canvas = document.createElement('canvas');
     canvas.width = 400; canvas.height = 300;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#f0f0f0';
     ctx.fillRect(0, 0, 400, 300);
-    ctx.fillStyle = '#cc3333';
-    ctx.font = 'bold 28px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('시간 초과 ㅠㅠ', 200, 155);
     return canvas.toDataURL();
   }
 

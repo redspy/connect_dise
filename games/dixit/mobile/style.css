@@ -93,7 +93,9 @@ body.dixit-mobile {
   background:      rgba(255,255,255,.07);
   border-radius:   10px;
 }
-.dx-player-score { opacity: .65; font-size: 14px; }
+.dx-player-score { opacity: .65; font-size: 14px; margin-left: auto; }
+.dx-ready-badge { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.4); margin-left: 6px; }
+.dx-ready-badge.ready { color: #55efc4; }
 
 /* ── Phase header row (header + timer) ──────────────────────────────────────── */
 .dx-phase-header-row {
@@ -242,6 +244,44 @@ body.dixit-mobile {
 }
 .dx-clue-input-area input::placeholder { opacity: .5; }
 .dx-clue-input-area input:focus { border-color: #6c5ce7; }
+
+/* ── Status bar (준비/제출/투표 현황) ──────────────────────────────────────── */
+.dx-status-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  flex-shrink: 0;
+}
+.dx-status-bar:empty { display: none; }
+
+.dx-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.06);
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.1);
+  font-size: 14px;
+  opacity: 0.55;
+  transition: opacity 0.25s, border-color 0.25s;
+}
+.dx-status-item.done {
+  opacity: 1;
+  border-color: rgba(100,220,120,.5);
+}
+.dx-status-item.skip {
+  opacity: 1;
+  border-color: rgba(162,155,254,.4);
+}
+.dx-status-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dx-status-name { flex: 1; }
+.dx-status-icon { font-size: 1rem; }
 
 /* ── Round result ──────────────────────────────────────────────────────────── */
 .dx-result-wrap {

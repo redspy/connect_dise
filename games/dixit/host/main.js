@@ -27,8 +27,13 @@ class DixitGame extends HostBaseGame {
     this._phaseTimerTimeout = null;
     this._phaseTimerInterval = null;
     this._phaseTimerStart   = 0;
+    this._readyPlayers      = new Set();
 
     this._wireHandlers();
+
+    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+      setTimeout(() => this._initDebugMenu(), 500);
+    }
   }
 
   // ── HostBaseGame hooks ────────────────────────────────────────────────────
@@ -91,6 +96,7 @@ class DixitGame extends HostBaseGame {
     this._boardCards     = [];
     this._gameStarted    = false;
     this._readyCount     = 0;
+    this._readyPlayers.clear();
     for (const p of this.players.values()) this._scores.set(p.id, 0);
     this.renderLobbyPlayers(this._getLobbyProfiles());
     this.updateLobbyReady(0);
@@ -107,6 +113,11 @@ class DixitGame extends HostBaseGame {
       this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
       if (this._gameStarted) this._sendRejoinState(player.id);
+    });
+
+    this.onMessage('playerReady', (player) => {
+      this._readyPlayers.add(player.id);
+      this._broadcastPlayerList();
     });
 
     this.onMessage('submitClue', (player, { cardId, clue }) => {
@@ -128,6 +139,7 @@ class DixitGame extends HostBaseGame {
 
       this._submissions.push({ playerId: player.id, cardId });
       this._renderSubmissionGrid();
+      this._broadcastSubmissionStatus();
 
       if (this._submissions.length === this.playerCount) {
         this._startVoting();
@@ -143,6 +155,7 @@ class DixitGame extends HostBaseGame {
 
       this._votes.push({ voterId: player.id, cardId });
       this._renderVoteProgress();
+      this._broadcastVoteStatus();
 
       const nonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
       if (this._votes.length === nonStorytellers.length) {
@@ -209,6 +222,7 @@ class DixitGame extends HostBaseGame {
     document.getElementById('current-clue').textContent = `"${this._clue}"`;
     this._renderSubmissionGrid();
     this.broadcast('clueSubmitted', { clue: this._clue });
+    this._broadcastSubmissionStatus(); // 이야기꾼 제출 완료 상태 즉시 전달
     this._startPhaseTimer('card-selection');
   }
 
@@ -226,7 +240,7 @@ class DixitGame extends HostBaseGame {
       clue: this._clue,
       boardCards: this._boardCards,
     });
-
+    this._broadcastVoteStatus(); // 투표 시작 시 초기 상태(0명) 즉시 전달
     this._startPhaseTimer('voting');
   }
 
@@ -318,6 +332,50 @@ class DixitGame extends HostBaseGame {
       map.set(id, { nickname: profile.nickname });
     }
     return map;
+  }
+
+  _broadcastPlayerList() {
+    const players = [];
+    this.players.forEach(p => {
+      players.push({
+        id:       p.id,
+        color:    p.color,
+        nickname: this._profiles.get(p.id)?.nickname ?? '익명',
+        score:    this._scores.get(p.id) ?? 0,
+        ready:    this._readyPlayers.has(p.id),
+      });
+    });
+    this.broadcast('playerListUpdated', { players });
+  }
+
+  _broadcastSubmissionStatus() {
+    const submittedIds = new Set(this._submissions.map(s => s.playerId));
+    const players = [];
+    this.players.forEach(p => {
+      players.push({
+        id:            p.id,
+        color:         p.color,
+        nickname:      this._profiles.get(p.id)?.nickname ?? '익명',
+        submitted:     submittedIds.has(p.id),
+        isStoryteller: p.id === this._storytellerId,
+      });
+    });
+    this.broadcast('submissionStatus', { players });
+  }
+
+  _broadcastVoteStatus() {
+    const votedIds = new Set(this._votes.map(v => v.voterId));
+    const players = [];
+    this.players.forEach(p => {
+      if (p.id === this._storytellerId) return; // 이야기꾼은 투표 안 함
+      players.push({
+        id:       p.id,
+        color:    p.color,
+        nickname: this._profiles.get(p.id)?.nickname ?? '익명',
+        voted:    votedIds.has(p.id),
+      });
+    });
+    this.broadcast('voteStatus', { players });
   }
 
   _renderSubmissionGrid() {
@@ -634,6 +692,93 @@ class DixitGame extends HostBaseGame {
       storyCardId:        this.phase === 'round-result' ? storyCardId : null,
       phaseTimerRemaining: this._getPhaseTimerRemaining(),
     });
+  }
+
+  // ── Debug ─────────────────────────────────────────────────────────────────
+
+  _initDebugMenu() {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      position: fixed; bottom: 10px; right: 10px; z-index: 9999;
+      background: rgba(0,0,0,0.8); color: white; padding: 10px;
+      border-radius: 8px; font-size: 12px; display: flex; flex-direction: column; gap: 5px;
+    `;
+    panel.innerHTML = `<b>Host Debug UI</b><hr style="margin:2px 0; border-color:#555;">`;
+    
+    // Mock profiles & players
+    this._profiles.set('p1', { nickname: 'Alice' });
+    this._profiles.set('p2', { nickname: 'Bob' });
+    this._profiles.set('p3', { nickname: 'Charlie' });
+    this.players.set('p1', { id: 'p1', color: '#ffaaaa' });
+    this.players.set('p2', { id: 'p2', color: '#aaffaa' });
+    this.players.set('p3', { id: 'p3', color: '#aaaaff' });
+    this._storytellerId = 'p1';
+    
+    const btns = [
+      { name: '1. Lobby', fn: () => {
+          this.setPhase('lobby');
+          this.renderLobbyPlayers(this._getLobbyProfiles());
+        }
+      },
+      { name: '2. Storytelling', fn: () => {
+          this.setPhase('storytelling');
+          document.getElementById('storyteller-name').textContent = 'Alice의 턴 (이야기꾼)';
+        }
+      },
+      { name: '3. Card Selection', fn: () => {
+          this._clue = '꿈꾸는 고양이';
+          this.setPhase('card-selection');
+          document.getElementById('current-clue').textContent = '"꿈꾸는 고양이"';
+          this._submissions = [{playerId: 'p1', cardId: 'card_001'}, {playerId: 'p2', cardId: 'card_002'}];
+          this._renderSubmissionGrid();
+        }
+      },
+      { name: '4. Voting', fn: () => {
+          this._clue = '꿈꾸는 고양이';
+          this.setPhase('voting');
+          document.getElementById('voting-clue').textContent = '"꿈꾸는 고양이"';
+          this._boardCards = ['card_001', 'card_002', 'card_003'];
+          this._votes = [{voterId: 'p2', cardId: 'card_001'}];
+          this._renderCardBoard();
+          this._renderVoteProgress();
+        }
+      },
+      { name: '5. Round Result (All Correct)', fn: () => {
+          this._clue = '꿈꾸는 고양이';
+          this.setPhase('round-result');
+          this._boardCards = ['card_001', 'card_002', 'card_003'];
+          this._submissions = [{playerId: 'p1', cardId: 'card_001'}, {playerId: 'p2', cardId: 'card_002'}, {playerId: 'p3', cardId: 'card_003'}];
+          this._renderRoundResult('all-correct', {p1: 0, p2: 2, p3: 2}, {p1: 0, p2: 2, p3: 2}, {'card_001':'p1', 'card_002':'p2', 'card_003':'p3'}, {'card_001':2});
+        }
+      },
+      { name: '5. Round Result (Partial)', fn: () => {
+          this.setPhase('round-result');
+          this._renderRoundResult('partial', {p1: 3, p2: 3, p3: 0}, {p1: 3, p2: 5, p3: 2}, {'card_001':'p1', 'card_002':'p2', 'card_003':'p3'}, {'card_001':1, 'card_002':1});
+        }
+      },
+      { name: '6. Final', fn: () => {
+          this.setPhase('final');
+          this._renderFinalRanking([
+            { id: 'p2', nickname: 'Bob', color: '#aaffaa', score: 32 },
+            { id: 'p1', nickname: 'Alice', color: '#ffaaaa', score: 28 },
+            { id: 'p3', nickname: 'Charlie', color: '#aaaaff', score: 15 },
+          ]);
+        }
+      }
+    ];
+
+    for (const b of btns) {
+      const btn = document.createElement('button');
+      btn.textContent = b.name;
+      btn.style.cssText = 'padding:4px; cursor:pointer; background:#333; color:white; border:1px solid #666; text-align:left;';
+      btn.onclick = () => {
+        this._clearPhaseTimer();
+        b.fn();
+      };
+      panel.appendChild(btn);
+    }
+    
+    document.body.appendChild(panel);
   }
 }
 

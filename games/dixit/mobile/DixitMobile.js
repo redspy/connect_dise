@@ -24,6 +24,10 @@ export class DixitMobile extends MobileBaseGame {
     this._wireUI();
     this._wireMessages();
     this._prefillNickname();
+
+    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+      setTimeout(() => this._initDebugMenu(), 500);
+    }
   }
 
   // ── MobileBaseGame hooks ──────────────────────────────────────────────────
@@ -81,6 +85,7 @@ export class DixitMobile extends MobileBaseGame {
       document.getElementById('btn-ready').disabled    = true;
       document.getElementById('btn-ready').textContent = '준비 완료 ✓';
       this.ready();
+      this.sendToHost('playerReady', {});
     });
 
     document.getElementById('clue-input').addEventListener('input', () => this._updateClueBtn());
@@ -125,6 +130,14 @@ export class DixitMobile extends MobileBaseGame {
     this.onMessage('playerListUpdated', ({ players }) => {
       this._players = players;
       this._renderWaitingPlayers();
+    });
+
+    this.onMessage('submissionStatus', ({ players }) => {
+      this._renderStatusBars(players, 'submitted', 'isStoryteller');
+    });
+
+    this.onMessage('voteStatus', ({ players }) => {
+      this._renderStatusBars(players, 'voted', null);
     });
 
     this.onMessage('roundStarted', ({ round, storytellerId }) => {
@@ -214,9 +227,29 @@ export class DixitMobile extends MobileBaseGame {
     el.innerHTML = this._players.map(p => `
       <div class="dx-waiting-player" style="border-left: 3px solid ${p.color}">
         <span>${p.nickname}</span>
-        <span class="dx-player-score">${p.score}점</span>
+        <span class="dx-player-score">${p.score != null ? p.score + '점' : ''}</span>
+        ${p.ready != null ? `<span class="dx-ready-badge ${p.ready ? 'ready' : ''}">${p.ready ? '✓' : '⏳'}</span>` : ''}
       </div>
     `).join('');
+  }
+
+  _renderStatusBars(players, doneKey, skipKey) {
+    const ids = ['wait-status-bar', 'card-status-bar', 'vote-status-bar'];
+    const html = players.map(p => {
+      const isDone = p[doneKey];
+      const isSkip = skipKey ? p[skipKey] : false;
+      return `
+        <div class="dx-status-item ${isDone ? 'done' : ''} ${isSkip ? 'skip' : ''}">
+          <div class="dx-status-dot" style="background:${p.color}"></div>
+          <span class="dx-status-name">${p.nickname}</span>
+          <span class="dx-status-icon">${isSkip ? '✍️' : (isDone ? '✅' : '⏳')}</span>
+        </div>
+      `;
+    }).join('');
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    });
   }
 
   _showStorytellerClueScreen() {
@@ -459,5 +492,71 @@ export class DixitMobile extends MobileBaseGame {
       this._showRoundResultScreen(0, phase === 'final');
       return;
     }
+  }
+
+  // ── Debug ─────────────────────────────────────────────────────────────────
+
+  _initDebugMenu() {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      position: fixed; bottom: 10px; right: 10px; z-index: 9999;
+      background: rgba(0,0,0,0.8); color: white; padding: 10px;
+      border-radius: 8px; font-size: 12px; display: flex; flex-direction: column; gap: 5px;
+    `;
+    panel.innerHTML = `<b>Mobile Debug UI</b><hr style="margin:2px 0; border-color:#555;">`;
+    
+    this._nickname = 'Tester';
+    this._players = [
+      { id: 'p1', nickname: 'Alice', score: 10, color: '#ffaaaa' },
+      { id: 'p2', nickname: 'Tester', score: 12, color: '#aaffaa' },
+      { id: 'p3', nickname: 'Charlie', score: 8, color: '#aaaaff' }
+    ];
+    this._hand = ['card_010', 'card_011', 'card_012', 'card_013', 'card_014', 'card_015'];
+    
+    const btns = [
+      { name: '1. Setup', fn: () => this.showScreen('setup') },
+      { name: '2. Waiting', fn: () => {
+          this._renderWaitingPlayers();
+          this._setWaitingHint('게임 시작을 기다리는 중...');
+          this.showScreen('waiting');
+        }
+      },
+      { name: '3. Storyteller Clue', fn: () => {
+          this._isStoryteller = true;
+          this._showStorytellerClueScreen();
+        }
+      },
+      { name: '4. Card Select', fn: () => {
+          this._clue = '꿈꾸는 고양이';
+          this._isStoryteller = false;
+          this._showCardSelectScreen();
+        }
+      },
+      { name: '5. Vote', fn: () => {
+          this._clue = '꿈꾸는 고양이';
+          this._isStoryteller = false;
+          this._mySubmittedCard = 'card_012';
+          this._boardCards = ['card_012', 'card_020', 'card_030'];
+          this._showVoteScreen();
+        }
+      },
+      { name: '6. Round Result', fn: () => {
+          this._myScore = 15;
+          this._showRoundResultScreen(3, false);
+        }
+      }
+    ];
+
+    for (const b of btns) {
+      const btn = document.createElement('button');
+      btn.textContent = b.name;
+      btn.style.cssText = 'padding:4px; cursor:pointer; background:#333; color:white; border:1px solid #666; text-align:left;';
+      btn.onclick = () => {
+        this._clearClientTimer();
+        b.fn();
+      };
+      panel.appendChild(btn);
+    }
+    document.body.appendChild(panel);
   }
 }

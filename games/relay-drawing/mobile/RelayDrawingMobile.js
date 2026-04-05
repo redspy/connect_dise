@@ -80,6 +80,7 @@ export class RelayDrawingMobile extends MobileBaseGame {
     // 준비 완료 버튼
     document.getElementById('readyBtn')?.addEventListener('click', () => {
       this.ready();
+      this.sendToHost('playerReady', {});
       document.getElementById('readyBtn')?.classList.add('hidden');
       document.getElementById('readyStatus')?.classList.remove('hidden');
     });
@@ -307,8 +308,14 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
   _startTimer(seconds, type) {
     this._clearTimer();
-    let timeLeft = seconds;
     const el = document.getElementById(type === 'draw' ? 'drawTimer' : 'wordTimer');
+
+    if (seconds <= 0) {
+      if (el) { el.textContent = '∞'; el.classList.remove('warning'); }
+      return; // 무제한 — 직접 제출 버튼으로만 완료
+    }
+
+    let timeLeft = seconds;
     if (el) { el.textContent = timeLeft; el.classList.remove('warning'); }
 
     this._timerInterval = setInterval(() => {
@@ -372,6 +379,24 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this.onMessage('roundSubmitted', () => {
       this.showScreen('standby');
     });
+
+    this.onMessage('forceSubmit', ({ type }) => {
+      if (this._hasSubmitted) return;
+      if (type === 'draw') this._submitDraw();
+      else this._submitWord();
+    });
+
+    this.onMessage('submissionStatus', ({ players }) => {
+      const listEl = document.getElementById('submission-list');
+      if (!listEl) return;
+      listEl.innerHTML = players.map(p => `
+        <div class="submission-item ${p.submitted ? 'done' : ''}">
+          <div class="sub-dot" style="background:${p.color}"></div>
+          <span class="sub-name">${p.nickname}</span>
+          <span class="sub-icon">${p.submitted ? '✅' : '⏳'}</span>
+        </div>
+      `).join('');
+    });
   }
 
   _updatePlayerList(players) {
@@ -385,7 +410,8 @@ export class RelayDrawingMobile extends MobileBaseGame {
       const li = document.createElement('li');
       li.innerHTML = `
         <div class="player-color-dot" style="background:${p.color};"></div>
-        <span>${p.nickname}</span>
+        <span class="player-name">${p.nickname}</span>
+        <span class="player-ready-badge ${p.ready ? 'ready' : ''}">${p.ready ? '✓ 준비' : '⏳'}</span>
       `;
       listEl.appendChild(li);
     });
