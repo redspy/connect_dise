@@ -38,7 +38,8 @@ class DixitGame extends HostBaseGame {
 
   // ── HostBaseGame hooks ────────────────────────────────────────────────────
 
-  async onSetup() {
+  async onSetup({ sessionId }) {
+    document.documentElement.dataset.sessionId = sessionId;
     const appbar = document.querySelector('game-appbar');
     if (appbar) appbar.onRestart = () => this.resetSession();
 

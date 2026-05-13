@@ -94,7 +94,8 @@ export class RelayDrawingGame extends HostBaseGame {
 
   // ─── HostBaseGame 훅 ─────────────────────────────────────────────────────
 
-  async onSetup() {
+  async onSetup({ sessionId }) {
+    document.documentElement.dataset.sessionId = sessionId;
     if (this._lobbyEl) {
       this._lobbyEl.onStart = () => { if (this.playerCount >= 2) this._startGame(); };
     }
@@ -108,6 +109,13 @@ export class RelayDrawingGame extends HostBaseGame {
     if (restartBtn) {
       restartBtn.onclick = () => this.resetSession();
     }
+
+    document.querySelectorAll('.rd-share-trigger').forEach(btn => {
+      btn.addEventListener('click', () => this._shareResults());
+    });
+    document.getElementById('shareCloseBtn')?.addEventListener('click', () => {
+      document.getElementById('sharePreviewOverlay')?.classList.add('hidden');
+    });
 
     this.setPhase('lobby');
     audioManager.playBGM('https://actions.google.com/static/audio/test/Lobby-Time.mp3');
@@ -575,4 +583,241 @@ export class RelayDrawingGame extends HostBaseGame {
     overlay.appendChild(el);
     setTimeout(() => el.parentNode?.removeChild(el), 3000);
   }
+
+  // ─── 결과 이미지 공유 ─────────────────────────────────────────────────────
+
+  async _shareResults() {
+    const triggers = document.querySelectorAll('.rd-share-trigger');
+    triggers.forEach(b => { b.disabled = true; b.textContent = '⏳ 생성 중...'; });
+    try {
+      const canvas  = await this._generateShareImage();
+      const dataUrl = canvas.toDataURL('image/png');
+
+      document.getElementById('sharePreviewImg').src = dataUrl;
+      document.getElementById('sharePreviewOverlay').classList.remove('hidden');
+
+      document.getElementById('shareDownloadBtn').onclick = () => {
+        const a = document.createElement('a');
+        a.href     = dataUrl;
+        a.download = 'relay-result.png';
+        a.click();
+      };
+    } catch (e) {
+      console.error('이미지 생성 실패:', e);
+    } finally {
+      triggers.forEach(b => { b.disabled = false; b.textContent = '📸 결과 이미지 저장'; });
+    }
+  }
+
+  async _generateShareImage() {
+    const chains = this._storyChains;
+    const N      = chains.length;
+
+    // 레이아웃 상수
+    const OUTER    = 20;
+    const COL_GAP  = 16;
+    const CARD_W   = 270;
+    const TITLE_H  = 64;
+    const HDR_H    = 38;
+    const STEP_GAP = 10;
+    const PROMPT_H = 74;
+    const DRAW_H   = 180;
+    const WORD_H   = 74;
+    const BTM_PAD  = 14;
+    const CELL_PAD = 12;
+    const FONT     = '"Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+
+    // 카드 높이 = 모든 체인 중 최대값
+    const cardH = Math.max(...chains.map(c => {
+      let h = HDR_H + STEP_GAP + PROMPT_H;
+      for (const s of c.steps) h += STEP_GAP + (s.type === 'draw' ? DRAW_H : WORD_H);
+      return h + BTM_PAD;
+    }));
+
+    const canvasW = OUTER * 2 + N * CARD_W + (N - 1) * COL_GAP;
+    const canvasH = TITLE_H + OUTER + cardH + OUTER;
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = canvasW;
+    canvas.height = canvasH;
+    const ctx = canvas.getContext('2d');
+    const cellW = CARD_W - CELL_PAD * 2;
+
+    // 배경
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    // 타이틀
+    ctx.fillStyle = '#F9FAFB';
+    ctx.font = `bold 24px ${FONT}`;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🎨 그림 릴레이 결과', canvasW / 2, TITLE_H / 2);
+
+    // 그림 이미지 사전 로드
+    const imgMap = new Map();
+    for (const chain of chains) {
+      for (const step of chain.steps) {
+        if (step.type === 'draw' && step.content && !imgMap.has(step.content)) {
+          imgMap.set(step.content, await _rdLoadImg(step.content));
+        }
+      }
+    }
+
+    // 체인별 카드 그리기
+    for (let ci = 0; ci < N; ci++) {
+      const chain = chains[ci];
+      const cardX = OUTER + ci * (CARD_W + COL_GAP);
+      const cardY = TITLE_H + OUTER;
+      const ownerColor = this.players.get(chain.originalAuthorId)?.color ?? '#818CF8';
+      const ownerNick  = this._profiles.get(chain.originalAuthorId)?.nickname ?? '?';
+
+      // 카드 배경
+      ctx.fillStyle = '#1F2937';
+      _rdRR(ctx, cardX, cardY, CARD_W, cardH, 12);
+
+      // 헤더 — 이야기 주인 이름
+      ctx.fillStyle    = ownerColor;
+      ctx.font         = `bold 14px ${FONT}`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${ownerNick}의 이야기`, cardX + CARD_W / 2, cardY + HDR_H / 2);
+
+      // 구분선
+      ctx.strokeStyle = '#374151';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(cardX + CELL_PAD, cardY + HDR_H);
+      ctx.lineTo(cardX + CARD_W - CELL_PAD, cardY + HDR_H);
+      ctx.stroke();
+
+      let cy = cardY + HDR_H + STEP_GAP;
+
+      // 시작 단어 셀
+      ctx.fillStyle = '#374151';
+      _rdRR(ctx, cardX + CELL_PAD, cy, cellW, PROMPT_H - STEP_GAP, 8);
+
+      ctx.fillStyle    = '#9CA3AF';
+      ctx.font         = `11px ${FONT}`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('시작 단어', cardX + CARD_W / 2, cy + 6);
+
+      ctx.fillStyle    = '#F9FAFB';
+      ctx.font         = `bold 13px ${FONT}`;
+      ctx.textBaseline = 'middle';
+      _rdTxtLines(ctx, chain.initialPrompt, cardX + CARD_W / 2, cy + (PROMPT_H - STEP_GAP) / 2 + 6, cellW - 8, 17);
+      cy += PROMPT_H;
+
+      // 라운드 스텝
+      for (const step of chain.steps) {
+        const authorNick  = this._profiles.get(step.authorId)?.nickname ?? '?';
+        const authorColor = this.players.get(step.authorId)?.color ?? '#9CA3AF';
+        cy += STEP_GAP;
+
+        if (step.type === 'draw') {
+          const labelH = 22;
+          const imgH   = DRAW_H - STEP_GAP - labelH;
+
+          // 흰 캔버스 영역
+          ctx.fillStyle = '#FFFFFF';
+          _rdRR(ctx, cardX + CELL_PAD, cy, cellW, imgH, 6);
+
+          // 그림 (contain 방식으로 비율 유지)
+          const img = imgMap.get(step.content);
+          if (img) _rdImgContain(ctx, img, cardX + CELL_PAD, cy, cellW, imgH);
+
+          // 작가 라벨 띠
+          ctx.fillStyle = 'rgba(0,0,0,0.62)';
+          ctx.fillRect(cardX + CELL_PAD, cy + imgH - labelH, cellW, labelH);
+          ctx.fillStyle    = authorColor;
+          ctx.font         = `bold 11px ${FONT}`;
+          ctx.textAlign    = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`🎨 ${authorNick}`, cardX + CELL_PAD + 6, cy + imgH - labelH / 2);
+
+          cy += DRAW_H - STEP_GAP;
+        } else {
+          const cellH = WORD_H - STEP_GAP;
+          ctx.fillStyle = '#374151';
+          _rdRR(ctx, cardX + CELL_PAD, cy, cellW, cellH, 8);
+
+          ctx.fillStyle    = authorColor;
+          ctx.font         = `11px ${FONT}`;
+          ctx.textAlign    = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(`✍️ ${authorNick}`, cardX + CELL_PAD + 6, cy + 6);
+
+          ctx.fillStyle    = '#F9FAFB';
+          ctx.font         = `bold 13px ${FONT}`;
+          ctx.textAlign    = 'center';
+          ctx.textBaseline = 'middle';
+          _rdTxtLines(ctx, step.content, cardX + CARD_W / 2, cy + cellH / 2 + 6, cellW - 8, 17);
+
+          cy += WORD_H - STEP_GAP;
+        }
+      }
+    }
+
+    return canvas;
+  }
+}
+
+// ── 모듈 레벨 헬퍼 ────────────────────────────────────────────────────────────
+
+function _rdLoadImg(src) {
+  return new Promise(res => {
+    const img = new Image();
+    img.onload  = () => res(img);
+    img.onerror = () => res(null);
+    img.src = src;
+  });
+}
+
+/** 캔버스 둥근 사각형 fill */
+function _rdRR(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x,     y + h, r);
+  ctx.arcTo(x,     y + h, x,     y,     r);
+  ctx.arcTo(x,     y,     x + w, y,     r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** 이미지를 비율 유지(contain)하여 그리기 */
+function _rdImgContain(ctx, img, x, y, w, h) {
+  const iAR = img.naturalWidth / img.naturalHeight;
+  const cAR = w / h;
+  let dw = w, dh = h, dx = x, dy = y;
+  if (iAR > cAR) { dh = w / iAR; dy += (h - dh) / 2; }
+  else            { dw = h * iAR; dx += (w - dw) / 2; }
+  ctx.drawImage(img, dx, dy, dw, dh);
+}
+
+/** 최대 2줄 텍스트 (넘치면 말줄임표) */
+function _rdTxtLines(ctx, text, cx, cy, maxW, lineH) {
+  const chars = [...text];
+  const lines = [];
+  let line = '';
+  for (const ch of chars) {
+    if (ctx.measureText(line + ch).width > maxW && line) {
+      lines.push(line);
+      line = ch;
+    } else {
+      line += ch;
+    }
+  }
+  if (line) lines.push(line);
+
+  const shown = lines.slice(0, 2);
+  if (lines.length > 2) {
+    let last = lines.slice(1).join('');
+    while (last.length > 0 && ctx.measureText(last + '…').width > maxW) last = last.slice(0, -1);
+    shown[1] = last + '…';
+  }
+
+  const topY = cy - (shown.length - 1) * lineH / 2;
+  shown.forEach((ln, i) => ctx.fillText(ln, cx, topY + i * lineH));
 }
