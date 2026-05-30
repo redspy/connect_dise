@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스파이를 찾아라! (Host)</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <style>
+    /* hidden-agent 전용 프리미엄 다크/네온 스타일 추가 정의 */
+    .agent-host-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      overflow: hidden;
+      background: #060913;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(239, 68, 68, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 45%);
+    }
+
+    .ha-overlay {
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      max-height: 700px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 32px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      transition: all 0.5s ease;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 각 페이즈별 고유 스타일 */
+    .setup-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      color: #ef4444;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: pulse 1.5s infinite;
+      margin-bottom: 20px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    /* 플로팅 단어 캔버스 */
+    .word-float-canvas {
+      flex: 1;
+      width: 100%;
+      position: relative;
+      background: rgba(0,0,0,0.15);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .floating-bubble {
+      position: absolute;
+      padding: 14px 28px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #f3f4f6;
+      font-size: 1.4rem;
+      font-weight: 700;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      animation: floatBubble 10s linear infinite;
+    }
+
+    @keyframes floatBubble {
+      0% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(3deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    /* 타이머 바 */
+    .timer-container {
+      width: 100%;
+      height: 10px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .timer-bar {
+      height: 100%;
+      background: linear-gradient(to right, #ef4444, #ec4899);
+      width: 100%;
+      transition: width 1s linear;
+    }
+
+    /* 투표 결과 및 아바타 목록 */
+    .vote-panel {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .vote-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .vote-card.voted::after {
+      content: "✅ 투표 완료";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.8rem;
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      padding: 4px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .vote-progress-bg {
+      background: rgba(255,255,255,0.05);
+      height: 8px;
+      border-radius: 4px;
+      width: 100%;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .vote-progress-fill {
+      background: #06b6d4;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* 승리 이펙트 */
+    .winner-banner {
+      font-size: 3.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 30px;
+      background: linear-gradient(to right, #00f2fe, #4facfe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(79, 172, 254, 0.5));
+    }
+  </style>
+</head>
+<body class="host-board">
+
+  <div class="agent-host-container">
+
+    <!-- 1. Lobby Phase -->
+    <div class="game-overlay" data-phase="lobby" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+      <game-lobby title="스파이를 찾아라! 🕵️‍♂️" min-players="3" banner="/games/hidden-agent/assets/thumbnail.png" style="width:100%; max-width:1100px; height:100%; max-height:650px;">
+        <p style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; margin-top: 10px;">
+          <strong>"누구도 믿을 수 없다!"</strong><br><br>
+          스마트폰 화면을 철저히 숨기세요. 시민들은 하나의 단어를 공유하고, 단 한 명의 스파이에게는 다른 단어가 배정됩니다.<br><br>
+          상대의 힌트 단어를 정교하게 관찰하고, 토론을 거쳐 의심이 가는 스파이를 은밀히 투표하세요!
+        </p>
+      </game-lobby>
+    </div>
+
+    <!-- 2. Setup Phase (역할 배정 중) -->
+    <div class="game-overlay ha-overlay hidden" data-phase="setup">
+      <div></div>
+      <div style="text-align: center;">
+        <h1 class="setup-title">🕵️‍♂️ 정체성 다운로드 중...</h1>
+        <p style="font-size: 1.4rem; color: var(--text-muted);">
+          모두 스마트폰 화면이 다른 사람에게 보이지 않게 주의하세요!
+        </p>
+      </div>
+      <div id="setup-countdown" style="font-size: 2.5rem; font-weight: bold; color: #a855f7;">5</div>
+    </div>
+
+    <!-- 3. Discussion Phase (제시어 힌트 제출 및 둥둥 플로팅) -->
+    <div class="game-overlay ha-overlay hidden" data-phase="discussion">
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+        <h2>💬 힌트 단어 수집 중</h2>
+        <div id="disc-timer-text" style="font-size: 1.3rem; font-weight: bold; color: #f59e0b;">남은 시간: 40초</div>
+      </div>
+      
+      <!-- 실시간 제출 현황 및 단어들이 떠돌 캔버스 -->
+      <div class="word-float-canvas" id="bubble-canvas">
+        <div style="position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.15); font-size:1.5rem; text-align:center;" id="canvas-placeholder">
+          플레이어가 모바일로 단어를 보내면 이곳에 둥둥 떠다닙니다...
+        </div>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer-bar" id="disc-timer-bar"></div>
+      </div>
+      <p id="submit-status-text" style="color: var(--text-muted);">제출 현황: 0 / 0명</p>
+    </div>
+
+    <!-- 4. Voting Phase (의심자 투표) -->
+    <div class="game-overlay ha-overlay hidden" data-phase="voting">
+      <div style="width:100%; text-align:center;">
+        <h1 style="font-size: 2.5rem; color: #06b6d4; text-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">🚨 스파이 지목 투표 시간!</h1>
+        <p style="color: var(--text-muted); margin-top: 10px;">모바일 화면에서 스파이로 의심되는 플레이어를 지목하세요.</p>
+      </div>
+
+      <div class="vote-panel" id="vote-list-container">
+        <!-- 동적 생성되는 각 플레이어의 투표 상태 카드 -->
+      </div>
+
+      <div style="width: 100%; display:flex; flex-direction:column; align-items:center; gap: 10px;">
+        <div class="timer-container" style="max-width: 600px;">
+          <div class="timer-bar" id="vote-timer-bar"></div>
+        </div>
+        <p id="vote-status-text" style="font-weight: bold; color: #a855f7;">투표 완료: 0 / 0명</p>
+      </div>
+    </div>
+
+    <!-- 5. Result Phase (최종 결과) -->
+    <div class="game-overlay ha-overlay hidden" data-phase="result">
+      <div style="text-align: center; margin-top: 40px;">
+        <div class="winner-banner" id="winner-banner-text">시민 승리!</div>
+        <h2 id="result-detail-text" style="font-size: 1.8rem; font-weight: 300;">탈락자 OOO은 스파이였습니다.</h2>
+      </div>
+
+      <!-- 정체 복기 오버레이 -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 24px 40px; text-align: center; width: 100%; max-width: 600px;" id="reveal-words-box">
+        <!-- 스파이 단어 vs 시민 단어 공개 예정 -->
+      </div>
+
+      <button id="btn-restart" class="btn-primary" style="padding: 16px 40px; font-size: 1.2rem; cursor:pointer; font-weight: bold; background: linear-gradient(135deg, #06b6d4, #a855f7); color:white; border:none; border-radius:15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index:100;">처음으로</button>
+    </div>
+
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

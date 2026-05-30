@@ -90,6 +90,8 @@ export default defineConfig({
         tradingBattleHost:   resolve(__dirname, 'games/trading-battle/host/index.html'),
         tradingBattleMobile: resolve(__dirname, 'games/trading-battle/mobile/index.html'),
         omok:               resolve(__dirname, 'games/omok/index.html'),
+        hiddenAgentHost:    resolve(__dirname, 'games/hidden-agent/host/index.html'),
+        hiddenAgentMobile:  resolve(__dirname, 'games/hidden-agent/mobile/index.html'),
       },
     },
   },

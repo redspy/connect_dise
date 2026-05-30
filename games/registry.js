@@ -107,4 +107,15 @@ export const GAMES = [
     thumbnail: '⚫',
     group: 'solo',
   },
+  {
+    id: 'hidden-agent',
+    name: '스파이를 찾아라!',
+    description: '서로의 단어를 유추해 숨어있는 스파이를 검거하라! 3인 이상 심리 보드게임 🕵️‍♂️',
+    hostPath: '/games/hidden-agent/host/',
+    mobilePath: '/games/hidden-agent/mobile/',
+    minPlayers: 3,
+    maxPlayers: 8,
+    thumbnail: '🕵️‍♂️',
+    group: 'multi',
+  },
 ];

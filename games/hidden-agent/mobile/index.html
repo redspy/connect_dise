@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>스파이를 찾아라! (Controller)</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <style>
+    /* 모바일 전용 뷰 및 인터랙션 커스텀 CSS */
+    .ha-mobile-container {
+      width: 100%;
+      height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      color: #f3f4f6;
+      background: #060913;
+      overflow-y: auto;
+    }
+
+    .ha-screen {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* 프로필 설정 */
+    .profile-setup-box {
+      width: 100%;
+      max-width: 320px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* 3D 카드 플립 */
+    .flip-card-container {
+      perspective: 1000px;
+      width: 260px;
+      height: 380px;
+      margin: 20px 0;
+      cursor: pointer;
+    }
+
+    .flip-card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .flip-card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-front {
+      background: linear-gradient(135deg, #1f2937, #111827);
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      color: #9ca3af;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      border: 2px solid;
+    }
+
+    .card-back.citizen {
+      background: linear-gradient(135deg, #0b3c5d, #06b6d4);
+      border-color: #06b6d4;
+    }
+
+    .card-back.spy {
+      background: linear-gradient(135deg, #6b1d2f, #ef4444);
+      border-color: #ef4444;
+    }
+
+    /* 투표 리스트 버튼 */
+    .vote-btn-list {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .vote-item-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+
+    .vote-item-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: #06b6d4;
+    }
+
+    .vote-item-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body class="mobile-controller">
+
+  <div class="ha-mobile-container">
+
+    <!-- 1. Lobby & Profile Setup Screen -->
+    <div class="ha-screen" data-screen="setup-profile">
+      <div style="text-align: center;">
+        <h1 style="font-size: 2rem; background: linear-gradient(to right, #06b6d4, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">스파이를 찾아라!</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">스마트폰을 개인 컨트롤러로 활용합니다.</p>
+      </div>
+
+      <div class="profile-setup-box">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="font-size: 0.9rem; font-weight: bold; color: var(--text-muted);">닉네임 입력</label>
+          <input type="text" id="input-nickname" placeholder="닉네임을 적어주세요" style="padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 1rem;" maxlength="8">
+        </div>
+        <button id="btn-join" class="btn-primary" style="padding: 16px; border-radius: 12px; font-weight: bold; background: #06b6d4; border:none; color:black; font-size: 1rem; cursor:pointer;">입장 및 준비 완료</button>
+      </div>
+      <div></div>
+    </div>
+
+    <!-- 2. General Waiting Screen -->
+    <div class="ha-screen hidden" data-screen="waiting">
+      <div style="text-align: center;">
+        <div class="loading-spinner" style="border-top-color: #a855f7; margin: 0 auto 20px;"></div>
+        <h2 id="waiting-title" style="font-size: 1.5rem;">호스트에서 시작하길 기다리는 중...</h2>
+        <p id="waiting-desc" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 10px;">다른 플레이어들이 준비 완료 상태가 될 때까지 기다립니다.</p>
+      </div>
+    </div>
+
+    <!-- 3. Role Reveal Screen (카드 뒤집기) -->
+    <div class="ha-screen hidden" data-screen="role-reveal">
+      <div style="text-align: center;">
+        <h2 style="font-size: 1.6rem; color: #f59e0b;">🤫 정체 확인 시간</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">스마트폰을 가리고 아래 카드를 터치하세요.</p>
+      </div>
+
+      <div class="flip-card-container" id="reveal-card-container">
+        <div class="flip-card" id="reveal-card">
+          <!-- 앞면 -->
+          <div class="card-face card-front">
+            <span style="font-size: 4rem; margin-bottom: 20px;">❓</span>
+            <h3 style="font-size: 1.3rem; color: white;">터치하여 정체 공개</h3>
+            <p style="font-size: 0.8rem; margin-top: 10px;">다른 사람에게 안 보이게 하세요!</p>
+          </div>
+          <!-- 뒷면 -->
+          <div class="card-face card-back" id="reveal-card-back">
+            <span style="font-size: 1.1rem; opacity: 0.8; letter-spacing: 2px;" id="reveal-role-label">ROLE</span>
+            <h2 style="font-size: 2.2rem; font-weight: 800; margin: 15px 0;" id="reveal-role-title">시민</h2>
+            <div style="width: 80%; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px;"></div>
+            <p style="font-size: 0.9rem; opacity: 0.7;">당신의 비밀 제시어</p>
+            <h3 style="font-size: 2.4rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.4);" id="reveal-secret-word">사과</h3>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 30px;"></div>
+    </div>
+
+    <!-- 4. Submit Hint Screen -->
+    <div class="ha-screen hidden" data-screen="submit-hint">
+      <div style="text-align: center;">
+        <h2 style="font-size: 1.6rem; color: #06b6d4;">✍️ 단어 힌트 전송</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">제시어를 떠올릴 수 있는 단어 <strong>딱 하나</strong>를 적어 전송하세요.</p>
+      </div>
+
+      <div class="profile-setup-box">
+        <div style="text-align: center; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px;">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">내 제시어: </span>
+          <strong style="font-size: 1.2rem; color: #06b6d4;" id="submit-hint-my-word">사과</strong>
+        </div>
+        <input type="text" id="input-hint-word" placeholder="한 단어만 입력 (예: 빨간색)" style="padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 1rem; text-align: center;" maxlength="10">
+        <button id="btn-submit-hint" class="btn-primary" style="padding: 16px; border-radius: 12px; font-weight: bold; background: #06b6d4; border:none; color:black; font-size: 1rem; cursor:pointer;">힌트 보내기</button>
+      </div>
+      <div></div>
+    </div>
+
+    <!-- 5. Vote Screen -->
+    <div class="ha-screen hidden" data-screen="vote">
+      <div style="text-align: center;">
+        <h2 style="font-size: 1.6rem; color: #ef4444;">🚨 스파이 지목 투표</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 8px;">의심이 가는 스파이 한 명을 지목하세요!</p>
+      </div>
+
+      <div class="vote-btn-list" id="vote-btn-container">
+        <!-- 동적으로 나머지 플레이어 목록 버튼이 렌더링됨 -->
+      </div>
+      <div></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

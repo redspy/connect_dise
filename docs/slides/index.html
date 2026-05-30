@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>connect_dise - Hidden Agent Project Board</title>
+  <!-- Google Fonts 적용 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --color-primary: #06b6d4; /* Cyan */
+      --color-secondary: #a855f7; /* Purple */
+      --color-success: #10b981; /* Green */
+      --color-warning: #f59e0b; /* Yellow */
+      --color-danger: #ef4444; /* Red */
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 45%);
+    }
+
+    /* 상단 헤더 */
+    header {
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+
+    .logo {
+      font-weight: 800;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .project-info {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 20px;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--color-primary);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    /* 슬라이드 컨테이너 */
+    .slider-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transform: scale(0.95) translateY(20px);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 80px;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* 글래스모피즘 카드 레이아웃 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      width: 100%;
+      max-width: 1100px;
+      height: 100%;
+      max-height: 580px;
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    }
+
+    .slide-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slide-title span {
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+      font-size: 1.1rem;
+      line-height: 1.7;
+    }
+
+    /* 격자형 구조 레이아웃 */
+    .two-col {
+      grid-template-columns: 1.2fr 0.8fr;
+    }
+
+    .content-box {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    h3 {
+      color: var(--color-primary);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    ul {
+      list-style-type: none;
+    }
+
+    li {
+      margin-bottom: 12px;
+      position: relative;
+      padding-left: 24px;
+      color: #d1d5db;
+    }
+
+    li::before {
+      content: "✦";
+      position: absolute;
+      left: 0;
+      color: var(--color-secondary);
+      font-weight: bold;
+    }
+
+    /* 대시보드 진행 게이지 */
+    .milestone-container {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .progress-bar-bg {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      height: 16px;
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+      width: 100%; /* 기획/설계/구현/QA 최종 완료 */
+      border-radius: 10px;
+      transition: width 1s ease-in-out;
+    }
+
+    .phase-indicator {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .phase-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+    }
+
+    .phase-step.active {
+      color: var(--color-primary);
+    }
+
+    .phase-step.waiting {
+      color: var(--text-muted);
+    }
+
+    .phase-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #374151;
+    }
+
+    .phase-step.active .phase-dot {
+      background: var(--color-primary);
+      box-shadow: 0 0 10px var(--color-primary);
+    }
+
+    /* 하단 네비게이션 컨트롤 */
+    .controls {
+      position: absolute;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      z-index: 10;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      font-family: inherit;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--color-primary);
+      transform: scale(1.05);
+      color: var(--color-primary);
+    }
+
+    .dots-indicator {
+      display: flex;
+      gap: 12px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .dot.active {
+      background: var(--color-primary);
+      width: 24px;
+      border-radius: 5px;
+    }
+
+    /* 의사결정 태그 */
+    .dec-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      background: rgba(168, 85, 247, 0.15);
+      color: var(--color-secondary);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      margin-right: 8px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">CONNECT_DISE</div>
+    <div class="project-info">
+      <div>Project: <strong>Hidden Agent (스파이를 찾아라)</strong></div>
+      <div>Sprint: <strong>Spike #1</strong></div>
+      <div class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Phase: 최종 완료 & QA 승인</div>
+    </div>
+  </header>
+
+  <div class="slider-container">
+
+    <!-- Slide 1: 대시보드 -->
+    <div class="slide active" id="slide-0">
+      <div class="card">
+        <div class="slide-title">
+          <span>01 / Overview</span>
+          <h2>🎯 프로젝트 로드맵 & 마일스톤</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>플랫폼 첫 플래그십 파티게임 개발 착수</h3>
+            <p>모바일 브라우저의 비밀성과 TV 화면의 공용 시선의 연동을 검증하기 위한 첫 번째 심리 추리 게임 <strong>'스파이를 찾아라!'</strong> 프로젝트를 개시합니다.</p>
+            <div class="milestone-container">
+              <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                <span>현재 프로젝트 진척도 (Sprint 1)</span>
+                <strong>100%</strong>
+              </div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill"></div>
+              </div>
+              <div class="phase-indicator">
+                <div class="phase-step active">
+                  <div class="phase-dot"></div>
+                  <span>기획 (완료)</span>
+                </div>
+                <div class="phase-step active">
+                  <div class="phase-dot"></div>
+                  <span>기술설계 (완료)</span>
+                </div>
+                <div class="phase-step active">
+                  <div class="phase-dot"></div>
+                  <span>코드 구현 (완료)</span>
+                </div>
+                <div class="phase-step active">
+                  <div class="phase-dot"></div>
+                  <span>품질 QA (완료)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="content-box">
+            <h3>📢 1주차 주요 목표</h3>
+            <ul>
+              <li>상세 게임 기획 명세 수립</li>
+              <li>Host/Mobile SDK 클래스 설계</li>
+              <li>E2E 통신 프로토콜 정의</li>
+              <li>기본 로비 및 역할 배정 구현</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 2: PM 기획 분석 -->
+    <div class="slide" id="slide-1">
+      <div class="card">
+        <div class="slide-title">
+          <span>02 / Product</span>
+          <h2>💡 PM 제안 및 소구포인트 (USP)</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>모바일-TV 정보 비대칭성의 극대화</h3>
+            <p>기존 잭박스 파티팩(Jackbox) 등의 글로벌 성공 포뮬러를 우리 플랫폼의 경량 웹 아키텍처에 맞게 이식합니다.</p>
+            <ul>
+              <li><strong>비밀 가림막 기술</strong>: 각 플레이어는 모바일 개별 세션에서 본인만의 비밀 단어를 은밀하게 확인하여 물리 보드게임의 손맛 구현</li>
+              <li><strong>물리 기반 단어 플로팅</strong>: 힌트 제출 시 TV에 텍스트가 플로팅되어 시각적 즐거움 선사</li>
+              <li><strong>극도의 간결성</strong>: 3인 이상 누구나 브라우저 접속 즉시 5초 만에 룰 학습 완료</li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>🎯 핵심 시장 타겟</h3>
+            <ul>
+              <li>보드게임방/엠티 공간의 파티 피플</li>
+              <li>거실에서 가족 단위로 가볍게 즐길 콘텐츠</li>
+              <li>웹 기술 기반의 무설치 설치 장벽 제거</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: 아키텍처 및 설계 -->
+    <div class="slide" id="slide-2">
+      <div class="card">
+        <div class="slide-title">
+          <span>03 / Architecture</span>
+          <h2>🛠️ 개발자 설계 및 기술 청사진</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>HostSDK & MobileBaseGame의 조화</h3>
+            <p>플랫폼 코어와 콘텐츠 레이어를 엄격하게 분리하여, 서버 자원 낭비 없이 완벽하게 클라이언트 기반으로 구동되는 시스템을 설계합니다.</p>
+            <ul>
+              <li><strong>호스트(Host)</strong>: <code>HostBaseGame</code> 상속. <code>lobby ➔ setup ➔ discussion ➔ voting ➔ result</code> 순서로 SPA 화면 전환 제어.</li>
+              <li><strong>모바일(Mobile)</strong>: <code>MobileBaseGame</code> 상속. <code>waiting ➔ role-reveal ➔ submit-hint ➔ vote</code> 스크린 렌더링.</li>
+              <li><strong>보안성 확보</strong>: 서버/호스트에서 각 클라이언트로 단어를 개별 유니캐스트함으로써 소스코드 인스펙션에 의한 키워드 유출 방지.</li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>🔌 핵심 통신 방식</h3>
+            <ul>
+              <li><strong>P2P WebRTC</strong>: 모바일 조작 실시간 전송</li>
+              <li><strong>Socket.IO Fallback</strong>: P2P 실패 시 서버 투명 릴레이 백업</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: QA/테스트 전략 -->
+    <div class="slide" id="slide-3">
+      <div class="card">
+        <div class="slide-title">
+          <span>04 / QA & Verification</span>
+          <h2>🧪 품질 보증 & 엣지 케이스 정복</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>모바일 특화 환경을 위한 E2E 신뢰성 검증</h3>
+            <p>다양한 기기 및 웹 환경에서 동작하는 보드게임의 신뢰성을 담보하기 위해 예외 처리에 집중적인 QA를 전개합니다.</p>
+            <ul>
+              <li><strong>세션 복구(Rejoin) 테스트</strong>: 힌트 제출 도중 브라우저 리프레시 시 상태값 유지 여부 교차 검증</li>
+              <li><strong>P2P 차단 예외 테스트</strong>: 방화벽 등으로 P2P 터널링이 막힐 때 소켓 백업 통신의 투명한 전환 확인</li>
+              <li><strong>동시 조작 분산 부하 테스트</strong>: 수십 명의 플레이어가 투표 마감 직전 동시에 터치하여 쏠리는 동시성 이슈 정밀 모니터링</li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>📈 목표 품질 지표</h3>
+            <ul>
+              <li>핵심 인수 시나리오 통과율 100%</li>
+              <li>Rejoin 세션 유지 성공률 100%</li>
+              <li>P2P Fallback 투명 지연 150ms 미만</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: 의사결정 로그 -->
+    <div class="slide" id="slide-4">
+      <div class="card">
+        <div class="slide-title">
+          <span>05 / Decisions</span>
+          <h2>📝 PL 의사결정 하이라이트</h2>
+        </div>
+        <div class="slide-body">
+          <div class="content-box">
+            <ul>
+              <li><span class="dec-tag">아키텍처</span> <strong>보안 유니캐스트 적용 결정</strong>: 스파이의 정체와 키워드는 전체 브로드캐스트가 아닌 타겟 유니캐스트(<code>sendToPlayer</code>)로만 폰에 하달하여 부정행위 원천 차단.</li>
+              <li><span class="dec-tag">기획</span> <strong>최소 인원 3인 제약</strong>: 비대칭 마피아 게임의 최소 인원인 3인 락(Lock)을 로비 화면의 비즈니스 로직 단에 강제하기로 합의.</li>
+              <li><span class="dec-tag">협업</span> <strong>TDD 테스트 자동화 확보</strong>: 모든 비즈니스 규칙(스파이 추첨, 득표 계산 등)은 <code>tests/</code> 디렉토리에 개발자의 유닛테스트로 코드 체크인 전 우선 검증하기로 의결.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prev-btn">◀</button>
+    <div class="dots-indicator" id="dots-container"></div>
+    <button class="nav-btn" id="next-btn">▶</button>
+  </div>
+
+  <script>
+    // 미니 슬라이더 스크립트
+    const slides = document.querySelectorAll('.slide');
+    const dotsContainer = document.getElementById('dots-container');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    let currentSlide = 0;
+
+    // 점(dots) 자동 생성
+    slides.forEach((_, idx) => {
+      const dot = document.createElement('div');
+      dot.classList.add('dot');
+      if (idx === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(idx));
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll('.dot');
+
+    function updateSlider() {
+      slides.forEach((slide, idx) => {
+        slide.classList.remove('active');
+        dots[idx].classList.remove('active');
+      });
+      slides[currentSlide].classList.add('active');
+      dots[currentSlide].classList.add('active');
+    }
+
+    function goToSlide(idx) {
+      currentSlide = idx;
+      updateSlider();
+    }
+
+    prevBtn.addEventListener('click', () => {
+      currentSlide = (currentSlide === 0) ? slides.length - 1 : currentSlide - 1;
+      updateSlider();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      currentSlide = (currentSlide === slides.length - 1) ? 0 : currentSlide + 1;
+      updateSlider();
+    });
+
+    // 키보드 방향키 지원
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        nextBtn.click();
+      } else if (e.key === 'ArrowLeft') {
+        prevBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
