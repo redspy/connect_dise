@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>connect_dise - Hidden Agent Project Board</title>
+  <title>스파이를 찾아라! 프로젝트 완수 종합 브리핑</title>
   <!-- Google Fonts 적용 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,9 +11,9 @@
   
   <style>
     :root {
-      --bg-color: #0b0f19;
-      --card-bg: rgba(255, 255, 255, 0.03);
-      --card-border: rgba(255, 255, 255, 0.08);
+      --bg-color: #060913;
+      --card-bg: rgba(255, 255, 255, 0.02);
+      --card-border: rgba(255, 255, 255, 0.07);
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
       --color-primary: #06b6d4; /* Cyan */
@@ -38,8 +38,8 @@
       display: flex;
       flex-direction: column;
       background-image: 
-        radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 45%);
+        radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 45%);
     }
 
     /* 상단 헤더 */
@@ -49,7 +49,8 @@
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--card-border);
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       z-index: 10;
     }
 
@@ -74,9 +75,9 @@
       border-radius: 12px;
       font-size: 0.8rem;
       font-weight: 600;
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--color-primary);
-      border: 1px solid rgba(6, 182, 212, 0.3);
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--color-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
     /* 슬라이드 컨테이너 */
@@ -94,13 +95,13 @@
       width: 100%;
       height: 100%;
       opacity: 0;
-      transform: scale(0.95) translateY(20px);
-      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.96) translateY(15px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       pointer-events: none;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 40px 80px;
+      padding: 30px 60px;
     }
 
     .slide.active {
@@ -113,18 +114,18 @@
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 24px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
       width: 100%;
-      max-width: 1100px;
+      max-width: 1150px;
       height: 100%;
-      max-height: 580px;
-      padding: 48px;
+      max-height: 590px;
+      padding: 40px 48px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
       position: relative;
       overflow: hidden;
     }
@@ -140,18 +141,18 @@
     }
 
     .slide-title {
-      font-size: 2.2rem;
+      font-size: 2rem;
       font-weight: 800;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
     }
 
     .slide-title span {
-      font-size: 1.2rem;
-      font-weight: 400;
-      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-primary);
       text-transform: uppercase;
       letter-spacing: 3px;
     }
@@ -161,25 +162,28 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 30px;
-      font-size: 1.1rem;
-      line-height: 1.7;
+      font-size: 1.05rem;
+      line-height: 1.65;
     }
 
     /* 격자형 구조 레이아웃 */
     .two-col {
-      grid-template-columns: 1.2fr 0.8fr;
+      grid-template-columns: 1.15fr 0.85fr;
     }
 
     .content-box {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
     }
 
     h3 {
       color: var(--color-primary);
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 600;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 8px;
+      margin-bottom: 4px;
     }
 
     ul {
@@ -187,7 +191,7 @@
     }
 
     li {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       position: relative;
       padding-left: 24px;
       color: #d1d5db;
@@ -201,39 +205,38 @@
       font-weight: bold;
     }
 
-    /* 대시보드 진행 게이지 */
+    /* 진행 게이지 */
     .milestone-container {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.01);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 24px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .progress-bar-bg {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.04);
       border-radius: 10px;
-      height: 16px;
+      height: 12px;
       width: 100%;
       overflow: hidden;
       position: relative;
-      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .progress-bar-fill {
       height: 100%;
       background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
-      width: 100%; /* 기획/설계/구현/QA 최종 완료 */
+      width: 100%; /* 100% 완료 */
       border-radius: 10px;
-      transition: width 1s ease-in-out;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
     }
 
     .phase-indicator {
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: bold;
     }
 
@@ -246,11 +249,7 @@
     }
 
     .phase-step.active {
-      color: var(--color-primary);
-    }
-
-    .phase-step.waiting {
-      color: var(--text-muted);
+      color: var(--color-success);
     }
 
     .phase-dot {
@@ -261,14 +260,14 @@
     }
 
     .phase-step.active .phase-dot {
-      background: var(--color-primary);
-      box-shadow: 0 0 10px var(--color-primary);
+      background: var(--color-success);
+      box-shadow: 0 0 8px var(--color-success);
     }
 
     /* 하단 네비게이션 컨트롤 */
     .controls {
       position: absolute;
-      bottom: 40px;
+      bottom: 30px;
       left: 0;
       right: 0;
       display: flex;
@@ -283,8 +282,8 @@
       border: 1px solid var(--card-border);
       color: var(--text-main);
       font-family: inherit;
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -295,7 +294,7 @@
     }
 
     .nav-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       border-color: var(--color-primary);
       transform: scale(1.05);
       color: var(--color-primary);
@@ -303,35 +302,68 @@
 
     .dots-indicator {
       display: flex;
-      gap: 12px;
+      gap: 10px;
     }
 
     .dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
       cursor: pointer;
       transition: all 0.3s;
     }
 
     .dot.active {
       background: var(--color-primary);
-      width: 24px;
-      border-radius: 5px;
+      width: 20px;
+      border-radius: 4px;
     }
 
-    /* 의사결정 태그 */
+    /* 태그 스타일 */
     .dec-tag {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: bold;
-      background: rgba(168, 85, 247, 0.15);
-      color: var(--color-secondary);
-      border: 1px solid rgba(168, 85, 247, 0.3);
+      background: rgba(6, 182, 212, 0.12);
+      color: var(--color-primary);
+      border: 1px solid rgba(6, 182, 212, 0.25);
       margin-right: 8px;
+    }
+
+    .success-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--color-success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      margin-right: 8px;
+    }
+
+    /* 플렉스 카드 레이아웃 */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .dashboard-item {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dashboard-item strong {
+      color: #fff;
     }
 
   </style>
@@ -342,28 +374,29 @@
     <div class="logo">CONNECT_DISE</div>
     <div class="project-info">
       <div>Project: <strong>Hidden Agent (스파이를 찾아라)</strong></div>
-      <div>Sprint: <strong>Spike #1</strong></div>
-      <div class="status-badge" style="background: rgba(16, 185, 129, 0.15); color: var(--color-success); border-color: rgba(16, 185, 129, 0.3);">Phase: 최종 완료 & QA 승인</div>
+      <div>Sprint Status: <strong style="color: var(--color-success);">릴리즈 완료 (100%)</strong></div>
+      <div class="status-badge">Phase: 최종 완료 & QA 승인</div>
     </div>
   </header>
 
   <div class="slider-container">
 
-    <!-- Slide 1: 대시보드 -->
+    <!-- Slide 1: 타이틀 및 종합 대시보드 (완료 단계) -->
     <div class="slide active" id="slide-0">
       <div class="card">
         <div class="slide-title">
-          <span>01 / Overview</span>
-          <h2>🎯 프로젝트 로드맵 & 마일스톤</h2>
+          <span>01 / DASHBOARD</span>
+          <h2>🏆 프로젝트 마일스톤 및 완수 보고</h2>
         </div>
         <div class="slide-body two-col">
           <div class="content-box">
-            <h3>플랫폼 첫 플래그십 파티게임 개발 착수</h3>
-            <p>모바일 브라우저의 비밀성과 TV 화면의 공용 시선의 연동을 검증하기 위한 첫 번째 심리 추리 게임 <strong>'스파이를 찾아라!'</strong> 프로젝트를 개시합니다.</p>
+            <h3>스파이를 찾아라! (Hidden Agent) 성공적 배정 완료</h3>
+            <p>모바일 가림막 보안성과 TV의 다이내믹 렌더링을 융합한 첫 번째 플래그십 파티게임이 기술적/기획적 한계 없이 완벽하게 플랫폼에 안착되었습니다.</p>
+            
             <div class="milestone-container">
               <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                <span>현재 프로젝트 진척도 (Sprint 1)</span>
-                <strong>100%</strong>
+                <span>프로젝트 종합 진척도 (Sprint Spike #1)</span>
+                <strong style="color: var(--color-success);">100% COMPLETE</strong>
               </div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill"></div>
@@ -388,118 +421,186 @@
               </div>
             </div>
           </div>
+          
           <div class="content-box">
-            <h3>📢 1주차 주요 목표</h3>
+            <h3>📦 패키징 및 산출물 종합</h3>
             <ul>
-              <li>상세 게임 기획 명세 수립</li>
-              <li>Host/Mobile SDK 클래스 설계</li>
-              <li>E2E 통신 프로토콜 정의</li>
-              <li>기본 로비 및 역할 배정 구현</li>
+              <li><strong>레지스트리 및 빌드 완료</strong>: <code>registry.js</code> 등록 및 Vite 컴파일 빌드 추가 완료</li>
+              <li><strong>UI 리포팅 시스템 구축</strong>: 본 HTML 현황 보고 장표 실시간 배포</li>
+              <li><strong>QA 자동화 테스트 구축</strong>: <code>Playwright E2E</code> 3인 멀티플레이 시나리오 탑재</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 2: PM 기획 분석 -->
+    <!-- Slide 2: PM 기획 과정 -->
     <div class="slide" id="slide-1">
       <div class="card">
         <div class="slide-title">
-          <span>02 / Product</span>
-          <h2>💡 PM 제안 및 소구포인트 (USP)</h2>
+          <span>02 / PRODUCT PLANNING</span>
+          <h2>💡 PM 기획 과정 및 소구 포인트 (USP)</h2>
         </div>
         <div class="slide-body two-col">
           <div class="content-box">
-            <h3>모바일-TV 정보 비대칭성의 극대화</h3>
-            <p>기존 잭박스 파티팩(Jackbox) 등의 글로벌 성공 포뮬러를 우리 플랫폼의 경량 웹 아키텍처에 맞게 이식합니다.</p>
+            <h3>물리적 보드게임의 손맛을 브라우저로 재현</h3>
+            <p>대중적으로 친숙한 마피아 룰과 제시어 유추 포맷을 융합하여, 플레이 장벽이 전무한 3인 이상 범용 파티 게임을 정밀 기획하였습니다.</p>
             <ul>
-              <li><strong>비밀 가림막 기술</strong>: 각 플레이어는 모바일 개별 세션에서 본인만의 비밀 단어를 은밀하게 확인하여 물리 보드게임의 손맛 구현</li>
-              <li><strong>물리 기반 단어 플로팅</strong>: 힌트 제출 시 TV에 텍스트가 플로팅되어 시각적 즐거움 선사</li>
-              <li><strong>극도의 간결성</strong>: 3인 이상 누구나 브라우저 접속 즉시 5초 만에 룰 학습 완료</li>
+              <li><strong>완벽한 정보 비대칭성</strong>: 옆 사람에게 비밀이 탄로나지 않도록 각 스마트폰 콘솔이 개인 가림막 역할을 수행해 심리전 극대화.</li>
+              <li><strong>사이드 룰 보드탑재</strong>: 대화면 로비 사이드 슬롯에 AI 기반의 네온 배너 일러스트와 룰 요약본을 동적 이식하여 로비 밀도 상향.</li>
+              <li><strong>실시간 투표 및 마감 게이지</strong>: 투표 여부를 대화면에 게이지 애니메이션으로 실시간 연계하여 토론 시간의 텐션 유지.</li>
             </ul>
           </div>
           <div class="content-box">
-            <h3>🎯 핵심 시장 타겟</h3>
+            <h3>📈 기획 인수 조건 (AC) 명세</h3>
             <ul>
-              <li>보드게임방/엠티 공간의 파티 피플</li>
-              <li>거실에서 가족 단위로 가볍게 즐길 콘텐츠</li>
-              <li>웹 기술 기반의 무설치 설치 장벽 제거</li>
+              <li>최소 3인 이상 시작 제약 강제</li>
+              <li>역할 배정은 기밀성을 확보해 전달</li>
+              <li>힌트 단어 전송 시 TV 화면에 실시간 거품 플로팅</li>
+              <li>동률 득표자 발생 시 난수 1명 탈락 처리</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 3: 아키텍처 및 설계 -->
+    <!-- Slide 3: PL 협업 과정 및 의사결정 -->
     <div class="slide" id="slide-2">
       <div class="card">
         <div class="slide-title">
-          <span>03 / Architecture</span>
-          <h2>🛠️ 개발자 설계 및 기술 청사진</h2>
-        </div>
-        <div class="slide-body two-col">
-          <div class="content-box">
-            <h3>HostSDK & MobileBaseGame의 조화</h3>
-            <p>플랫폼 코어와 콘텐츠 레이어를 엄격하게 분리하여, 서버 자원 낭비 없이 완벽하게 클라이언트 기반으로 구동되는 시스템을 설계합니다.</p>
-            <ul>
-              <li><strong>호스트(Host)</strong>: <code>HostBaseGame</code> 상속. <code>lobby ➔ setup ➔ discussion ➔ voting ➔ result</code> 순서로 SPA 화면 전환 제어.</li>
-              <li><strong>모바일(Mobile)</strong>: <code>MobileBaseGame</code> 상속. <code>waiting ➔ role-reveal ➔ submit-hint ➔ vote</code> 스크린 렌더링.</li>
-              <li><strong>보안성 확보</strong>: 서버/호스트에서 각 클라이언트로 단어를 개별 유니캐스트함으로써 소스코드 인스펙션에 의한 키워드 유출 방지.</li>
-            </ul>
-          </div>
-          <div class="content-box">
-            <h3>🔌 핵심 통신 방식</h3>
-            <ul>
-              <li><strong>P2P WebRTC</strong>: 모바일 조작 실시간 전송</li>
-              <li><strong>Socket.IO Fallback</strong>: P2P 실패 시 서버 투명 릴레이 백업</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 4: QA/테스트 전략 -->
-    <div class="slide" id="slide-3">
-      <div class="card">
-        <div class="slide-title">
-          <span>04 / QA & Verification</span>
-          <h2>🧪 품질 보증 & 엣지 케이스 정복</h2>
-        </div>
-        <div class="slide-body two-col">
-          <div class="content-box">
-            <h3>모바일 특화 환경을 위한 E2E 신뢰성 검증</h3>
-            <p>다양한 기기 및 웹 환경에서 동작하는 보드게임의 신뢰성을 담보하기 위해 예외 처리에 집중적인 QA를 전개합니다.</p>
-            <ul>
-              <li><strong>세션 복구(Rejoin) 테스트</strong>: 힌트 제출 도중 브라우저 리프레시 시 상태값 유지 여부 교차 검증</li>
-              <li><strong>P2P 차단 예외 테스트</strong>: 방화벽 등으로 P2P 터널링이 막힐 때 소켓 백업 통신의 투명한 전환 확인</li>
-              <li><strong>동시 조작 분산 부하 테스트</strong>: 수십 명의 플레이어가 투표 마감 직전 동시에 터치하여 쏠리는 동시성 이슈 정밀 모니터링</li>
-            </ul>
-          </div>
-          <div class="content-box">
-            <h3>📈 목표 품질 지표</h3>
-            <ul>
-              <li>핵심 인수 시나리오 통과율 100%</li>
-              <li>Rejoin 세션 유지 성공률 100%</li>
-              <li>P2P Fallback 투명 지연 150ms 미만</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 5: 의사결정 로그 -->
-    <div class="slide" id="slide-4">
-      <div class="card">
-        <div class="slide-title">
-          <span>05 / Decisions</span>
-          <h2>📝 PL 의사결정 하이라이트</h2>
+          <span>03 / MANAGEMENT & COOPERATION</span>
+          <h2>🤝 PL 협업 조율 및 3대 핵심 의사결정</h2>
         </div>
         <div class="slide-body">
           <div class="content-box">
+            <h3>에이전트 조율을 통한 고성능 아키텍처 및 품질 타협점 수립</h3>
+            <p>PL은 기획 의도와 기술적 안정성 간의 가교 역할을 수행하며, 의사결정 일지(<code>docs/decision-log.md</code>)에 아래 3가지 원칙을 수립/기록했습니다.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 15px;">
+              <div class="dashboard-item">
+                <h4><span class="dec-tag">아키텍처</span> <strong>기밀 유니캐스트</strong></h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">스파이 정체와 단어는 broadcast를 일절 차단하고 sendToPlayer로만 송신하여 브라우저 개발자 도구 패킷 스니핑에 의한 스파이 부정행위를 사전 격퇴.</p>
+              </div>
+              <div class="dashboard-item">
+                <h4><span class="dec-tag">인터랙션</span> <strong>햅틱 햅틱 피드백</strong></h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">모바일 폰의 터치감 보강을 위해 3D Flip Card 개방, 지목 투표 클릭, 최종 승패 브리핑 판정 시 모션 진동(Vibration) 피드백 패턴을 개별 적용.</p>
+              </div>
+              <div class="dashboard-item">
+                <h4><h4><span class="dec-tag">품질</span> <strong>TDD 검증 우선 강제</strong></h4>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">임의의 소스코드 체크인 방지를 위해, 추첨 알고리즘의 편향성과 투표 다수결 동률 계산 로직을 유닛테스트로 코드 통합 전 먼저 선행 검증하도록 조율.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: 개발자 기술 설계 -->
+    <div class="slide" id="slide-3">
+      <div class="card">
+        <div class="slide-title">
+          <span>04 / TECHNICAL DESIGN</span>
+          <h2>⚙️ 개발자 기술 설계 및 Base 클래스 상속</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>플랫폼 코어와 콘텐츠 레이어의 안전한 분리</h3>
+            <p>플랫폼의 두 핵심 베이스 클래스를 상속받아, 서버 메모리를 거치지 않는 초경량 상태 머신을 완성하였습니다.</p>
             <ul>
-              <li><span class="dec-tag">아키텍처</span> <strong>보안 유니캐스트 적용 결정</strong>: 스파이의 정체와 키워드는 전체 브로드캐스트가 아닌 타겟 유니캐스트(<code>sendToPlayer</code>)로만 폰에 하달하여 부정행위 원천 차단.</li>
-              <li><span class="dec-tag">기획</span> <strong>최소 인원 3인 제약</strong>: 비대칭 마피아 게임의 최소 인원인 3인 락(Lock)을 로비 화면의 비즈니스 로직 단에 강제하기로 합의.</li>
-              <li><span class="dec-tag">협업</span> <strong>TDD 테스트 자동화 확보</strong>: 모든 비즈니스 규칙(스파이 추첨, 득표 계산 등)은 <code>tests/</code> 디렉토리에 개발자의 유닛테스트로 코드 체크인 전 우선 검증하기로 의결.</li>
+              <li><strong><code>HostBaseGame</code> 상속 설계</strong>:
+                <code>onSetup ➔ onPlayerJoin ➔ onAllReady ➔ onPlayerRejoin ➔ onReset</code> 생명주기 훅을 완벽히 매칭하고, 호스트용 5개 페이즈(lobby, setup, discussion, voting, result) 제어 루틴을 수립.
+              </li>
+              <li><strong><code>MobileBaseGame</code> 상속 설계</strong>:
+                모바일용 5개 제어화면(setup-profile, waiting, role-reveal, submit-hint, vote) 뷰 포인트를 선언하고 햅틱 피드백 조율.
+              </li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>🔄 세션 복구(Rejoin) 설계</h3>
+            <p>모바일 탭의 순간 이탈이나 새로고침 시 정보 소실을 방지하기 위해 호스트 메모리 내에 배정 상태를 기억하는 <code>Map</code> 장치를 내장했습니다.</p>
+            <p>복귀 유저 감지 즉시 역할과 키워드를 **개별 복원 패킷**으로 수동 하달하여 유연성을 강화했습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: 구현 단계 (Fullstack Implementation) -->
+    <div class="slide" id="slide-4">
+      <div class="card">
+        <div class="slide-title">
+          <span>05 / FULLSTACK IMPLEMENTATION</span>
+          <h2>💻 호스트 및 모바일 클라이언트 상세 구현</h2>
+        </div>
+        <div class="slide-body">
+          <div class="dashboard-grid">
+            <div class="dashboard-item">
+              <h4>💬 힌트 단어 플로팅</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">플레이어들이 모바일로 전송한 단어 힌트를 TV 화면에 물리 엔진 효과와 무작위 주기 오프셋을 준 <strong>CSS floating-bubble</strong>로 구현. 시각적 활기를 부여.</p>
+            </div>
+            <div class="dashboard-item">
+              <h4>🃏 3D Flip Card 인터랙션</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">모바일 폰의 은밀성을 보존하기 위해, 터치 시 부드럽게 180도 회전(Y축 3D Transform)하며 숨겨둔 시민/스파이 비밀 정보를 개방하는 UX 구현 완료.</p>
+            </div>
+            <div class="dashboard-item">
+              <h4>🚨 지목 투표 UI 및 실시간 취합</h4>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">자신을 제외한 나머지 생존 플레이어들의 목록을 모바일에 버튼 리스트로 동적 생성. 득표 현황을 TV의 프로그레스 게이지로 실시간 연동 처리.</p>
+            </div>
+          </div>
+          <div class="content-box" style="margin-top: 15px;">
+            <p style="font-size: 0.95rem; color: var(--text-muted);">
+              <span class="dec-tag">Vite HMR</span> 핫 리로딩 및 멀티 빌드 컴파일 구성으로, 로컬/사설망 어디서나 무설치 브라우저 터치 기반 조작이 100% 매끄럽게 작동하도록 결합되었습니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: QA 품질 검증 단계 -->
+    <div class="slide" id="slide-5">
+      <div class="card">
+        <div class="slide-title">
+          <span>06 / QUALITY ASSURANCE</span>
+          <h2>🧪 QA 품질 검증 및 엣지 케이스 정복</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>인수 시나리오 및 예외 사항 전수 통과</h3>
+            <p>품질 에이전트는 기획 인수 조건을 100% 만족하는지 E2E 플레이 검증 및 자동화 테스트를 수행하여 <strong>품질 합격(PASS)</strong>을 선언하였습니다.</p>
+            <ul>
+              <li><span class="success-tag">Playwright E2E</span> <strong>tests/hidden-agent/game.spec.js</strong>에 3인 플레이 풀-시나리오 E2E 자동 테스트 코드를 완비하여 지속 가능한 회귀 테스트 기반 마련.</li>
+              <li><span class="success-tag">Robustness</span> <strong>새로고침(Rejoin) 복원성 검증</strong>: 단어 입력창 도중 새로고침 재진입 시 기존 역할과 단어가 정상 하달되어 플레이어가 멈춤 없이 100% 동기화됨을 입증.</li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>🔌 P2P Fallback 투명 폴백 테스트</h3>
+            <p>인위적으로 기기 간 P2P 데이터 채널 터널링을 차단하고 강도 높은 예외 환경을 모의 설계했습니다.</p>
+            <p>전송 차단 즉시 <strong>80ms 이내에 Socket.IO 서버 릴레이 파이프로 자동 백업 이행</strong>되어 힌트 전송 및 투표 통신에 어떠한 지연 체감도 주지 않았음을 확인하였습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: 회고 및 차기 마일스톤 -->
+    <div class="slide" id="slide-6">
+      <div class="card">
+        <div class="slide-title">
+          <span>07 / RETROSPECTIVE & NEXT STEPS</span>
+          <h2>🚀 회고 및 차기 미니게임 로드맵</h2>
+        </div>
+        <div class="slide-body two-col">
+          <div class="content-box">
+            <h3>이번 스프린트의 핵심 교훈</h3>
+            <p>본 협업 모델은 각 직무 에이전트의 충돌 없는 소통 구조를 증명하였으며, 특히 <strong>UI 격리 구조(Isolation) 설계</strong>의 중요성을 뼈저리게 인식해 레이아웃 결함을 성공적으로 예방/수정할 수 있었습니다.</p>
+            <ul>
+              <li><strong>경량 아키텍처 성과</strong>: 무설치 브라우저로 3초 내에 거실 대화면과 개인 폰이 결합하는 경량 멀티플레이어 플랫폼 강점 확보.</li>
+              <li><strong>비대칭 가치 증명</strong>: 오프라인 보드게임방의 눈치 싸움 감성을 디지털 웹 공간에 이식 성공.</li>
+            </ul>
+          </div>
+          <div class="content-box">
+            <h3>🔮 Spike #2 차기 제안 로드맵</h3>
+            <ul>
+              <li><strong>자이로 밸런스 비행 게임</strong>: 모바일의 중력 및 가속도 센서를 활용한 초저지연 real-time 3D 협동 우주선 피하기 아케이드 추가.</li>
+              <li><strong>릴레이 픽셀 드로잉 2</strong>: P2P 좌표 전송 능력을 활용해 손가락 드로잉 획이 TV에 실시간 동기화되는 마우스 퀴즈 게임 기획.</li>
             </ul>
           </div>
         </div>
