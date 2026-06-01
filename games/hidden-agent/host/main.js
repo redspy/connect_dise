@@ -1,5 +1,6 @@
 import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 // 비밀 제시어 풀 (시민용 단어, 스파이용 단어 쌍)
 const WORD_PAIRS = [
@@ -28,6 +29,8 @@ class HiddenAgentGame extends HostBaseGame {
     this._playerVotes = new Map();      // playerId -> targetPlayerId string
 
     this._gameTimer = null;
+    this._demoSimulator = new DemoSimulator(this);
+    this._isDemoActive = false;
     this._gameTimerLimit = 0;
     this._gameTimerStart = 0;
 
@@ -56,14 +59,55 @@ class HiddenAgentGame extends HostBaseGame {
       this.resetSession();
     };
 
+    // 데모 모드 버튼 리스너 바인딩
+    const btnDemoStart = document.getElementById('btn-demo-start');
+    const btnDemoStop = document.getElementById('btn-demo-stop');
+    const demoBanner = document.getElementById('demo-banner');
+
+    if (btnDemoStart) {
+      btnDemoStart.onclick = () => {
+        if (this.playerCount > 0) {
+          alert('현재 로비에 접속 중인 플레이어가 있어 데모 플레이를 실행할 수 없습니다.');
+          return;
+        }
+        this._isDemoActive = true;
+        if (demoBanner) demoBanner.classList.remove('hidden');
+
+        // QR접속 카드 흐리게(Blur) 블락 처리
+        if (this._lobbyEl) {
+          const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+          if (qrCard) qrCard.style.filter = 'blur(6px) grayscale(40%)';
+        }
+
+        this._demoSimulator.start();
+      };
+    }
+
+    if (btnDemoStop) {
+      btnDemoStop.onclick = () => {
+        this._isDemoActive = false;
+        if (demoBanner) demoBanner.classList.add('hidden');
+
+        // QR 블러 원복
+        if (this._lobbyEl) {
+          const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+          if (qrCard) qrCard.style.filter = '';
+        }
+
+        this._demoSimulator.stop();
+      };
+    }
+
     this.setPhase('lobby');
   }
 
   onPlayerJoin(player) {
+    if (this._isDemoActive) return; // 데모 중 실유저 난입 방어
     this._updateLobby();
   }
 
   onPlayerLeave(playerId) {
+    if (this._isDemoActive) return; // 데모 중 가드
     this._profiles.delete(playerId);
     this._assignedRoles.delete(playerId);
     this._assignedWords.delete(playerId);
@@ -81,6 +125,7 @@ class HiddenAgentGame extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
+    if (this._isDemoActive) return; // 데모 중 가드
     // 게임 진행 도중 재접속 시
     if (this.phase !== 'lobby' && this.phase !== 'loading') {
       const role = this._assignedRoles.get(player.id);
@@ -112,6 +157,15 @@ class HiddenAgentGame extends HostBaseGame {
     this._spyWord = '';
     this._stopTimer();
 
+    // 데모 배너 및 필터 원복
+    this._isDemoActive = false;
+    const demoBanner = document.getElementById('demo-banner');
+    if (demoBanner) demoBanner.classList.add('hidden');
+    if (this._lobbyEl) {
+      const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+      if (qrCard) qrCard.style.filter = '';
+    }
+
     // 캔버스 비우기
     const canvas = document.getElementById('bubble-canvas');
     if (canvas) {
@@ -128,6 +182,7 @@ class HiddenAgentGame extends HostBaseGame {
   _wireMessages() {
     // 프로필 등록 수신
     this.onMessage('setProfile', (player, { nickname, avatar }) => {
+      if (this._isDemoActive) return; // 데모 중 실유저 패킷 가드
       const name = nickname.trim() || '익명';
       this._profiles.set(player.id, { nickname: name, avatar: avatar || null });
       this.setPlayerName(player.id, name);
@@ -136,6 +191,7 @@ class HiddenAgentGame extends HostBaseGame {
 
     // 힌트 단어 제출 수신
     this.onMessage('submitHint', (player, { hint }) => {
+      if (this._isDemoActive) return; // 데모 중 가드
       if (this.phase !== 'discussion') return;
       if (this._playerHints.has(player.id)) return; // 중복 방지
 
@@ -157,6 +213,7 @@ class HiddenAgentGame extends HostBaseGame {
 
     // 투표 제출 수신
     this.onMessage('submitVote', (player, { targetId }) => {
+      if (this._isDemoActive) return; // 데모 중 가드
       if (this.phase !== 'voting') return;
       if (this._playerVotes.has(player.id)) return; // 중복 방지
 

@@ -175,6 +175,12 @@
 
   <div class="agent-host-container">
 
+    <!-- 데모 시뮬레이션 배너 -->
+    <div id="demo-banner" class="hidden" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; background: rgba(10, 12, 18, 0.9); border: 2px solid rgba(168, 85, 247, 0.6); padding: 10px 24px; border-radius: 30px; display: flex; align-items: center; gap: 15px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+      <span style="color: #a855f7; font-weight: bold; font-size: 0.95rem;">🤖 데모 시뮬레이션 재생 중...</span>
+      <button id="btn-demo-stop" style="background: #ef4444; border:none; color:white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; cursor: pointer; font-family: inherit;">중단하기</button>
+    </div>
+
     <!-- 1. Lobby Phase -->
     <div class="game-overlay" data-phase="lobby" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
       <game-lobby title="스파이를 찾아라! 🕵️‍♂️" min-players="3" banner="/games/hidden-agent/assets/thumbnail.png" style="width:100%; max-width:1100px; height:100%; max-height:650px;">
@@ -183,6 +189,7 @@
           스마트폰 화면을 철저히 숨기세요. 시민들은 하나의 단어를 공유하고, 단 한 명의 스파이에게는 다른 단어가 배정됩니다.<br><br>
           상대의 힌트 단어를 정교하게 관찰하고, 토론을 거쳐 의심이 가는 스파이를 은밀히 투표하세요!
         </p>
+        <button id="btn-demo-start" class="btn-secondary" style="margin-top: 20px; width: 100%; padding: 14px; font-weight: bold; cursor: pointer; border-radius: 12px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); color: #a855f7; display: block; font-family: inherit;">🤖 데모 플레이 실행</button>
       </game-lobby>
     </div>
 
