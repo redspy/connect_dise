@@ -2,6 +2,7 @@
 cd /d %~dp0
 
 echo [Step 1] Stopping server...
+taskkill /F /IM node.exe >nul 2>&1
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000 ^| findstr LISTENING') do (
     taskkill /F /PID %%a >nul 2>&1
 )
