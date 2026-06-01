@@ -153,9 +153,9 @@ test.describe('그림 릴레이 — 2인 게임', () => {
     await expect(host.locator('.rd-share-trigger').last()).toBeVisible();
     await host.locator('.rd-share-trigger').last().click();
 
-    // 이미지 생성 후 모달 표시 (PNG data URL 확인)
+    // 이미지 생성 후 모달 표시 (WebP data URL 확인)
     await host.locator('#sharePreviewOverlay:not(.hidden)').waitFor({ timeout: 15_000 });
-    await expect(host.locator('#sharePreviewImg')).toHaveAttribute('src', /^data:image\/png/);
+    await expect(host.locator('#sharePreviewImg')).toHaveAttribute('src', /^data:image\/webp/);
     await expect(host.locator('#shareDownloadBtn')).toBeVisible();
 
     // 닫기 버튼
@@ -205,12 +205,41 @@ test.describe('그림 릴레이 — 2인 게임', () => {
     await host.locator('.rd-share-trigger').first().click();
 
     await host.locator('#sharePreviewOverlay:not(.hidden)').waitFor({ timeout: 15_000 });
-    await expect(host.locator('#sharePreviewImg')).toHaveAttribute('src', /^data:image\/png/);
+    await expect(host.locator('#sharePreviewImg')).toHaveAttribute('src', /^data:image\/webp/);
 
     await host.click('#shareCloseBtn');
 
     await hostCtx.close();
     for (const { page } of players) await page.context().close();
+  });
+
+  test('Attract Mode: 3인 가상 봇 실시간 드로잉 데모 자동화 풀플로우 검증', async ({ browser }) => {
+    const hostCtx = await browser.newContext();
+    const host = await hostCtx.newPage();
+    await host.goto(`${BASE}/games/relay-drawing/host/`);
+
+    await host.locator('html[data-session-id]').waitFor({ timeout: 15_000 });
+
+    // 데모 플레이 실행 버튼이 활성화되어 노출되는가
+    const demoPlayBtn = host.locator('#demoPlayBtn');
+    await expect(demoPlayBtn).toBeVisible();
+    await demoPlayBtn.click();
+
+    // 1라운드: 봇 드로잉 스테이지 돌입 및 캔버스 요소 활성화 확인
+    await host.locator('[data-phase="game"]:not(.hidden)').waitFor({ timeout: 15_000 });
+    await expect(host.locator('#status-bot_amy')).toBeVisible();
+    await expect(host.locator('#canvas-bot_amy')).toBeVisible();
+    await expect(host.locator('#canvas-bot_bob')).toBeVisible();
+    await expect(host.locator('#canvas-bot_charles')).toBeVisible();
+
+    // 봇들의 자동 드로잉 및 2라운드 단어 턴으로 자동 전환 대기
+    await host.locator('#currentTurnDisplay').waitFor({ timeout: 15_000 });
+    
+    // 결과 발표 페이즈까지 무점검 완전 자동 진행 대기 (최대 25초)
+    await host.locator('[data-phase="result"]:not(.hidden)').waitFor({ timeout: 25_000 });
+    await expect(host.locator('#storyOwnerName')).toBeVisible();
+
+    await hostCtx.close();
   });
 
 });

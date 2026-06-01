@@ -85,6 +85,27 @@
       <img id="previousDrawing" src="" alt="이전 그림">
     </div>
 
+    <!-- 하이브리드 이모지 입력 (아동 배제 해소) -->
+    <div class="emoji-picker-container">
+      <p class="emoji-picker-title">클릭해서 단어 완성하기 🍭</p>
+      <div class="emoji-picker-grid">
+        <span class="picker-emoji">🐶</span>
+        <span class="picker-emoji">🐱</span>
+        <span class="picker-emoji">🐻</span>
+        <span class="picker-emoji">🦁</span>
+        <span class="picker-emoji">🦖</span>
+        <span class="picker-emoji">🚀</span>
+        <span class="picker-emoji">🛸</span>
+        <span class="picker-emoji">🍕</span>
+        <span class="picker-emoji">🍦</span>
+        <span class="picker-emoji">🎈</span>
+        <span class="picker-emoji">⭐️</span>
+        <span class="picker-emoji">🌈</span>
+        <span class="picker-emoji">👑</span>
+        <span class="picker-emoji">❤️</span>
+      </div>
+    </div>
+
     <div class="word-input-container">
       <input type="text" id="wordGuess" maxlength="30" placeholder="무엇을 그린 걸까요?">
       <button id="submitWordBtn" class="primary-btn submit-btn">제출하기</button>
@@ -101,11 +122,20 @@
     </div>
   </div>
 
-  <!-- 6. 결과 관람 -->
+  <!-- 6. 결과 관람 및 SNS 공유 -->
   <div class="rd-screen view" data-screen="spectate">
     <div class="spectate-content">
       <h2>결과 발표! 🎬</h2>
       <p>PC 화면을 주목해주세요.</p>
+
+      <!-- 모바일 역송신 SNS 결과 공유 카드 영역 -->
+      <div id="mobileShareCard" class="mobile-share-card hidden">
+        <p class="share-desc">🎉 우리들의 릴레이 스토리가 완성되었습니다!</p>
+        <div class="share-img-wrap">
+          <img id="mobileShareImg" src="" alt="릴레이 결과 카드">
+        </div>
+        <button id="mobileShareBtn" class="primary-btn share-action-btn">📸 내 폰에 소장 & SNS 공유</button>
+      </div>
 
       <div class="reaction-container">
         <h3>리액션 보내기</h3>

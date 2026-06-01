@@ -1,5 +1,6 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { audioManager } from '../shared/AudioManager.js';
+import { RelayDemoSimulator } from './RelayDemoSimulator.js';
 
 const STARTER_PROMPTS = [
   // 원본
@@ -88,6 +89,9 @@ export class RelayDrawingGame extends HostBaseGame {
     this._readyPlayers    = new Set(); // 준비 완료한 플레이어 ID
     this._currentStoryIndex = 0;
     this._presentationTimeouts = [];
+    this._activeStrokes   = new Map(); // 실시간 WebRTC 획(stroke) 스트리밍 추적용 캐시
+    this._demoSimulator   = new RelayDemoSimulator(this);
+    this._isDemo          = false;
 
     this._wireGameMessages();
   }
@@ -110,6 +114,16 @@ export class RelayDrawingGame extends HostBaseGame {
       restartBtn.onclick = () => this.resetSession();
     }
 
+    // 데모 플레이 버튼 리스너 바인딩
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
+
     document.querySelectorAll('.rd-share-trigger').forEach(btn => {
       btn.addEventListener('click', () => this._shareResults());
     });
@@ -121,7 +135,11 @@ export class RelayDrawingGame extends HostBaseGame {
     audioManager.playBGM('https://actions.google.com/static/audio/test/Lobby-Time.mp3');
   }
 
-  onPlayerJoin() {
+  onPlayerJoin(player) {
+    if (this._isDemo) {
+      // 데모 실행 도중 난입 가드
+      return;
+    }
     this._updateLobbyPlayers();
   }
 
@@ -163,6 +181,7 @@ export class RelayDrawingGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._profiles.clear();
     this._storyChains = [];
     this._currentRound = 0;
@@ -200,6 +219,103 @@ export class RelayDrawingGame extends HostBaseGame {
       if (this.phase === 'result') {
         this._showReaction(emoji);
         audioManager.playSFX('https://actions.google.com/static/audio/test/Pop.mp3', 0.5);
+      }
+    });
+
+    // 실시간 WebRTC 획(Stroke) 스트리밍 복원 이벤트 바인딩
+    this.onMessage('strokeStart', (player, { strokeId, color, lineWidth, nx, ny }) => {
+      if (this.phase !== 'game') return;
+      const canvas = document.getElementById(`canvas-${player.id}`);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const x = nx * 800;
+      const y = ny * 600;
+
+      // 새 실시간 드로잉 스트로크 초기화
+      this._activeStrokes.set(strokeId, {
+        ctx,
+        color,
+        lineWidth,
+        lastX: x,
+        lastY: y,
+        nextSeq: 0,
+        seqBuffer: new Map() // 패킷 꼬임 방지용 버퍼
+      });
+
+      // 획 시작점 찍기
+      ctx.beginPath();
+      ctx.arc(x, y, lineWidth / 2, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+
+    this.onMessage('strokeMove', (player, { strokeId, seq, points }) => {
+      if (this.phase !== 'game') return;
+      const stroke = this._activeStrokes.get(strokeId);
+      if (!stroke) return;
+
+      // 시퀀스 번호에 맞게 패킷 임시 적재
+      stroke.seqBuffer.set(seq, points);
+
+      // 정렬된 순서대로 복원 렌더링 루프 가동
+      while (stroke.seqBuffer.has(stroke.nextSeq)) {
+        const pts = stroke.seqBuffer.get(stroke.nextSeq);
+        stroke.seqBuffer.delete(stroke.nextSeq);
+
+        const ctx = stroke.ctx;
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.lineWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        pts.forEach(pt => {
+          const x = pt.nx * 800;
+          const y = pt.ny * 600;
+
+          ctx.beginPath();
+          ctx.moveTo(stroke.lastX, stroke.lastY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+
+          stroke.lastX = x;
+          stroke.lastY = y;
+        });
+
+        stroke.nextSeq++;
+      }
+    });
+
+    this.onMessage('strokeEnd', (player, { strokeId }) => {
+      if (this.phase !== 'game') return;
+      const stroke = this._activeStrokes.get(strokeId);
+      if (stroke) {
+        // 네트워크 지연으로 버퍼에 잔류한 패킷 강제 렌더링 마무리
+        if (stroke.seqBuffer.size > 0) {
+          const sortedSeqs = Array.from(stroke.seqBuffer.keys()).sort((a, b) => a - b);
+          const ctx = stroke.ctx;
+          ctx.strokeStyle = stroke.color;
+          ctx.lineWidth = stroke.lineWidth;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+
+          sortedSeqs.forEach(seq => {
+            const pts = stroke.seqBuffer.get(seq);
+            pts.forEach(pt => {
+              const x = pt.nx * 800;
+              const y = pt.ny * 600;
+
+              ctx.beginPath();
+              ctx.moveTo(stroke.lastX, stroke.lastY);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+
+              stroke.lastX = x;
+              stroke.lastY = y;
+            });
+          });
+        }
+        this._activeStrokes.delete(strokeId);
       }
     });
   }
@@ -319,6 +435,25 @@ export class RelayDrawingGame extends HostBaseGame {
       audioManager.playBGM('https://actions.google.com/static/audio/test/Game-Start.mp3');
     }
     audioManager.playSFX('https://actions.google.com/static/audio/test/Tones_2.mp3');
+
+    // 🤖 데모 모드 일 때 가상 봇 시뮬레이션 가동
+    if (this._isDemo) {
+      if (isDrawTurn) {
+        // 그림 그리기 시뮬레이션 (각 봇이 5초 동안 실시간으로 수학 드로잉을 슥슥 그림)
+        setTimeout(() => {
+          this._demoSimulator.simulateDrawing('bot_amy', 'heart', 5000);
+          this._demoSimulator.simulateDrawing('bot_bob', 'spiral', 5000);
+          this._demoSimulator.simulateDrawing('bot_charles', 'face', 5000);
+        }, 1000);
+      } else {
+        // 단어 알아맞히기 시뮬레이션 (3.5초 후 위트 넘치는 답변 일제히 제출)
+        setTimeout(() => {
+          this._handlePlayerSubmission('bot_amy', { type: 'word', content: '하트 뿅뿅 ❤️' });
+          this._handlePlayerSubmission('bot_bob', { type: 'word', content: '우주 소용돌이 🌀' });
+          this._handlePlayerSubmission('bot_charles', { type: 'word', content: '귀여운 고양이 🐱' });
+        }, 3500);
+      }
+    }
   }
 
   _setupGameStatusGrid(isDrawTurn) {
@@ -332,12 +467,35 @@ export class RelayDrawingGame extends HostBaseGame {
       const card = document.createElement('div');
       card.className = 'status-card';
       card.id = `status-${p.id}`;
+      
+      let canvasHtml = '';
+      if (isDrawTurn) {
+        canvasHtml = `
+          <div class="player-canvas-container">
+            <canvas class="player-canvas" id="canvas-${p.id}"></canvas>
+          </div>
+        `;
+      }
+
       card.innerHTML = `
         <span class="status-icon" id="icon-${p.id}">${icon}</span>
         <div class="name">${this._profiles.get(p.id)?.nickname ?? '?'}</div>
         <div class="action-text" id="action-${p.id}">${actionText}</div>
+        ${canvasHtml}
       `;
       grid.appendChild(card);
+
+      // 드로잉 캔버스 고정 논리 해상도(800x600)로 흰 도화지 초기화
+      if (isDrawTurn) {
+        const canvas = document.getElementById(`canvas-${p.id}`);
+        if (canvas) {
+          canvas.width = 800;
+          canvas.height = 600;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, 800, 600);
+        }
+      }
     });
   }
 
@@ -487,6 +645,7 @@ export class RelayDrawingGame extends HostBaseGame {
   _presentNextStory() {
     if (this._currentStoryIndex >= this._storyChains.length) {
       this.setPhase('final');
+      this._autoBroadcastShareImage();
       return;
     }
 
@@ -591,7 +750,7 @@ export class RelayDrawingGame extends HostBaseGame {
     triggers.forEach(b => { b.disabled = true; b.textContent = '⏳ 생성 중...'; });
     try {
       const canvas  = await this._generateShareImage();
-      const dataUrl = canvas.toDataURL('image/png');
+      const dataUrl = canvas.toDataURL('image/webp', 0.75); // WebP 0.75 퀄리티 압축
 
       document.getElementById('sharePreviewImg').src = dataUrl;
       document.getElementById('sharePreviewOverlay').classList.remove('hidden');
@@ -599,13 +758,24 @@ export class RelayDrawingGame extends HostBaseGame {
       document.getElementById('shareDownloadBtn').onclick = () => {
         const a = document.createElement('a');
         a.href     = dataUrl;
-        a.download = 'relay-result.png';
+        a.download = 'relay-result.webp';
         a.click();
       };
     } catch (e) {
       console.error('이미지 생성 실패:', e);
     } finally {
       triggers.forEach(b => { b.disabled = false; b.textContent = '📸 결과 이미지 저장'; });
+    }
+  }
+
+  // 모바일로 최종 결과 카드를 WebP 형식으로 압축해 자동 브로드캐스팅하는 파이프라인
+  async _autoBroadcastShareImage() {
+    try {
+      const canvas = await this._generateShareImage();
+      const webpDataUrl = canvas.toDataURL('image/webp', 0.75); // 0.75 퀄리티로 대폭 압축 (80KB 이하)
+      this.broadcast('showFinalShareCard', { webpDataUrl });
+    } catch (e) {
+      console.error('모바일 자동 결과 카드 전송 실패:', e);
     }
   }
 

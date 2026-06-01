@@ -134,6 +134,26 @@ export class RelayDrawingMobile extends MobileBaseGame {
     });
 
     this._initProfileCanvas();
+
+    // 하이브리드 이모지 입력기 바인딩 (아동 배제 극복)
+    document.querySelectorAll('.picker-emoji').forEach(el => {
+      el.addEventListener('click', e => {
+        const emoji = e.currentTarget.textContent;
+        const input = document.getElementById('wordGuess');
+        if (input) {
+          input.value += emoji;
+          input.focus();
+        }
+      });
+    });
+
+    // 네이티브 SNS 공유 및 다운로드 연동
+    document.getElementById('mobileShareBtn')?.addEventListener('click', () => {
+      const img = document.getElementById('mobileShareImg');
+      if (img && img.src) {
+        this._shareResultToNative(img.src);
+      }
+    });
   }
 
   // ─── 캔버스 초기화 ────────────────────────────────────────────────────────
@@ -214,13 +234,52 @@ export class RelayDrawingMobile extends MobileBaseGame {
     canvas.addEventListener('mouseout',   this._stopDrawing.bind(this));
   }
 
+  normalizeCoords(clientX, clientY, rect) {
+    let nx = (clientX - rect.left) / rect.width;
+    let ny = (clientY - rect.top) / rect.height;
+
+    // 0~1 사이로 클램핑 (캔버스 외곽을 터치할 때의 보정)
+    nx = Math.max(0, Math.min(1, nx));
+    ny = Math.max(0, Math.min(1, ny));
+
+    return { nx, ny };
+  }
+
+  denormalizeCoords(nx, ny, width, height) {
+    return {
+      x: nx * width,
+      y: ny * height
+    };
+  }
+
   _resizeCanvas() {
     const canvas = document.getElementById('drawingCanvas');
     if (!canvas) return;
     const parent = canvas.parentElement;
-    canvas.width  = parent.clientWidth;
-    canvas.height = parent.clientHeight;
-    this._clearCanvas();
+    const pWidth = parent.clientWidth;
+    const pHeight = parent.clientHeight;
+
+    let w = pWidth;
+    let h = pWidth * (3 / 4);
+
+    if (h > pHeight) {
+      h = pHeight;
+      w = pHeight * (4 / 3);
+    }
+
+    // CSS 스타일을 통한 4:3 강제 고정 및 레터박스 중앙 배치
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+    canvas.style.left = `${(pWidth - w) / 2}px`;
+    canvas.style.top = `${(pHeight - h) / 2}px`;
+    canvas.style.position = 'absolute';
+
+    // 논리 해상도는 800x600으로 영구 고정
+    if (canvas.width !== 800 || canvas.height !== 600) {
+      canvas.width = 800;
+      canvas.height = 600;
+      this._clearCanvas();
+    }
   }
 
   _clearCanvas() {
@@ -235,26 +294,46 @@ export class RelayDrawingMobile extends MobileBaseGame {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    return this.normalizeCoords(clientX, clientY, rect);
   }
 
   _startDrawing(e) {
     e.preventDefault();
     this._isDrawing = true;
-    const { x, y } = this._getCoords(e);
+    const { nx, ny } = this._getCoords(e);
+    const { x, y } = this.denormalizeCoords(nx, ny, 800, 600);
     this._lastX = x;
     this._lastY = y;
+
+    // 로컬 화면 드로잉
     this._ctx.beginPath();
     const r = (this._isEraser ? this._lineWidth * 3 : this._lineWidth) / 2;
     this._ctx.arc(x, y, r, 0, Math.PI * 2);
     this._ctx.fillStyle = this._isEraser ? '#FFFFFF' : this._currentColor;
     this._ctx.fill();
+
+    // WebRTC 스트로크 스트리밍 패킷 설계 및 송출 시작
+    this._strokeId = `${this.playerId}_${Date.now()}`;
+    this._strokeSeq = 0;
+    this._strokePoints = [];
+    this._lastSendTime = Date.now();
+
+    this.sendToHost('strokeStart', {
+      strokeId: this._strokeId,
+      color: this._isEraser ? '#FFFFFF' : this._currentColor,
+      lineWidth: this._isEraser ? this._lineWidth * 3 : this._lineWidth,
+      nx,
+      ny
+    });
   }
 
   _draw(e) {
     if (!this._isDrawing) return;
     e.preventDefault();
-    const { x, y } = this._getCoords(e);
+    const { nx, ny } = this._getCoords(e);
+    const { x, y } = this.denormalizeCoords(nx, ny, 800, 600);
+
+    // 로컬 화면 선 드로잉
     this._ctx.beginPath();
     this._ctx.moveTo(this._lastX, this._lastY);
     this._ctx.lineTo(x, y);
@@ -263,13 +342,46 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._ctx.lineCap = 'round';
     this._ctx.lineJoin = 'round';
     this._ctx.stroke();
+
     this._lastX = x;
     this._lastY = y;
+
+    // 스트로크 포인트 수집
+    this._strokePoints.push({ nx, ny });
+
+    // 15ms(약 60fps) 주기로 패킷 송출
+    const now = Date.now();
+    if (now - this._lastSendTime >= 15 && this._strokePoints.length > 0) {
+      this.sendToHost('strokeMove', {
+        strokeId: this._strokeId,
+        seq: this._strokeSeq++,
+        points: this._strokePoints
+      });
+      this._strokePoints = [];
+      this._lastSendTime = now;
+    }
   }
 
   _stopDrawing(e) {
     if (e) e.preventDefault();
+    if (!this._isDrawing) return;
     this._isDrawing = false;
+
+    // 큐에 잔류한 드로잉 포인트 일괄 전송
+    if (this._strokePoints && this._strokePoints.length > 0) {
+      this.sendToHost('strokeMove', {
+        strokeId: this._strokeId,
+        seq: this._strokeSeq++,
+        points: this._strokePoints
+      });
+      this._strokePoints = [];
+    }
+
+    // 스트로크 전송 종료 선언
+    if (this._strokeId) {
+      this.sendToHost('strokeEnd', { strokeId: this._strokeId });
+      this._strokeId = null;
+    }
   }
 
   // ─── 제출 로직 ────────────────────────────────────────────────────────────
@@ -397,6 +509,16 @@ export class RelayDrawingMobile extends MobileBaseGame {
         </div>
       `).join('');
     });
+
+    // P2P 역송신 최종 결과 이미지 수신 핸들러
+    this.onMessage('showFinalShareCard', ({ webpDataUrl }) => {
+      const shareCard = document.getElementById('mobileShareCard');
+      const shareImg  = document.getElementById('mobileShareImg');
+      if (shareCard && shareImg) {
+        shareImg.src = webpDataUrl;
+        shareCard.classList.remove('hidden');
+      }
+    });
   }
 
   _updatePlayerList(players) {
@@ -426,6 +548,9 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._isEraser = false;
     document.getElementById('eraserBtn')?.classList.remove('active');
 
+    // 결과 공유 카드는 숨김
+    document.getElementById('mobileShareCard')?.classList.add('hidden');
+
     this.showScreen('draw');
     setTimeout(() => this._resizeCanvas(), 50);
     this._clearCanvas();
@@ -439,5 +564,43 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
     this.showScreen('word');
     this._startTimer(timeLimit, 'word');
+  }
+
+  // ─── 모바일 네이티브 SNS 공유 및 폴백 ───────────────────────────────────────
+
+  async _shareResultToNative(dataUrl) {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'relay-story.webp', { type: 'image/webp' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: '그림 릴레이 2.0 결과 🎨',
+          text: '친구들과 스마트폰으로 함께 그린 왁자지껄 릴레이 스토리 결과입니다!'
+        });
+      } else if (navigator.share) {
+        await navigator.share({
+          title: '그림 릴레이 2.0 결과 🎨',
+          text: '친구들과 스마트폰으로 함께 그린 왁자지껄 릴레이 스토리 결과입니다!'
+        });
+      } else {
+        this._fallbackDownload(dataUrl);
+      }
+    } catch (e) {
+      console.error('네이티브 공유 실패:', e);
+      this._fallbackDownload(dataUrl);
+    }
+  }
+
+  _fallbackDownload(dataUrl) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'relay-result.webp';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    alert('기기가 네이티브 공유를 지원하지 않아 결과 카드를 이미지 파일로 다운로드합니다. ⬇');
   }
 }
