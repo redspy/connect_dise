@@ -8,3 +8,6 @@ dist
 .claude/settings.local.json
 .playwright-mcp
 .playwright
+
+playwright-report/
+test-results/

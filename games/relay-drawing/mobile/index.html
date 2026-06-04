@@ -7,7 +7,14 @@
   <link rel="stylesheet" href="/src/style.css">
   <link rel="stylesheet" href="./style.css">
 </head>
-<body class="mobile-body">
+<body class="mobile-controller mobile-body">
+
+  <!-- 가로 모드 차단 안내 오버레이 -->
+  <div class="orientation-guard">
+    <div class="orientation-guard-icon">🔄</div>
+    <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
+    <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
+  </div>
 
   <!-- 1. 닉네임 입력 -->
   <div class="rd-screen view" data-screen="setup">

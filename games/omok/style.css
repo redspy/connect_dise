@@ -287,3 +287,25 @@ footer {
   margin-bottom: 20px;
   color: var(--text-color);
 }
+
+@media (max-height: 600px) {
+  body {
+    padding: 10px;
+  }
+  .game-container {
+    gap: 10px;
+    padding: 15px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+  }
+  .board {
+    width: min(300px, 55vh);
+    height: min(300px, 55vh);
+  }
+  .status-bar {
+    padding: 6px 15px;
+    gap: 15px;
+  }
+}

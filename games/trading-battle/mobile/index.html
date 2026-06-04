@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <title>천하제일단타대회</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,7 +20,13 @@
     <link rel="stylesheet" href="/src/style.css" />
     <link rel="stylesheet" href="./style.css" />
   </head>
-  <body class="tb-mobile">
+  <body class="mobile-controller tb-mobile">
+    <!-- 가로 모드 차단 안내 오버레이 -->
+    <div class="orientation-guard">
+      <div class="orientation-guard-icon">🔄</div>
+      <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
+      <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
+    </div>
     <!-- ── 닉네임 및 아바타 설정 화면 ── -->
     <div class="tb-screen" data-screen="setup">
       <div class="setup-wrap">

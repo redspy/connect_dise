@@ -254,6 +254,13 @@ body.db-mobile {
   min-height: 0;
 }
 
+@media (orientation: landscape) {
+  .db-my-card {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+  }
+}
+
 .db-symbol-cell {
   background: var(--db-panel);
   border: 2px solid var(--db-border);

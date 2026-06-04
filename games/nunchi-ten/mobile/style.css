@@ -95,7 +95,7 @@ body.nunchi-mobile {
 /* ── 프로필 설정 ─────────────────────────────────────────────────────────────── */
 
 .setup-wrap {
-  padding: 40px 24px 32px;
+  padding: clamp(16px, 5vh, 40px) 24px clamp(16px, 4vh, 32px);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -107,10 +107,10 @@ body.nunchi-mobile {
   border-radius: 12px;
   color: var(--nm-text);
   font-size: 1.1rem;
-  padding: 14px 16px;
+  padding: clamp(10px, 1.8vh, 14px) 16px;
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: 20px;
+  margin-bottom: clamp(12px, 3vh, 20px);
   outline: none;
   transition: border-color 0.2s;
 }
@@ -127,9 +127,9 @@ body.nunchi-mobile {
 
 .avatar-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: clamp(12px, 3vh, 24px);
 }
 
 .avatar-btn {

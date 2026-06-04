@@ -1,6 +1,11 @@
 /* src/style.css */
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Roboto:wght@400;700&display=swap');
 
+html {
+  /* 스마트 TV 대형 해상도 대응 rem 루트 폰트 줌 */
+  font-size: clamp(14px, 1.1vw, 22px);
+}
+
 :root {
   --felt-green: #1a6b3a;
   --dark-green: #0f3d21;
@@ -252,12 +257,18 @@ canvas {
 body.mobile-controller {
   background-color: #1a1a1a;
   color: var(--text-light);
-  height: 100dvh;
+  height: 100dvh; /* 100vh -> 100dvh 유동형 뷰포트 교체 */
   display: flex;
   flex-direction: column;
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  
+  /* 태블릿/대화면 퍼짐 방지 한 손 파지감 사수 가드 */
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .controller-ui {
@@ -265,6 +276,50 @@ body.mobile-controller {
   display: flex;
   flex-direction: column;
   padding: 20px;
+}
+
+/* ─── 가로 모드 차단 오버레이 뷰 (Portrait Orientation Guard) ─── */
+.orientation-guard {
+  position: fixed;
+  inset: 0;
+  background-color: #0c1220;
+  color: #f59e0b;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+  padding: 24px;
+  text-align: center;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.orientation-guard-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  animation: guard-rotate 2s ease-in-out infinite;
+}
+.orientation-guard-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #e2e8f0;
+}
+.orientation-guard-desc {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+@keyframes guard-rotate {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}
+
+/* 모바일 기기 가로 회전 시 노출 (가로 모드 필수 게임 및 최종 공유 카드 노출 상태 제외) */
+@media (orientation: landscape) and (max-width: 1024px) {
+  body.mobile-controller:not(.db-mobile):not(.dx-mobile):not(.rd-mobile-share-active) .orientation-guard {
+    display: flex !important;
+  }
 }
 
 .status-indicator {

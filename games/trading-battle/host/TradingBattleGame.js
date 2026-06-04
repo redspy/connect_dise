@@ -621,7 +621,7 @@ export class TradingBattleGame extends HostBaseGame {
 
     // Resize observer
     const ro = new ResizeObserver(() => {
-      chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+      chart.resize(container.clientWidth, container.clientHeight);
     });
     ro.observe(container);
   }

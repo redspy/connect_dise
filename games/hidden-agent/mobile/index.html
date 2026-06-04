@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>스파이를 찾아라! (Controller)</title>
   <link rel="stylesheet" href="/src/style.css">
   <style>
@@ -143,6 +143,12 @@
   </style>
 </head>
 <body class="mobile-controller">
+  <!-- 가로 모드 차단 안내 오버레이 -->
+  <div class="orientation-guard">
+    <div class="orientation-guard-icon">🔄</div>
+    <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
+    <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
+  </div>
 
   <div class="ha-mobile-container">
 

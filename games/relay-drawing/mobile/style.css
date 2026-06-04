@@ -466,3 +466,47 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   margin-top: 0 !important;
   background-color: var(--rdm-success) !important;
 }
+
+/* 가로 모드 대응 유동적 리레이아웃 */
+@media (orientation: landscape) {
+  .emoji-picker-container {
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .emoji-picker-title {
+    display: none;
+  }
+  .emoji-picker-grid {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    max-height: none !important;
+    padding: 2px 0;
+    gap: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  .picker-emoji {
+    flex-shrink: 0;
+    font-size: 1.3rem;
+    padding: 0.1rem 0.4rem;
+  }
+  .image-preview-container {
+    max-height: 80px !important;
+    margin-bottom: 0.25rem;
+  }
+  .word-input-container {
+    flex-direction: row !important;
+    gap: 0.4rem;
+  }
+  .word-input-container input[type="text"] {
+    flex: 1;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.95rem;
+  }
+  .word-input-container button {
+    width: auto;
+    padding: 0.5rem 1.2rem !important;
+    font-size: 0.95rem !important;
+  }
+}
