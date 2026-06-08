@@ -38,9 +38,9 @@ body.mobile-body {
 }
 .rd-screen.hidden { display: none !important; }
 
-/* game-view는 overflow 없이 flex로 가득 채움 */
+/* game-view는 기본적으로 세로 스크롤을 허용하여 소형 기기 대응 */
 .rd-screen.game-view {
-  overflow: hidden;
+  overflow-y: auto;
   padding: 0.5rem;
 }
 
@@ -234,7 +234,7 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   position: relative;
   margin-bottom: 0.4rem;
   touch-action: none;
-  min-height: 0;
+  min-height: 260px; /* 소형 기기에서도 드로잉 캔버스 크기를 보장 */
 }
 #drawingCanvas {
   background-color: #ffffff; /* Canvas drawing surface */
@@ -292,7 +292,7 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   padding: 0.4rem;
   margin-bottom: 0.4rem;
   overflow: hidden;
-  min-height: 0;
+  min-height: 200px; /* 소형 기기에서도 이전 그림의 시인성 보장 */
 }
 #previousDrawing {
   max-width: 100%;
