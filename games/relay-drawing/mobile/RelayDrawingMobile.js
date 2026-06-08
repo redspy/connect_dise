@@ -122,16 +122,22 @@ export class RelayDrawingMobile extends MobileBaseGame {
       });
     });
 
-    // 화면 회전 시 캔버스 리사이즈
-    window.addEventListener('resize', () => {
-      const canvas = document.getElementById('drawingCanvas');
-      if (!canvas || !document.querySelector('[data-screen="draw"]:not(.hidden)')) return;
-      const temp = canvas.toDataURL();
-      this._resizeCanvas();
-      const img = new Image();
-      img.onload = () => this._ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-      img.src = temp;
-    });
+    // canvas-container 크기 변화 감지 (화면 전환, 창 크기 변경, 방향 전환 모두 대응)
+    const canvas = document.getElementById('drawingCanvas');
+    const canvasContainer = document.querySelector('.canvas-container');
+    if (canvas && canvasContainer) {
+      const resizeObserver = new ResizeObserver(() => {
+        // 그리기 화면이 활성화된 상태일 때만 리사이즈 실행
+        if (document.querySelector('[data-screen="draw"].hidden')) return;
+
+        const temp = canvas.toDataURL();
+        this._resizeCanvas();
+        const img = new Image();
+        img.onload = () => this._ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        img.src = temp;
+      });
+      resizeObserver.observe(canvasContainer);
+    }
 
     this._initProfileCanvas();
 

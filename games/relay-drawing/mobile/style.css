@@ -182,20 +182,23 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
 /* ─── 게임 공통 헤더 ─────────────────────────────────────────── */
 .game-header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0;
+  gap: 0.6rem;
+  padding: 0.4rem;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .timer {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--rdm-text);
   background-color: var(--rdm-bg2);
-  padding: 0.25rem 1rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 20px;
   border: 2px solid var(--rdm-border);
+  flex-shrink: 0;
 }
 .timer.warning {
   color: var(--rdm-danger);
@@ -208,33 +211,45 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
 }
 .topic-box {
   background: linear-gradient(135deg, var(--rdm-accent), #4f46e5);
-  width: 100%;
-  border-radius: 12px;
-  padding: 0.8rem 1rem;
-  text-align: center;
+  flex: 1;
+  border-radius: 10px;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  min-width: 0;
 }
 .topic-label {
-  display: block;
   font-size: 0.75rem;
   font-weight: bold;
   text-transform: uppercase;
   color: rgba(255,255,255,0.8);
-  margin-bottom: 0.2rem;
   letter-spacing: 0.05rem;
+  white-space: nowrap;
 }
-.topic-box h3 { margin: 0; font-size: 1.2rem; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.topic-box h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ─── 그림 그리기 화면 ───────────────────────────────────────── */
 .canvas-container {
   flex: 1;
-  background-color: #000000; /* Letterbox background */
+  background-color: var(--rdm-bg2); /* Matches dark grey theme background */
   border-radius: 6px;
   overflow: hidden;
   position: relative;
   margin-bottom: 0.4rem;
   touch-action: none;
-  min-height: 260px; /* 소형 기기에서도 드로잉 캔버스 크기를 보장 */
+  min-height: 220px; /* 소형 기기에서도 드로잉 캔버스 크기를 보장 */
+  border: 1px solid var(--rdm-border);
 }
 #drawingCanvas {
   background-color: #ffffff; /* Canvas drawing surface */
