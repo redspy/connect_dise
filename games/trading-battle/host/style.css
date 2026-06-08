@@ -566,3 +566,50 @@
 body:not(:has(.tb-overlay:not(.hidden))) .game-board {
   display: flex !important;
 }
+
+@media (max-width: 1024px) {
+  .tb-host {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  .game-board {
+    height: auto !important;
+  }
+  .tb-header {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px 10px !important;
+  }
+  .tb-header-left, .tb-header-right {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+  .timer-wrap {
+    align-items: center !important;
+  }
+  .player-panels {
+    height: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1px !important;
+  }
+  .player-panel {
+    border-right: none !important;
+    border-bottom: 1px solid #1c2026 !important;
+    padding: 10px 8px !important;
+  }
+  .player-avatar {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .player-balance {
+    font-size: 1.05rem !important;
+  }
+  .player-pnl {
+    font-size: 0.95rem !important;
+  }
+  .result-panel {
+    width: 95vw !important;
+    padding: 24px 16px !important;
+  }
+}

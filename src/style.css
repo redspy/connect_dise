@@ -637,3 +637,51 @@ body.mobile-controller {
 #btn-retry:active {
   background-color: #e6c200;
 }
+
+/* =========================================
+   Host Board Mobile Responsiveness styles
+   ========================================= */
+@media (max-width: 1024px) {
+  body.host-board {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow-y: auto !important;
+    padding: 20px 10px !important;
+    box-sizing: border-box !important;
+  }
+  /* Casino table Felt decoration mobile adjustment */
+  body.host-board::before {
+    inset: 10px !important;
+    border-radius: 24px !important;
+    border-width: 3px !important;
+  }
+  body.host-board::after {
+    display: none !important; /* hide extra decor lines */
+  }
+  .center-status {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    width: min(340px, 90vw) !important;
+    height: auto !important;
+    aspect-ratio: 1;
+    padding: 20px !important;
+    border-radius: 24px !important;
+    margin: 20px auto !important;
+  }
+  .center-status h1 {
+    font-size: 1.6rem !important;
+  }
+  /* Prevent overlap of QR containers on mobile viewport */
+  .qr-container {
+    position: static !important;
+    margin: 10px auto !important;
+    width: fit-content !important;
+  }
+  #dice-box {
+    position: absolute !important;
+    inset: 10px !important;
+    border-radius: 18px !important;
+  }
+}

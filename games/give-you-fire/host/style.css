@@ -99,6 +99,50 @@ body.host-board {
   padding: 6px 14px;
   font-size: 0.9rem;
 }
+.gyf-rank-dot    { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.gyf-rank-detail { margin-left: auto; color: var(--gyf-sub); font-size: .8rem; }
+
+@media (max-width: 1024px) {
+  body.host-board {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  .gyf-playing-header {
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding: 8px 12px !important;
+  }
+  .gyf-dashboard-grid {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    gap: 16px !important;
+    padding: 10px !important;
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+  .gyf-player-card {
+    min-height: 260px !important;
+    padding: 10px !important;
+  }
+  .gyf-mini-board {
+    max-width: 160px !important;
+    min-height: 180px !important;
+  }
+  .gyf-lobby-panel {
+    min-width: 0 !important;
+    width: 95vw !important;
+    padding: 24px 16px !important;
+  }
+  .gyf-logo {
+    font-size: 1.6rem !important;
+  }
+  .gyf-result-panel {
+    min-width: 0 !important;
+    width: 95vw !important;
+    padding: 24px 16px !important;
+  }
+}
+
 .gyf-lobby-dot {
   width: 10px;
   height: 10px;

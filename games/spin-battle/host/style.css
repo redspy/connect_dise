@@ -666,12 +666,17 @@ body.spin-mobile {
   font-family: monospace;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
+  body.spin-board {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
   .spin-panel {
     min-width: 0;
     width: calc(100vw - 34px);
     max-width: 420px;
     padding: 30px 22px 24px;
+    margin: 20px auto !important;
   }
 
   .spin-panel h2,
@@ -685,6 +690,7 @@ body.spin-mobile {
     min-width: 0;
     width: calc(100vw - 20px);
     padding: 10px 10px;
+    background: rgba(8, 13, 27, 0.95) !important;
   }
 
   .rpm-row {
@@ -697,6 +703,8 @@ body.spin-mobile {
   }
 
   #dev-panel {
-    width: 210px;
+    width: 160px !important;
+    font-size: 0.68rem !important;
+    opacity: 0.85;
   }
 }

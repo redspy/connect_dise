@@ -498,3 +498,40 @@
   transition:    transform .2s, box-shadow .2s;
 }
 .dx-btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 20px var(--dx-primary); }
+
+@media (max-width: 1024px) {
+  .dx-overlay {
+    padding: 16px !important;
+  }
+  .dx-clue-banner {
+    padding: 10px 16px !important;
+  }
+  .dx-clue-text {
+    font-size: 24px !important;
+  }
+  .dx-card-board {
+    gap: 12px !important;
+  }
+  .dx-card {
+    width: 100px !important;
+  }
+  .dx-result-card-wrap .dx-card {
+    width: 90px !important;
+  }
+  .dx-score-updates {
+    width: 100% !important;
+  }
+  .dx-final-panel {
+    padding: 16px !important;
+    width: 95vw !important;
+  }
+  .dx-gallery-panel {
+    width: 95vw !important;
+    height: 95vh !important;
+  }
+  .dx-gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
+    gap: 8px !important;
+    padding: 12px !important;
+  }
+}

@@ -169,6 +169,42 @@
       -webkit-text-fill-color: transparent;
       filter: drop-shadow(0 0 20px rgba(79, 172, 254, 0.5));
     }
+
+    @media (max-width: 1024px) {
+      .agent-host-container {
+        height: auto !important;
+        overflow-y: auto !important;
+        padding: 16px 10px !important;
+      }
+      .ha-overlay {
+        height: auto !important;
+        max-height: none !important;
+        padding: 20px 16px !important;
+        border-radius: 20px !important;
+        gap: 20px !important;
+      }
+      .setup-title {
+        font-size: 1.8rem !important;
+      }
+      .word-float-canvas {
+        min-height: 200px !important;
+      }
+      .floating-bubble {
+        padding: 8px 16px !important;
+        font-size: 1rem !important;
+      }
+      .vote-panel {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        margin: 20px 0 !important;
+      }
+      .vote-card {
+        padding: 12px !important;
+      }
+      .winner-banner {
+        font-size: 2.2rem !important;
+      }
+    }
   </style>
 </head>
 <body class="host-board">

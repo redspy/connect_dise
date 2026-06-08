@@ -588,3 +588,52 @@ body.host-board {
   font-weight: 700;
   color: var(--db-gold);
 }
+
+@media (max-width: 1024px) {
+  body.host-board {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  #game-board {
+    height: auto !important;
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+  .db-lobby-panel {
+    padding: 16px !important;
+    max-height: none !important;
+  }
+  .db-lobby-body {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .db-lobby-qr-col {
+    width: 100% !important;
+  }
+  .db-lobby-settings-col {
+    width: 100% !important;
+  }
+  .db-select {
+    max-width: none !important;
+  }
+  .db-center-card {
+    width: 95vw !important;
+    height: auto !important;
+    aspect-ratio: 4 / 2 !important;
+  }
+  .db-score-cards {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+  .db-score-card {
+    min-width: 0 !important;
+    flex: none !important;
+    width: 100% !important;
+  }
+  .db-result-panel {
+    width: 95vw !important;
+    padding: 24px 16px !important;
+  }
+}

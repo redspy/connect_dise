@@ -523,3 +523,51 @@ body.nunchi-host {
 .btn-restart:hover {
   background: var(--nunchi-gold-dim);
 }
+
+.btn-restart:active {
+}
+
+@media (max-width: 1024px) {
+  body.nunchi-host {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  #game-board {
+    height: auto !important;
+    padding: 10px !important;
+  }
+  .player-status-grid {
+    position: static !important;
+    height: auto !important;
+    margin-top: 20px !important;
+    padding: 0 10px !important;
+    gap: 12px !important;
+  }
+  .player-status-card {
+    min-width: 140px !important;
+    padding: 40px 16px 16px !important;
+    border-radius: 16px !important;
+  }
+  .ps-avatar {
+    width: var(--avatar-size-md) !important;
+    height: var(--avatar-size-md) !important;
+  }
+  .game-message {
+    position: static !important;
+    transform: none !important;
+    font-size: 2.2rem !important;
+    margin: 20px 0 !important;
+    text-align: center !important;
+  }
+  .reveal-panel, .result-panel {
+    width: 95vw !important;
+    padding: 20px 16px !important;
+  }
+  .reveal-cards {
+    gap: 12px !important;
+  }
+  .reveal-card {
+    min-width: 100px !important;
+    padding: 12px !important;
+  }
+}

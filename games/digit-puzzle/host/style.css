@@ -386,3 +386,47 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 1024px) {
+  .dp-host {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  .dp-game-board {
+    height: auto !important;
+    padding: 10px !important;
+  }
+  .dp-board-header {
+    flex-direction: column !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+    padding: 10px !important;
+  }
+  .dp-dashboard-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .dp-dash-card {
+    padding: 12px !important;
+  }
+  .dp-mini-board {
+    max-width: 140px !important;
+  }
+  .dp-overlay {
+    height: auto !important;
+    overflow-y: auto !important;
+  }
+  .dp-lobby-panel {
+    padding: 16px !important;
+  }
+  .dp-lobby-title {
+    font-size: 24px !important;
+  }
+  .dp-lobby-body {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .dp-lobby-qr-col {
+    width: 100% !important;
+  }
+}
