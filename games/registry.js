@@ -118,4 +118,15 @@ export const GAMES = [
     thumbnail: '🕵️‍♂️',
     group: 'multi',
   },
+  {
+    id: 'pirate-plunder',
+    name: '해적의 전리품 (Pirates Plunder)',
+    description: '동맹인가 배신인가! 협상하여 금화를 나눌지 독차지할지 선택하는 고도의 심리 게임 🏴‍☠️',
+    hostPath: '/games/pirate-plunder/host/',
+    mobilePath: '/games/pirate-plunder/mobile/',
+    minPlayers: 3,
+    maxPlayers: 8,
+    thumbnail: '🏴‍☠️',
+    group: 'multi',
+  },
 ];

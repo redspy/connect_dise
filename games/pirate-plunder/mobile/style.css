@@ -1,0 +1,553 @@
+/* ================================================================
+   Pirate's Plunder — Mobile Controller Style
+   Theme: Pirate Tavern / Felt & Parchment (Dark Crimson/Gold/Black)
+   Fully responsive with 100dvh viewport and soft keyboard safety
+ ================================================================ */
+
+:root {
+  --pp-bg: #110c08;
+  --pp-card-bg: rgba(30, 20, 15, 0.95);
+  --pp-wood-border: #4a281a;
+  --pp-gold: #fbbf24;
+  --pp-gold-dark: #d97706;
+  --pp-split-green: #10b981;
+  --pp-steal-red: #ef4444;
+  --pp-text: #f3f4f6;
+  --pp-text-muted: #9ca3af;
+  
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+  --safe-top: max(env(safe-area-inset-top, 0px), 16px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body.pirate-mobile-body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100dvh;
+  background-color: var(--pp-bg);
+  background-image: 
+    radial-gradient(circle at 50% 20%, rgba(217, 119, 6, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 50% 80%, rgba(239, 68, 68, 0.05) 0%, transparent 60%);
+  color: var(--pp-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow: hidden;
+}
+
+.pp-mobile-screen {
+  width: 100%;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+}
+
+.pp-mobile-screen.hidden {
+  display: none !important;
+}
+
+/* ─── 모바일용 카드 레이아웃 ───────────────────────────────────── */
+.pp-mobile-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--pp-card-bg);
+  border: 3px solid var(--pp-wood-border);
+  box-shadow: 
+    0 15px 35px rgba(0, 0, 0, 0.6),
+    inset 0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 28px;
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.pp-logo {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 10px rgba(217, 119, 6, 0.3));
+}
+
+.pp-m-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.pp-m-desc {
+  font-size: 0.95rem;
+  color: var(--pp-text-muted);
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}
+
+/* ─── 입력 폼 & 버튼 ────────────────────────────────────────── */
+.pp-input-group {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.pp-m-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--pp-wood-border);
+  border-radius: 14px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pp-m-input:focus {
+  border-color: var(--pp-gold);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+}
+
+.pp-m-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+.pp-m-btn:active {
+  transform: translateY(2px);
+}
+
+.pp-m-btn.primary {
+  background: linear-gradient(135deg, var(--pp-gold), var(--pp-gold-dark));
+  color: #110c08;
+}
+
+/* ─── 스피너 (대기 애니메이션) ─────────────────────────────────── */
+.pp-spinner {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  animation: spinWheel 4s linear infinite;
+}
+
+@keyframes spinWheel {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 라운드 뱃지 ───────────────────────────────────────────── */
+.pp-round-badge {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+  background: rgba(251, 191, 36, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  margin-bottom: 16px;
+}
+
+/* ─── 역할 카드 및 파트너 정보 ─────────────────────────────────── */
+.pp-role-card {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+
+.pp-role-emoji {
+  font-size: 3.2rem;
+  margin-bottom: 10px;
+}
+
+.pp-partner-box {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 12px;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pp-partner-label {
+  font-size: 0.85rem;
+  color: var(--pp-text-muted);
+  font-weight: bold;
+}
+
+.pp-partner-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-partner-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid white;
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.pp-partner-name {
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.pp-gold-status {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--pp-text);
+  margin-bottom: 14px;
+}
+
+.pp-gold-status strong {
+  color: var(--pp-gold);
+  font-size: 1.25rem;
+}
+
+.pp-m-hint {
+  font-size: 0.8rem;
+  color: var(--pp-text-muted);
+  margin: 5px 0 0 0;
+}
+
+/* ─── 협상/선택 화면 (전체 레이아웃) ─────────────────────────────── */
+.pp-mobile-screen[data-screen="negotiation"] {
+  justify-content: space-between;
+  padding: var(--safe-top) 20px var(--safe-bottom) 20px;
+}
+
+.pp-neg-top {
+  width: 100%;
+  max-width: 420px;
+}
+
+.pp-neg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--pp-text);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 12px;
+}
+
+.pp-gold-pill {
+  color: var(--pp-gold);
+  background: rgba(251, 191, 36, 0.12);
+  padding: 2px 10px;
+  border-radius: 12px;
+}
+
+.pp-neg-partner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--pp-card-bg);
+  border: 2px solid var(--pp-wood-border);
+  padding: 12px 16px;
+  border-radius: 16px;
+  width: 100%;
+}
+
+.pp-partner-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── 결정 선택 패널 및 슬라이더 ────────────────────────────────── */
+.pp-choice-panel {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.pp-choice-btn {
+  width: 100%;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+  transition: transform 0.1s, border-color 0.2s, opacity 0.2s;
+}
+
+.pp-choice-btn:active {
+  transform: scale(0.98);
+}
+
+.pp-choice-btn.disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-split {
+  background: linear-gradient(135deg, #064e3b, #022c22);
+  border-color: var(--pp-split-green);
+  color: #a7f3d0;
+}
+
+.btn-split .btn-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+
+.btn-split .btn-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.btn-split .btn-subtext {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 4px;
+  word-break: keep-all;
+}
+
+.pp-divider-or {
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--pp-text-muted);
+  position: relative;
+  margin: 4px 0;
+}
+
+.pp-divider-or::before, .pp-divider-or::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 42%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.pp-divider-or::before { left: 0; }
+.pp-divider-or::after { right: 0; }
+
+/* 훔치기 컨테이너 및 터치 슬라이더 */
+.pp-steal-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-steal {
+  background: linear-gradient(135deg, #7f1d1d, #450a0a);
+  border-color: var(--pp-steal-red);
+  color: #fca5a5;
+}
+
+.btn-steal .btn-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+}
+
+.btn-steal .btn-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.btn-steal .btn-subtext {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  margin-top: 4px;
+  word-break: keep-all;
+}
+
+/* 슬라이더 트랙 */
+.pp-slider-track {
+  width: 100%;
+  height: 54px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--pp-wood-border);
+  border-radius: 27px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+}
+
+.pp-slider-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pp-text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 슬라이더 손잡이 */
+.pp-slider-handle {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #4b5563, #1f2937);
+  border: 2px solid #9ca3af;
+  border-radius: 50%;
+  position: absolute;
+  left: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: grab;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  z-index: 2;
+  transition: transform 0.05s linear;
+}
+
+.pp-slider-handle:active {
+  cursor: grabbing;
+}
+
+/* 슬라이더 잠금 해제 상태 */
+.pp-slider-track.unlocked {
+  border-color: var(--pp-steal-red);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.pp-slider-track.unlocked .pp-slider-handle {
+  background: linear-gradient(135deg, var(--pp-steal-red), #b91c1c);
+  border-color: #fca5a5;
+  color: white;
+}
+
+.pp-slider-track.unlocked .pp-slider-text {
+  color: var(--pp-steal-red);
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+/* ─── 라운드 결과 화면 ───────────────────────────────────────── */
+.result-card {
+  padding-bottom: 24px;
+}
+
+.pp-result-large-emoji {
+  font-size: 4.5rem;
+  margin-bottom: 12px;
+  animation: resultPulse 1s ease-out;
+}
+
+@keyframes resultPulse {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pp-payout-grid {
+  display: flex;
+  width: 100%;
+  gap: 15px;
+  margin: 18px 0;
+}
+
+.pp-payout-item {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-payout-label {
+  font-size: 0.75rem;
+  color: var(--pp-text-muted);
+  font-weight: 700;
+}
+
+.pp-choice-badge {
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.pp-choice-badge.split {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--pp-split-green);
+}
+
+.pp-choice-badge.steal {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--pp-steal-red);
+}
+
+.pp-payout-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+}
+
+.pp-result-summary {
+  font-size: 0.9rem;
+  color: var(--pp-text-muted);
+  line-height: 1.4;
+  margin-bottom: 18px;
+  word-break: keep-all;
+}
+
+.pp-gold-total-box {
+  width: 100%;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.15);
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.pp-gold-total-box strong {
+  color: var(--pp-gold);
+  font-size: 1.2rem;
+}
+
+/* 홈 버튼 위치 조정 */
+#_mbg-home {
+  bottom: calc(var(--safe-bottom) + 8px) !important;
+  left: 16px !important;
+}

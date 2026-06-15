@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>해적의 전리품 — Pirates Plunder (Mobile)</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="pirate-mobile-body">
+
+  <!-- 1. 프로필 설정 화면 -->
+  <div class="pp-mobile-screen game-screen" data-screen="setup-profile">
+    <div class="pp-mobile-card">
+      <div class="pp-logo">🏴‍☠️</div>
+      <h2 class="pp-m-title">해적 선술집 입장</h2>
+      <p class="pp-m-desc">약탈에 사용할 해적 이름을 알려주세요!</p>
+      
+      <div class="pp-input-group">
+        <input type="text" id="input-nickname" class="pp-m-input" placeholder="닉네임 입력 (최대 8자)" maxlength="8" autocomplete="off">
+      </div>
+      
+      <button id="btn-join" class="pp-m-btn primary">선술집 들어가기</button>
+    </div>
+  </div>
+
+  <!-- 2. 대기 화면 -->
+  <div class="pp-mobile-screen game-screen hidden" data-screen="waiting">
+    <div class="pp-mobile-card">
+      <div class="pp-spinner">⚓</div>
+      <h2 id="waiting-title" class="pp-m-title">대기 중...</h2>
+      <p id="waiting-desc" class="pp-m-desc">다른 해적들을 기다리고 있습니다.</p>
+    </div>
+  </div>
+
+  <!-- 3. 역할 공개 화면 -->
+  <div class="pp-mobile-screen game-screen hidden" data-screen="role-reveal">
+    <div class="pp-mobile-card">
+      <div class="pp-round-badge">라운드 <span id="reveal-round-num">1</span></div>
+      
+      <div id="role-card-display" class="pp-role-card">
+        <div id="role-emoji" class="pp-role-emoji">🏴‍☠️</div>
+        <h2 id="role-title" class="pp-m-title">당신의 역할</h2>
+        <p id="role-desc" class="pp-m-desc">역할 설명</p>
+      </div>
+
+      <div id="partner-info-box" class="pp-partner-box">
+        <div class="pp-partner-label">이번 라운드 파트너</div>
+        <div class="pp-partner-details">
+          <div id="partner-color-dot" class="pp-partner-color"></div>
+          <span id="partner-name-text" class="pp-partner-name">검은 수염</span>
+        </div>
+      </div>
+
+      <div class="pp-gold-status">
+        현재 보유 금화: <strong id="reveal-current-gold">0</strong> 🪙
+      </div>
+
+      <p class="pp-m-hint">TV 화면을 보고 짝꿍과 협상하세요!</p>
+    </div>
+  </div>
+
+  <!-- 4. 협상 및 선택 화면 -->
+  <div class="pp-mobile-screen game-screen hidden" data-screen="negotiation">
+    <div class="pp-neg-top">
+      <div class="pp-neg-header">
+        <span>라운드 <span id="neg-round-num">1</span></span>
+        <span class="pp-gold-pill">💰 <span id="neg-current-gold">0</span></span>
+      </div>
+      
+      <div id="neg-partner-box" class="pp-neg-partner">
+        <div class="pp-partner-label">파트너</div>
+        <div class="pp-partner-name-row">
+          <div id="neg-partner-color" class="pp-partner-color"></div>
+          <span id="neg-partner-name">검은 수염</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pp-choice-panel">
+      <!-- 1) 나누기 버튼 (기본 활성) -->
+      <button id="btn-split" class="pp-choice-btn btn-split">
+        <span class="btn-icon">🤝</span>
+        <span class="btn-text">나누기 (Split)</span>
+        <span class="btn-subtext">서로 신뢰하여 50 gold씩 나눕니다.</span>
+      </button>
+
+      <div class="pp-divider-or">OR</div>
+
+      <!-- 2) 훔치기 슬라이더 래치 및 버튼 -->
+      <div class="pp-steal-container">
+        <!-- 슬라이드 레일 -->
+        <div id="steal-slider-track" class="pp-slider-track">
+          <div id="steal-slider-handle" class="pp-slider-handle">☠️</div>
+          <span class="pp-slider-text">위로 슬라이드하여 훔치기 잠금 해제</span>
+        </div>
+
+        <!-- 실제 훔치기 버튼 (처음엔 비활성화) -->
+        <button id="btn-steal" class="pp-choice-btn btn-steal disabled" disabled>
+          <span class="btn-icon">🏴‍☠️</span>
+          <span class="btn-text">훔치기 (Steal)</span>
+          <span class="btn-subtext">나만 100 gold 독차지! (상대도 훔치면 0)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 라운드 결과 화면 -->
+  <div class="pp-mobile-screen game-screen hidden" data-screen="reveal">
+    <div class="pp-mobile-card result-card">
+      <div id="result-emoji" class="pp-result-large-emoji">🤝</div>
+      <h2 id="result-status-title" class="pp-m-title">공동 분배 성공!</h2>
+      
+      <div class="pp-payout-grid">
+        <div class="pp-payout-item">
+          <div class="pp-payout-label">나의 결정</div>
+          <div id="result-my-choice" class="pp-choice-badge">나누기 🤝</div>
+          <div id="result-my-payout" class="pp-payout-amount">+50 🪙</div>
+        </div>
+        <div class="pp-payout-item" id="result-partner-item">
+          <div class="pp-payout-label">파트너 결정</div>
+          <div id="result-partner-choice" class="pp-choice-badge">나누기 🤝</div>
+          <div id="result-partner-payout" class="pp-payout-amount">+50 🪙</div>
+        </div>
+      </div>
+
+      <div class="pp-result-summary">
+        <p id="result-summary-text">서로를 믿어 사이좋게 금화를 나누어 가졌습니다!</p>
+      </div>
+
+      <div class="pp-gold-total-box">
+        총 보유 금화: <strong id="result-total-gold">50</strong> 🪙
+      </div>
+
+      <p class="pp-m-hint">TV 화면을 주시하세요...</p>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

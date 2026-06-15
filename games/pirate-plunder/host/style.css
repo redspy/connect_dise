@@ -1,0 +1,517 @@
+/* ================================================================
+   Pirate's Plunder — Host Screen Style
+   Theme: Pirate Ship Tavern (Mahogany, Gold, Crimson)
+================================================================ */
+
+:root {
+  --pp-bg: #110d0a;
+  --pp-felt: #2b1810; /* Dark mahogany wood table tone */
+  --pp-wood-border: #4a281a;
+  --pp-gold: #f59e0b;
+  --pp-split-green: #10b981;
+  --pp-steal-red: #ef4444;
+  --pp-text: #f3f4f6;
+  --pp-text-muted: #9ca3af;
+}
+
+.pirate-host-body {
+  background-color: var(--pp-bg);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(239, 68, 68, 0.04) 0%, transparent 45%);
+}
+
+.pp-host-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+.pp-overlay {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.pp-overlay.hidden {
+  display: none !important;
+}
+
+/* ─── 대나무/선술집 카드 패널 스타일 ─────────────────────────────── */
+.pp-card-panel {
+  max-width: 1200px;
+  max-height: 720px;
+  background: rgba(43, 24, 16, 0.85); /* Rich wood felt tone */
+  border: 4px solid var(--pp-wood-border);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.6),
+    inset 0 0 40px rgba(0, 0, 0, 0.8);
+  border-radius: 36px;
+  padding: 40px;
+  backdrop-filter: blur(20px);
+  transition: all 0.4s ease;
+}
+
+.pp-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+  text-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+
+.pp-desc {
+  font-size: 1.25rem;
+  color: var(--pp-text-muted);
+  text-align: center;
+  margin: 0 0 30px 0;
+}
+
+/* ─── 셋업 및 진행 페이즈 그리드 ─────────────────────────────── */
+.pp-pairs-grid {
+  width: 100%;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  align-content: center;
+}
+
+.pp-pair-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 180px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.pp-pair-card:hover {
+  transform: translateY(-2px);
+}
+
+.pp-pair-card.ready {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+}
+
+.pp-player-badges {
+  width: 100%;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 15px;
+}
+
+.pp-player-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.pp-player-color {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.pp-player-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  word-break: break-all;
+  max-width: 110px;
+}
+
+.pp-vs-divider {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 10px;
+  border-radius: 50%;
+}
+
+.pp-lookout-card {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(0, 0, 0, 0.5));
+  border: 2px dashed rgba(245, 158, 11, 0.3);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 180px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.pp-lookout-title {
+  color: var(--pp-gold);
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.pp-lookout-desc {
+  font-size: 0.95rem;
+  color: var(--pp-text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.pp-plunder-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pp-gold);
+  margin-top: 15px;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+/* ─── 결정 제출 체크마크 ─────────────────────────────── */
+.pp-status-indicators {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.pp-indicator {
+  font-size: 0.9rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--pp-text-muted);
+}
+
+.pp-indicator.submitted {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--pp-split-green);
+  font-weight: bold;
+}
+
+/* ─── 타이머 및 게이지 영역 ───────────────────────────────────────── */
+.pp-header-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pp-timer-label {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--pp-gold);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pp-progress-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.pp-timer-container {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.pp-timer-bar {
+  height: 100%;
+  background: linear-gradient(to right, var(--pp-gold), #d97706);
+  width: 100%;
+  transition: width 0.2s linear;
+}
+
+.pp-status-text {
+  font-size: 1rem;
+  color: var(--pp-text-muted);
+  margin: 0;
+}
+
+.pp-countdown {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--pp-gold);
+  animation: countdownPulse 1s infinite;
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ─── 결과 공개 (Reveal) 화면 ───────────────────────────────────────── */
+.pp-reveal-grid {
+  width: 100%;
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  overflow-y: auto;
+  padding: 10px;
+  box-sizing: border-box;
+  align-content: center;
+}
+
+.pp-reveal-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 250px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+/* 보물상자 연출 */
+.pp-chest-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 15px 0;
+  position: relative;
+  width: 120px;
+  height: 90px;
+}
+
+.pp-chest-graphic {
+  font-size: 3rem;
+  transition: transform 0.5s ease;
+  animation: idleChest 3s infinite ease-in-out;
+}
+
+@keyframes idleChest {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.pp-reveal-card.split-split .pp-chest-graphic {
+  animation: openChest 0.8s forwards;
+}
+
+.pp-reveal-card.steal-steal .pp-chest-graphic {
+  animation: breakChest 0.8s forwards;
+}
+
+.pp-reveal-card.steal-split .pp-chest-graphic,
+.pp-reveal-card.split-steal .pp-chest-graphic {
+  animation: openChest 0.8s forwards;
+}
+
+@keyframes openChest {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15) rotate(-3deg); }
+  100% { transform: scale(1) translateY(-10px); }
+}
+
+@keyframes breakChest {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.2) rotate(15deg); }
+  60% { transform: scale(0.9) rotate(-15deg); }
+  100% { transform: scale(0.6) opacity: 0.3; }
+}
+
+.pp-result-label {
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 12px;
+  margin-top: 10px;
+  text-transform: uppercase;
+}
+
+.pp-reveal-card.split-split .pp-result-label {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--pp-split-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.pp-reveal-card.steal-steal .pp-result-label {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--pp-steal-red);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.pp-reveal-card.steal-split .pp-result-label,
+.pp-reveal-card.split-steal .pp-result-label {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--pp-gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ─── 결정카드 오버레이 ───────────────────────────────────────── */
+.pp-choice-indicator {
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-top: 5px;
+}
+
+.pp-choice-indicator.split {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--pp-split-green);
+}
+
+.pp-choice-indicator.steal {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--pp-steal-red);
+}
+
+/* ─── 최종 리더보드 결과 화면 ───────────────────────────────────────── */
+.pp-result-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pp-winner-banner {
+  font-size: 3rem;
+  font-weight: 900;
+  color: var(--pp-gold);
+  text-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+  margin: 0;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+  to { text-shadow: 0 0 35px rgba(245, 158, 11, 0.8); }
+}
+
+.pp-leaderboard {
+  width: 100%;
+  max-width: 600px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.pp-rank-row {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pp-rank-row.rank-1 {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(0, 0, 0, 0.4));
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.pp-rank-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  width: 35px;
+  text-align: center;
+}
+
+.pp-rank-row.rank-1 .pp-rank-num {
+  color: var(--pp-gold);
+}
+
+.pp-rank-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.pp-rank-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.pp-rank-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--pp-gold);
+}
+
+.pp-restart-btn {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--pp-gold), #d97706);
+  border: none;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  margin-top: 0;
+}
+
+/* ─── 모바일 대응 레이아웃 해제 ─────────────────────────────── */
+@media (max-width: 1024px) {
+  .pp-host-container {
+    height: auto !important;
+    overflow-y: auto !important;
+    padding: 16px 10px !important;
+  }
+  .pp-card-panel {
+    height: auto !important;
+    max-height: none !important;
+    padding: 24px 16px !important;
+    border-radius: 24px !important;
+  }
+  .pp-title {
+    font-size: 1.8rem !important;
+  }
+  .pp-pairs-grid, .pp-reveal-grid {
+    grid-template-columns: 1fr !important;
+    gap: 15px !important;
+    margin: 20px 0 !important;
+  }
+  .pp-pair-card, .pp-reveal-card {
+    min-height: 150px !important;
+  }
+  .pp-winner-banner {
+    font-size: 2rem !important;
+  }
+}

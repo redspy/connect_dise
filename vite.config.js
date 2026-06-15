@@ -92,6 +92,8 @@ export default defineConfig({
         omok:               resolve(__dirname, 'games/omok/index.html'),
         hiddenAgentHost:    resolve(__dirname, 'games/hidden-agent/host/index.html'),
         hiddenAgentMobile:  resolve(__dirname, 'games/hidden-agent/mobile/index.html'),
+        piratePlunderHost:   resolve(__dirname, 'games/pirate-plunder/host/index.html'),
+        piratePlunderMobile: resolve(__dirname, 'games/pirate-plunder/mobile/index.html'),
       },
     },
   },
