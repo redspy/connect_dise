@@ -183,10 +183,20 @@ class HiddenAgentController extends MobileBaseGame {
         case 'result':
           this._showGameResult(data);
           break;
-
         default:
           this.showScreen('waiting');
           break;
+      }
+    });
+
+    // 3. Lobby State restoration on Rejoin
+    this.onMessage('lobbyState', (data) => {
+      if (!data.hasName) {
+        this.showScreen('setup-profile');
+      } else {
+        this.showScreen('waiting');
+        document.getElementById('waiting-title').textContent = '준비 완료!';
+        document.getElementById('waiting-desc').textContent = '다른 플레이어들이 다 모이면 방장이 게임을 시작합니다.';
       }
     });
   }

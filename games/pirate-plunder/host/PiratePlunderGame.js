@@ -105,6 +105,12 @@ export class PiratePlunderGame extends HostBaseGame {
       this.sendToPlayer(player.id, 'rejoinState', payload);
     } else {
       this._updateLobby();
+      const hasName = this._profiles.has(player.id);
+      this.sendToPlayer(player.id, 'lobbyState', {
+        phase: 'lobby',
+        hasName: hasName,
+        nickname: hasName ? nickname : null,
+      });
     }
   }
 

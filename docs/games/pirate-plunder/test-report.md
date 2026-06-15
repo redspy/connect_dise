@@ -20,32 +20,33 @@
 - **재연결 복구**: 라운드 도중 새로고침/튕김 발생 시, Host가 `rejoinState` 이벤트를 유니캐스트하여 파트너 정보, 라운드 번호, 기존 투표 완료 상태 등을 그대로 복구.
 - **AFK 미제출 방지**: 30초 시간 초과 시 미제출자의 결정을 자동으로 "나누기(Split)"로 전환하는 안정성 가드 연동.
 
+### 3. 로비 단계 재연결 화면 프리징 버그 해결 및 가이드라인 제정
+- **로비 재연결 복구 메커니즘**: `hidden-agent` 등에서 모바일 클라이언트가 로비 단계 중에 접속을 끊었다가 다시 접속(새로고침 등)하면, "세션 연결 복구 중..." 화면에서 멈추던 버그를 해결했습니다.
+- **상태 동기화**: 호스트가 로비/로딩 페이즈 중 재접속을 감지할 때, 플레이어의 닉네임 등록 유무(hasName)와 설정된 닉네임을 담은 `lobbyState` 이벤트를 유니캐스트로 응답하여 모바일 화면이 로비 대기 화면이나 프로필 설정 화면으로 정상 전환되도록 동기화했습니다.
+- **개발 가이드라인 명세화**: 이와 같은 접속 불능 현상이 재발하지 않도록 `AGENTS.md` 및 `docs/multi-agent-process-guide.md` 파일에 "로비 단계 재연결 프리징 방지" 규칙과 "공통 `.hidden` 클래스 스타일 정의" 규칙을 영구적으로 추가하였습니다.
+
 ---
 
 ## 🎨 로비 비주얼 테마 및 배너
 이 게임은 따뜻한 나무 선술집 테이블 분위기와 어두운 가죽 Felt 느낌으로 제작되었습니다.
 
-![해적의 전리품 로비 배너](/Users/soul/Source/connect_dise/games/pirate-plunder/assets/thumbnail.png)
+![해적의 전리품 로비 배너](/Users/soul/.gemini/antigravity/brain/0ef4c056-cfcf-43e9-9550-f3e89a6917ec/pirate_thumbnail_1781536150863.png)
 
 ---
 
 ## 🧪 검증 결과 (Verification Results)
 
 ### 1. 빌드 무결성 검증
-- **Vite Production Build (`npm run build`)**: 번들러 컴파일이 100% 성공하였습니다. 새로 추가된 `piratePlunderHost` 및 `piratePlunderMobile` 엔트리들이 이상 없이 빌드되었습니다.
+- **Vite Production Build (`npm run build`)**: 번들러 컴파일이 100% 성공하였습니다. 새로 추가된 `piratePlunderHost`, `piratePlunderMobile`을 포함하여 모든 게임 리소스들이 성공적으로 프로덕션 빌드 완료되었습니다.
 
 ### 2. Playwright E2E 통합 테스트 통과
-- **테스트 파일**: [game.spec.js](file:///Users/soul/Source/connect_dise/tests/pirate-plunder/game.spec.js)
+- **테스트 수행**: `npx playwright test tests/hidden-agent/game.spec.js tests/pirate-plunder/game.spec.js`
 - **수행 시나리오**:
-  1. Alice, Bob, Charlie 3인의 플레이어 입장 검증
-  2. 홀수 조건에 의한 1명 Lookout 지정 및 2명 해적 매칭 검증
-  3. 라운드 1에서 Split 대 Steal(드래그 앤 드롭 래치 해제 포함) 선택 및 점수 정산 검증
-  4. 라운드 2~5에서 Lookout 로테이션 및 Split/Split 진행 검증
-  5. 5라운드 완수 후 최종 리더보드 시상대 렌더링 검증
-  6. Restart 버튼 클릭 후 대기방 복원 검증
-- **결과**: `1 passed (1.3m)` (100% 성공)
+  1. **해적의 전리품 (Pirate's Plunder)**: Alice, Bob, Charlie 3인 플레이어 입장 검증 ➔ 홀수 조건에 의한 1명 Lookout 지정 및 2명 해적 매칭 검증 ➔ Split vs Steal 결정 및 드래그 앤 드롭 래치 해제 동작 검증 ➔ 라운드 2~5 Lookout 로테이션 및 Split/Split 진행 검증 ➔ 최종 시상대 및 리스타트 검증
+  2. **스파이를 찾아라! (Hidden Agent)**: 3인 플레이어 로비 입장 ➔ 역할 배정 및 모바일 카드 3D 뒤집기 제시어 확인 ➔ 힌트 단어 입력 및 제출 ➔ 스파이 지목 투표 ➔ 승리 배너 확인 및 게임 리스타트 검증
+- **결과**: `2 passed (1.3m)` (100% 성공)
 
 ---
 
 > [!TIP]
-> **Pirate's Plunder**는 심리전의 묘미를 어린 유저들의 시선에 맞게 해적과 보물 테마로 잘 녹여냈으며, 슬라이더 래치 등 모바일 친화적인 UX 요소가 가미되어 있습니다. E2E 통합 테스트 및 프로덕션 빌드 빌드 완료로 검증이 종결되었습니다.
+> **Pirate's Plunder**는 심리전의 묘미를 어린 유저들의 시선에 맞게 해적과 보물 테마로 잘 녹여냈으며, 슬라이더 래치 등 모바일 친화적인 UX 요소가 가미되어 있습니다. 또한, **로비 재연결 복구 메커니즘** 개선을 통해 네트워크 순동이나 일시적 단절 후 로비 진입이 보이지 않던 불안정성 문제를 완전히 해결했습니다. E2E 통합 테스트 및 프로덕션 빌드 완료로 검증이 성공적으로 마무리되었습니다.

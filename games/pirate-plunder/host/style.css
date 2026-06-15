@@ -515,3 +515,7 @@
     font-size: 2rem !important;
   }
 }
+
+.hidden {
+  display: none !important;
+}

@@ -551,3 +551,7 @@ body.pirate-mobile-body {
   bottom: calc(var(--safe-bottom) + 8px) !important;
   left: 16px !important;
 }
+
+.hidden {
+  display: none !important;
+}

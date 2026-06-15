@@ -137,7 +137,9 @@ class MyMobileGame extends MobileBaseGame {
 
 - `onMessage` 타입 매칭 (호스트↔모바일 간 type 문자열 일치)
 - 준비(`ready`) / 리셋(`onReset`) / 재연결(`onPlayerRejoin`, `onRejoin`) 처리
+  - **로비 재연결 프리징 가드**: 모바일 클라이언트가 `onRejoin` 발생 시 복구 중 화면(예: "연결 복구 중...")을 띄우고 호스트의 응답을 대기하는 구조라면, 호스트는 `lobby` 혹은 `loading` 단계에서 재접속(`onPlayerRejoin`)을 받더라도 무시하지 말고 반드시 로비 상태 동기화 패킷(예: `lobbyState`)을 응답하여 모바일 화면이 로비 대기 화면이나 프로필 설정 화면으로 정상 전환되도록 해야 합니다.
 - 플레이어 퇴장 시 게임 상태 정리
+- **공통 `.hidden` CSS 클래스 정의**: 호스트 및 모바일 개별 CSS 파일에 `.hidden { display: none !important; }` 스타일을 상시 포함하여, `classList.toggle('hidden')`이나 `showScreen()`을 통한 화면 전환 시 레이아웃 겹침이나 화면 노출 오류가 생기지 않도록 방지해야 합니다.
 
 ## 메시지 전송
 

@@ -144,6 +144,13 @@ class HiddenAgentGame extends HostBaseGame {
       });
     } else {
       this._updateLobby();
+      const hasName = this._profiles.has(player.id);
+      const nickname = this._profiles.get(player.id)?.nickname ?? null;
+      this.sendToPlayer(player.id, 'lobbyState', {
+        phase: 'lobby',
+        hasName: hasName,
+        nickname: nickname,
+      });
     }
   }
 
