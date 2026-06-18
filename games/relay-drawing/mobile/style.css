@@ -44,6 +44,21 @@ body.mobile-body {
   padding: 0.5rem;
 }
 
+/* 소형 기기/키보드 업 시 화면 찌그러짐 방지 및 스크롤 강제 활성화 */
+.rd-screen > * {
+  flex-shrink: 0;
+}
+.rd-screen > .player-list-container {
+  flex-shrink: 1;
+  min-height: 120px;
+}
+.standby-content > *,
+.spectate-content > *,
+.setup-content > *,
+.avatar-setup > * {
+  flex-shrink: 0;
+}
+
 h2 {
   font-size: 1.5rem;
   margin: 0 0 1rem 0;
@@ -61,7 +76,7 @@ h2 {
   font-size: 1.1rem;
   font-weight: bold;
   cursor: pointer;
-  margin-top: auto;
+  margin-top: 1.5rem;
   transition: opacity 0.15s, transform 0.1s;
   -webkit-user-select: none;
   user-select: none;

@@ -650,8 +650,10 @@ export class RelayDrawingGame extends HostBaseGame {
     }
 
     const chain = this._storyChains[this._currentStoryIndex];
-
-      `${this._profiles.get(chain.originalAuthorId)?.nickname ?? '?'}의 이야기`;
+    const ownerEl = document.getElementById('storyOwnerName');
+    if (ownerEl) {
+      ownerEl.textContent = `${this._profiles.get(chain.originalAuthorId)?.nickname ?? '?'}의 이야기`;
+    }
 
     this._clearPresentationTimeouts(); 
     const stepsEl = document.getElementById('storySteps');

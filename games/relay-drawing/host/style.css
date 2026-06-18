@@ -30,6 +30,7 @@
 .rd-overlay {
   position: fixed;
   inset: 0;
+  z-index: 10;
 }
 
 .view {
@@ -39,6 +40,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .rd-overlay[data-phase="lobby"] {
@@ -274,6 +276,9 @@ h2 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
 }
 .status-grid {
   display: grid;
@@ -356,6 +361,12 @@ h2 {
   align-items: center;
   padding: 2rem;
   min-height: 0;
+}
+.story-board-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .story-owner {
   font-size: 2rem;
