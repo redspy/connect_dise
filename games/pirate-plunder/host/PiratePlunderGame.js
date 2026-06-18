@@ -1,4 +1,5 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 export class PiratePlunderGame extends HostBaseGame {
   constructor(sdk) {
@@ -15,6 +16,8 @@ export class PiratePlunderGame extends HostBaseGame {
 
     this.timer = null;
     this.countdownTimer = null;
+    this._demoSimulator = new DemoSimulator(this);
+    this._isDemoActive = false;
 
     this._wireMessages();
   }
@@ -40,14 +43,55 @@ export class PiratePlunderGame extends HostBaseGame {
       };
     }
 
+    // 데모 모드 버튼 리스너 바인딩
+    const btnDemoStart = document.getElementById('btn-demo-start');
+    const btnDemoStop = document.getElementById('btn-demo-stop');
+    const demoBanner = document.getElementById('demo-banner');
+
+    if (btnDemoStart) {
+      btnDemoStart.onclick = () => {
+        if (this.playerCount > 0) {
+          alert('현재 로비에 접속 중인 플레이어가 있어 데모 플레이를 실행할 수 없습니다.');
+          return;
+        }
+        this._isDemoActive = true;
+        if (demoBanner) demoBanner.classList.remove('hidden');
+
+        // QR접속 카드 흐리게(Blur) 블락 처리
+        if (this._lobbyEl) {
+          const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+          if (qrCard) qrCard.style.filter = 'blur(6px) grayscale(40%)';
+        }
+
+        this._demoSimulator.start();
+      };
+    }
+
+    if (btnDemoStop) {
+      btnDemoStop.onclick = () => {
+        this._isDemoActive = false;
+        if (demoBanner) demoBanner.classList.add('hidden');
+
+        // QR 블러 원복
+        if (this._lobbyEl) {
+          const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+          if (qrCard) qrCard.style.filter = '';
+        }
+
+        this._demoSimulator.stop();
+      };
+    }
+
     this.setPhase('lobby');
   }
 
   onPlayerJoin(player) {
+    if (this._isDemoActive) return;
     this._updateLobby();
   }
 
   onPlayerLeave(playerId) {
+    if (this._isDemoActive) return;
     this._profiles.delete(playerId);
     this._updateLobby();
 
@@ -69,6 +113,7 @@ export class PiratePlunderGame extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
+    if (this._isDemoActive) return;
     const nickname = this._profiles.get(player.id)?.nickname ?? '익명';
     this.setPlayerName(player.id, nickname);
 
@@ -125,6 +170,14 @@ export class PiratePlunderGame extends HostBaseGame {
     this._stopTimer();
     this._stopCountdown();
 
+    this._isDemoActive = false;
+    const demoBanner = document.getElementById('demo-banner');
+    if (demoBanner) demoBanner.classList.add('hidden');
+    if (this._lobbyEl) {
+      const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+      if (qrCard) qrCard.style.filter = '';
+    }
+
     this._updateLobby();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
@@ -134,6 +187,7 @@ export class PiratePlunderGame extends HostBaseGame {
 
   _wireMessages() {
     this.onMessage('setProfile', (player, { nickname, avatar }) => {
+      if (this._isDemoActive) return;
       const name = nickname.trim() || '익명';
       this._profiles.set(player.id, { nickname: name, avatar: avatar || null });
       this.setPlayerName(player.id, name);
@@ -141,6 +195,7 @@ export class PiratePlunderGame extends HostBaseGame {
     });
 
     this.onMessage('submitDecision', (player, { decision }) => {
+      if (this._isDemoActive) return;
       if (this.phase !== 'negotiation') return;
       
       // Make sure the player is in a pair (Lookouts can't submit)

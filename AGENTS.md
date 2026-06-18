@@ -141,6 +141,7 @@ class MyMobileGame extends MobileBaseGame {
 - 플레이어 퇴장 시 게임 상태 정리
 - **공통 `.hidden` CSS 클래스 정의**: 호스트 및 모바일 개별 CSS 파일에 `.hidden { display: none !important; }` 스타일을 상시 포함하여, `classList.toggle('hidden')`이나 `showScreen()`을 통한 화면 전환 시 레이아웃 겹침이나 화면 노출 오류가 생기지 않도록 방지해야 합니다.
 - **호스트 메인 컨테이너 z-index 및 포지셔닝 필수 지정**: 호스트 화면의 카지노 Felt 백그라운드(`body.host-board::before`, `::after`)는 `z-index: 0` 및 `1`로 렌더링되므로, 호스트 콘텐츠 메인 컨테이너(예: `.pp-host-container` 등)가 배경 뒤로 숨겨지거나 가려져 투명화되는 버그를 피하기 위해 호스트 스타일시트에 반드시 **`position: relative; z-index: 10;`**을 정의해야 합니다.
+- **호스트 화면 데모 모드 구현 필수**: 모든 게임 개발 시, 여러 기기에서 동시 접속하지 않고도 게임의 핵심 루프와 연출을 한눈에 검증할 수 있는 **데모 시뮬레이션 모드(Attract Mode)**를 반드시 함께 개발해야 합니다. 호스트 로비 화면에 "🤖 데모 플레이 실행" 버튼과 중단 배너를 구현하고, 별도 `DemoSimulator.js` 파일을 생성하여 가상 봇 입장, 준비 완료, 라운드 진행 및 결과 도출 시뮬레이션을 차례대로 구동한 뒤 원상태로 복구(onReset)되도록 구현해야 합니다.
 
 ## 메시지 전송
 
