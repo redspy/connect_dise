@@ -140,6 +140,7 @@ class MyMobileGame extends MobileBaseGame {
   - **로비 재연결 프리징 가드**: 모바일 클라이언트가 `onRejoin` 발생 시 복구 중 화면(예: "연결 복구 중...")을 띄우고 호스트의 응답을 대기하는 구조라면, 호스트는 `lobby` 혹은 `loading` 단계에서 재접속(`onPlayerRejoin`)을 받더라도 무시하지 말고 반드시 로비 상태 동기화 패킷(예: `lobbyState`)을 응답하여 모바일 화면이 로비 대기 화면이나 프로필 설정 화면으로 정상 전환되도록 해야 합니다.
 - 플레이어 퇴장 시 게임 상태 정리
 - **공통 `.hidden` CSS 클래스 정의**: 호스트 및 모바일 개별 CSS 파일에 `.hidden { display: none !important; }` 스타일을 상시 포함하여, `classList.toggle('hidden')`이나 `showScreen()`을 통한 화면 전환 시 레이아웃 겹침이나 화면 노출 오류가 생기지 않도록 방지해야 합니다.
+- **호스트 메인 컨테이너 z-index 및 포지셔닝 필수 지정**: 호스트 화면의 카지노 Felt 백그라운드(`body.host-board::before`, `::after`)는 `z-index: 0` 및 `1`로 렌더링되므로, 호스트 콘텐츠 메인 컨테이너(예: `.pp-host-container` 등)가 배경 뒤로 숨겨지거나 가려져 투명화되는 버그를 피하기 위해 호스트 스타일시트에 반드시 **`position: relative; z-index: 10;`**을 정의해야 합니다.
 
 ## 메시지 전송
 
