@@ -269,6 +269,11 @@ body.mobile-controller {
   margin: 0 auto;
   position: relative;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  
+  /* iOS Safe Area 대응 및 베젤 패딩 가드 */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 12px);
+  box-sizing: border-box;
 }
 
 .controller-ui {

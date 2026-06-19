@@ -35,6 +35,8 @@ body.mobile-body {
   padding: 1.2rem;
   box-sizing: border-box;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 .rd-screen.hidden { display: none !important; }
 
@@ -105,7 +107,7 @@ input[type="text"] {
   color: var(--rdm-text);
   padding: 0.9rem 1rem;
   border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 16px !important; /* iOS Safari 줌 방지선 고정 */
   outline: none;
 }
 input[type="text"]:focus { border-color: var(--rdm-accent); }
@@ -152,6 +154,8 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   flex: 1;
   overflow-y: auto;
   margin-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 .player-list-container h3 {
   font-size: 0.9rem;
@@ -383,6 +387,8 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-top: 2rem;
+  will-change: transform;
+  transform: translate3d(0,0,0);
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -394,11 +400,11 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
 }
 .reactions { display: flex; justify-content: center; gap: 1rem; }
 .reaction-btn {
-  font-size: 2.2rem;
+  font-size: 2.4rem;
   background: var(--rdm-bg2);
   border: 2px solid var(--rdm-border);
   border-radius: 50%;
-  width: 60px; height: 60px;
+  width: 68px; height: 68px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -436,13 +442,19 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
   overflow-y: auto;
 }
 .picker-emoji {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   cursor: pointer;
-  padding: 0.15rem 0.3rem;
-  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
   background-color: var(--rdm-bg3);
   transition: transform 0.1s, background-color 0.1s;
   user-select: none;
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 .picker-emoji:active {
   transform: scale(1.3);
@@ -538,5 +550,39 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
     width: auto;
     padding: 0.5rem 1.2rem !important;
     font-size: 0.95rem !important;
+  }
+}
+
+/* 소형 기기 및 소프트 키보드 팝업 시 세로 공간 확보를 위한 미디어 쿼리 */
+@media (max-height: 520px) {
+  .image-preview-container {
+    min-height: 100px !important;
+    max-height: 120px !important;
+    margin-bottom: 0.25rem;
+  }
+  .canvas-container {
+    min-height: 150px !important;
+  }
+  .emoji-picker-container {
+    padding: 0.2rem;
+    margin-bottom: 0.2rem;
+  }
+  .emoji-picker-title {
+    display: none;
+  }
+  .emoji-picker-grid {
+    gap: 0.3rem;
+  }
+  .picker-emoji {
+    min-width: 42px;
+    min-height: 42px;
+    font-size: 1.5rem;
+  }
+  .rd-screen {
+    padding: 0.6rem !important;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
   }
 }

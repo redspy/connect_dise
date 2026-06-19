@@ -171,8 +171,14 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
     // 래퍼 크기에 맞춰 캔버스 해상도 설정
     const size = Math.min(200, Math.round(window.innerWidth * 0.55));
-    canvas.width = size;
-    canvas.height = size;
+    const dpr = window.devicePixelRatio || 1;
+
+    // Retina HD 드로잉을 위한 논리/물리 크기 스케일 매핑
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    this._profileCtx.scale(dpr, dpr);
 
     this._profileCtx.fillStyle = '#FFFFFF';
     this._profileCtx.fillRect(0, 0, size, size);
