@@ -12,6 +12,7 @@
 
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { renderBoard } from '../shared/BoardRenderer.js';
+import { FireDemoSimulator } from './FireDemoSimulator.js';
 
 /** 색상 표시에 사용할 플레이어 색상 목록 (플랫폼에서 자동 배정되지만 레이블용으로 보유) */
 
@@ -34,6 +35,7 @@ export class TetrisGame extends HostBaseGame {
     this._elapsed      = 0;
     this._elapsedTimer = null;
 
+    this._demoSimulator = new FireDemoSimulator(this);
     this._wireGameMessages();
   }
 
@@ -59,6 +61,15 @@ export class TetrisGame extends HostBaseGame {
     document.getElementById('btn-restart-game')?.addEventListener('click', () => {
       this.resetSession();
     });
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
 
     this.setPhase('lobby');
   }
@@ -118,6 +129,7 @@ export class TetrisGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._profiles.clear();
     this._playerData.clear();
     this._gameStarted   = false;
@@ -126,10 +138,15 @@ export class TetrisGame extends HostBaseGame {
     this._rankings      = [];
     this._gameStartTime = null;
     this._stopElapsedTimer();
-    this.setPhase('lobby');
     this._renderLobby();
-    this._updateReadyStatus();
-    this._updateStartBtn();
+    this.updateLobbyReady(0);
+    this.setPhase('lobby');
+  }
+
+  onPhaseChange(from, to) {
+    if (this._isDemo) {
+      this._demoSimulator.onPhaseChange(to);
+    }
   }
 
   // ─── 메시지 처리 ──────────────────────────────────────────────────────────

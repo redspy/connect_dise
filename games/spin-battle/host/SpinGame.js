@@ -1,6 +1,7 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { SpinPhysics, MAX_RPM, ITEM_TYPES } from './SpinPhysics.js';
 import { SpinRenderer } from './SpinRenderer.js';
+import { SpinDemoSimulator } from './SpinDemoSimulator.js';
 
 const LAUNCH_DURATION_MS = 5000;
 const BATTLE_COUNTDOWN_MS = 3000;
@@ -31,6 +32,7 @@ export class SpinGame extends HostBaseGame {
       this.resetSession();
     });
 
+    this._demoSimulator = new SpinDemoSimulator(this);
     this._loop();
   }
 
@@ -49,6 +51,16 @@ export class SpinGame extends HostBaseGame {
       this._readyCount = 0;
       this.resetSession();
     });
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
+
     this.setPhase('lobby');
   }
 
@@ -83,6 +95,7 @@ export class SpinGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._stopItemSpawner();
     this.renderer.clearItems();
 
@@ -102,6 +115,12 @@ export class SpinGame extends HostBaseGame {
     this.renderLobbyPlayers();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
+  }
+
+  onPhaseChange(from, to) {
+    if (this._isDemo) {
+      this._demoSimulator.onPhaseChange(to);
+    }
   }
 
   // ─── 아이템 스포너 ────────────────────────────────────────────────────────

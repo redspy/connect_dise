@@ -1,10 +1,22 @@
 import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import DiceBox from '@3d-dice/dice-box';
+import { DiceDemoSimulator } from './DiceDemoSimulator.js';
 
 const host = new HostSDK({ gameId: 'dice' });
 let playerCount = 0;
 let uiRestoreTimer = null;
+
+const demoSimulator = new DiceDemoSimulator(host, {
+  onStart: () => {
+    playerCount = 3;
+    updatePlayerStatus();
+  },
+  onStop: () => {
+    playerCount = 0;
+    updatePlayerStatus();
+  }
+});
 
 const sessionInfo = document.getElementById('session-info');
 const playerStatus = document.getElementById('player-status');
@@ -154,4 +166,20 @@ document.getElementById('test-roll-btn').addEventListener('click', () => {
   } else {
     console.warn('Dice engine not ready yet');
   }
+});
+
+document.getElementById('demoPlayBtn').addEventListener('click', () => {
+  if (!demoSimulator.isDemo) {
+    demoSimulator.startDemo();
+    document.getElementById('demoPlayBtn').textContent = '⏹️ 데모 중지';
+  } else {
+    demoSimulator.stopDemo();
+    document.getElementById('demoPlayBtn').textContent = '🤖 데모 플레이 실행';
+  }
+});
+
+host.on('reset', () => {
+  demoSimulator.stopDemo();
+  const demoBtn = document.getElementById('demoPlayBtn');
+  if (demoBtn) demoBtn.textContent = '🤖 데모 플레이 실행';
 });

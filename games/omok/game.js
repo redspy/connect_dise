@@ -1,4 +1,5 @@
 import { OmokAI } from './ai.js';
+import { OmokDemoSimulator } from './DemoSimulator.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const BOARD_SIZE = 13;
@@ -15,6 +16,41 @@ document.addEventListener('DOMContentLoaded', () => {
     let gameActive = true;
     let ai = new OmokAI(BOARD_SIZE);
 
+    let isDemoActive = false;
+    let demoSimulator = null;
+
+    const gameController = {
+        setDemoMode(val) {
+            isDemoActive = val;
+            const btn = document.getElementById('demoPlayBtn');
+            if (btn) {
+                btn.textContent = val ? '⏹️ 데모 중지' : '🤖 데모 플레이';
+            }
+        },
+        initGame() {
+            initGame();
+        },
+        triggerDemoBlackMove() {
+            if (!gameActive || currentPlayer !== 'black') return;
+            const move = ai.calculateBestMove(board, 'black', 'white');
+            if (move) {
+                placeStone(move.r, move.c, 'black');
+                if (checkWin(move.r, move.c, 'black')) {
+                    endGame('You Win!');
+                    if (isDemoActive) {
+                        demoSimulator.scheduleRestart(() => initGame(), 5000);
+                    }
+                } else {
+                    currentPlayer = 'white';
+                    updateStatus();
+                    triggerWhiteAIMove();
+                }
+            }
+        }
+    };
+
+    demoSimulator = new OmokDemoSimulator(gameController);
+
     // Initialize Game
     function initGame() {
         board = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
@@ -23,6 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderBoard();
         updateStatus();
         modal.classList.add('hidden');
+
+        if (isDemoActive) {
+            demoSimulator.scheduleNextMove(() => gameController.triggerDemoBlackMove(), 800);
+        }
     }
 
     // Render the board grid
@@ -56,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle user click
     function handleCellClick(e) {
         if (!gameActive || currentPlayer !== 'black') return;
+        if (isDemoActive) return; // 데모 중 클릭 금지
 
         const r = parseInt(e.target.dataset.row);
         const c = parseInt(e.target.dataset.col);
@@ -71,8 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentPlayer = 'white';
         updateStatus();
+        triggerWhiteAIMove();
+    }
 
-        // AI Turn with slight delay for realism
+    function triggerWhiteAIMove() {
         setTimeout(() => {
             if (!gameActive) return;
             const move = ai.calculateBestMove(board, 'white', 'black');
@@ -80,12 +123,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 placeStone(move.r, move.c, 'white');
                 if (checkWin(move.r, move.c, 'white')) {
                     endGame('AI Wins!');
+                    if (isDemoActive) {
+                        demoSimulator.scheduleRestart(() => initGame(), 5000);
+                    }
                 } else {
                     currentPlayer = 'black';
                     updateStatus();
+                    if (isDemoActive) {
+                        demoSimulator.scheduleNextMove(() => gameController.triggerDemoBlackMove(), 800);
+                    }
                 }
             }
-        }, 500);
+        }, 800);
     }
 
     function placeStone(r, c, color) {
@@ -122,8 +171,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500);
     }
 
-    restartBtn.addEventListener('click', initGame);
-    modalRestartBtn.addEventListener('click', initGame);
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+        demoPlayBtn.addEventListener('click', () => {
+            if (!demoSimulator.isDemo) {
+                demoSimulator.startDemo();
+            } else {
+                demoSimulator.stopDemo();
+            }
+        });
+    }
+
+    restartBtn.addEventListener('click', () => {
+        demoSimulator.stopDemo();
+        initGame();
+    });
+    modalRestartBtn.addEventListener('click', () => {
+        demoSimulator.stopDemo();
+        initGame();
+    });
 
     // Start
     initGame();

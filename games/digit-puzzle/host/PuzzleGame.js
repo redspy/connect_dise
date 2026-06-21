@@ -1,4 +1,5 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+import { PuzzleDemoSimulator } from './PuzzleDemoSimulator.js';
 
 const SIZE = 4;
 const MIN_PLAYERS = 2;
@@ -16,6 +17,7 @@ export class PuzzleGame extends HostBaseGame {
     this._gameStartTime = null;
     this._timerInterval = null;
 
+    this._demoSimulator = new PuzzleDemoSimulator(this);
     this._wireGameMessages();
   }
 
@@ -38,6 +40,15 @@ export class PuzzleGame extends HostBaseGame {
     document.getElementById('btn-restart-result').addEventListener('click', () => {
       this.resetSession();
     });
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
 
     this.setPhase('lobby');
   }
@@ -82,6 +93,7 @@ export class PuzzleGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._profiles.clear();
     this._progress.clear();
     this._board = null;
@@ -96,6 +108,12 @@ export class PuzzleGame extends HostBaseGame {
     this._renderLobby();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
+  }
+
+  onPhaseChange(from, to) {
+    if (this._isDemo) {
+      this._demoSimulator.onPhaseChange(to);
+    }
   }
 
   // ─── Game messages ───────────────────────────────────────────────────────

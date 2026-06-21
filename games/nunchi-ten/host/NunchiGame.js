@@ -1,4 +1,5 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
+import { NunchiDemoSimulator } from './NunchiDemoSimulator.js';
 
 const _chooseNumberAudio = new Audio('/games/nunchi-ten/assets/choose_number.mp3');
 function _playChooseNumber() {
@@ -40,6 +41,8 @@ export class NunchiGame extends HostBaseGame {
     this._gameStarted = false;
     this._lastRoundResult = null;
     this._lastRankings = null;
+    this._demoSimulator = new NunchiDemoSimulator(this);
+    this._isDemo = false;
 
     this._wireGameMessages();
   }
@@ -64,6 +67,16 @@ export class NunchiGame extends HostBaseGame {
     document.getElementById('btn-restart').addEventListener('click', () => {
       this.resetSession();
     });
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
+
     this.setPhase('lobby');
   }
 
@@ -104,6 +117,7 @@ export class NunchiGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._profiles.clear();
     this._data.clear();
     this._submissions.clear();
@@ -293,6 +307,13 @@ export class NunchiGame extends HostBaseGame {
         [...this.players.keys()].map(id => [id, this._data.get(id)])
       ),
     });
+
+    // 🤖 데모 모드 일 때 가상 봇들의 자동 카드 선택 시뮬레이션
+    if (this._isDemo) {
+      setTimeout(() => {
+        this._demoSimulator.simulateChoices();
+      }, 1500 + Math.random() * 1000);
+    }
   }
 
   _handleSubmission(playerId, card, useDouble) {

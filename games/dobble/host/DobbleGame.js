@@ -4,6 +4,7 @@ import {
   hanjaSymbols, hangulSymbols, hanjaMeanings,
   hiraganaSymbols, katakanaSymbols, kanaHangulFeedback,
 } from '../shared/DobbleEngine.js';
+import { DobbleDemoSimulator } from './DobbleDemoSimulator.js';
 
 const FREEZE_MS     = 3000;
 const HIGHLIGHT_MS  = 2000;
@@ -26,6 +27,8 @@ export class DobbleGame extends HostBaseGame {
     this._gameStarted = false;
     this._readyCount = 0;
     this._flashTimer = null;
+    this._demoSimulator = new DobbleDemoSimulator(this);
+    this._isDemo = false;
 
     this._wireMessages();
   }
@@ -43,6 +46,15 @@ export class DobbleGame extends HostBaseGame {
       this._lobbyEl.onStart = () => { if (this._canStart()) this._startGame(); };
     }
     document.querySelector('game-appbar').onRestart = () => this.resetSession();
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
 
     this.setPhase('lobby');
   }
@@ -102,6 +114,7 @@ export class DobbleGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     clearTimeout(this._flashTimer);
     this._flashTimer = null;
     const flash = document.getElementById('round-flash');
@@ -235,6 +248,11 @@ export class DobbleGame extends HostBaseGame {
     this._renderCenterCard();
     this._renderScoreCards();
     this._showRoundFlash(id, newScore);
+
+    // 🤖 데모 모드일 때 다음 탭 예약 갱신
+    if (this._isDemo && this._gameStarted) {
+      this._demoSimulator.scheduleNextTaps();
+    }
 
     // 승리 체크
     if (newScore >= this._winScore) {

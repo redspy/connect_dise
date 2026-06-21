@@ -1,5 +1,6 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { generateStockData, randomStockName } from './stockData.js';
+import { TradingDemoSimulator } from './TradingDemoSimulator.js';
 
 const INITIAL_BALANCE = 100000000;
 
@@ -60,6 +61,7 @@ export class TradingBattleGame extends HostBaseGame {
     // 가격 변동률 추적
     this._priceHistory = [];
 
+    this._demoSimulator = new TradingDemoSimulator(this);
     this._wireMessages();
   }
 
@@ -75,6 +77,15 @@ export class TradingBattleGame extends HostBaseGame {
     document.getElementById('btn-restart')?.addEventListener('click', () => this.resetSession());
     document.getElementById('btn-settings-start')?.addEventListener('click', () => this._applySettings());
     document.getElementById('btn-quit-game')?.addEventListener('click', () => this._quitGame());
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
 
     this._initSettingsUI();
 
@@ -124,9 +135,14 @@ export class TradingBattleGame extends HostBaseGame {
   onPhaseChange(from, to) {
     const board = document.getElementById('game-board');
     if (board) board.classList.toggle('hidden', to !== 'trading');
+
+    if (this._isDemo) {
+      this._demoSimulator.onPhaseChange(to);
+    }
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._stopTimers();
     this._profiles.clear();
     this._positions.clear();
@@ -335,6 +351,7 @@ export class TradingBattleGame extends HostBaseGame {
 
     // 게임 보드를 먼저 표시 (chart 컨테이너 크기 확보)
     this.setPhase('trading');
+    this._renderPlayerPanels();
 
     // 차트 초기화 (DOM이 보여진 후)
     requestAnimationFrame(() => {

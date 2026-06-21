@@ -3,6 +3,7 @@ import { HostBaseGame }  from '../../../platform/client/HostBaseGame.js';
 import { DeckManager }   from '../shared/deck.js';
 import { calculateRoundScores } from '../shared/scoring.js';
 import { getHandSize, WIN_SCORE, MIN_PLAYERS, CARD_COUNT } from '../shared/constants.js';
+import { DixitDemoSimulator } from './DixitDemoSimulator.js';
 
 class DixitGame extends HostBaseGame {
   constructor(sdk) {
@@ -29,6 +30,7 @@ class DixitGame extends HostBaseGame {
     this._phaseTimerStart   = 0;
     this._readyPlayers      = new Set();
 
+    this._demoSimulator = new DixitDemoSimulator(this);
     this._wireHandlers();
 
     if (new URLSearchParams(window.location.search).get('debug') === '1') {
@@ -58,6 +60,15 @@ class DixitGame extends HostBaseGame {
       .addEventListener('click', () => this._nextRound());
     document.getElementById('restart-btn')
       .addEventListener('click', () => this.resetSession());
+
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.onclick = () => {
+        if (!this._isDemo) {
+          this._demoSimulator.startDemo();
+        }
+      };
+    }
 
     this._initCardGallery();
     this.setPhase('lobby');
@@ -109,6 +120,7 @@ class DixitGame extends HostBaseGame {
   }
 
   onReset() {
+    this._demoSimulator.stopDemo();
     this._clearPhaseTimer();
     this._profiles.clear();
     this._hands.clear();
@@ -128,6 +140,12 @@ class DixitGame extends HostBaseGame {
     this.renderLobbyPlayers(this._getLobbyProfiles());
     this.updateLobbyReady(0);
     this.setPhase('lobby');
+  }
+
+  onPhaseChange(from, to) {
+    if (this._isDemo) {
+      this._demoSimulator.onPhaseChange(to);
+    }
   }
 
   // ── Message handlers ─────────────────────────────────────────────────────
