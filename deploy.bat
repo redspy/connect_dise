@@ -22,7 +22,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [Step 4] Starting server...
-start "ConnectDiseServer" /min cmd /c "node server/index.js > server.log 2>&1"
+start "ConnectDiseServer" /min cmd /c "cd /d %~dp0 && node server/index.js > server.log 2>&1"
 
 echo ========================================
 echo  Deploy complete!
