@@ -176,4 +176,15 @@ export const GAMES = [
     thumbnail: '🎲',
     group: 'multi',
   },
+  {
+    id: 'dimension-weaver',
+    name: '디멘션 위버 (Dimension Weaver)',
+    description: '비대칭 시공간 협동! 각자의 폰에 다른 차원의 위협이 나타나는 실시간 차원 조율 파티 게임 🌀',
+    hostPath: '/games/dimension-weaver/host/',
+    mobilePath: '/games/dimension-weaver/mobile/',
+    minPlayers: 2,
+    maxPlayers: 8,
+    thumbnail: '🌀',
+    group: 'multi',
+  },
 ];

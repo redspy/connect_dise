@@ -22,7 +22,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [Step 4] Starting server...
-wmic process call create "cmd /c cd /d D:\Source\connect_dise && node server/index.js > server.log 2>&1"
+start "" /B node server/index.js > server.log 2>&1
 
 echo ========================================
 echo  Deploy complete!

@@ -103,6 +103,8 @@ export default defineConfig({
         herdLogicMobile:     resolve(__dirname, 'games/herd-logic/mobile/index.html'),
         triviaVegasHost:     resolve(__dirname, 'games/trivia-vegas/host/index.html'),
         triviaVegasMobile:   resolve(__dirname, 'games/trivia-vegas/mobile/index.html'),
+        dimensionWeaverHost:   resolve(__dirname, 'games/dimension-weaver/host/index.html'),
+        dimensionWeaverMobile: resolve(__dirname, 'games/dimension-weaver/mobile/index.html'),
       },
     },
   },

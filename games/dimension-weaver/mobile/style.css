@@ -1,0 +1,237 @@
+:root {
+  --neon-cyan: #00f3ff;
+  --neon-pink: #ff007f;
+  --neon-gold: #ffd700;
+  --card-bg: rgba(255, 255, 255, 0.05);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.pp-mobile-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: 0;
+  justify-content: center;
+}
+
+.dw-screen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.card-bg {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.card-bg h2 {
+  margin-top: 0;
+  color: var(--neon-cyan);
+}
+
+/* HUD */
+.hud-bar {
+  display: flex;
+  justify-content: space-between;
+}
+
+.hud-tag {
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hull-tag {
+  color: var(--neon-pink);
+  border-color: var(--neon-pink);
+}
+
+/* 역할 배지 */
+.role-badge {
+  display: inline-block;
+  font-weight: bold;
+  font-size: 0.95rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid;
+}
+
+.alpha-color { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+.beta-color { color: var(--neon-pink); border-color: var(--neon-pink); }
+.gamma-color { color: var(--neon-gold); border-color: var(--neon-gold); }
+
+.role-desc {
+  font-size: 0.8rem;
+  color: #8b9bb4;
+  margin: 0 0 16px 0;
+}
+
+/* 🌀 차원 알파 그리드 */
+.alpha-grid-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 5px;
+}
+
+.alpha-cell {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #fff;
+}
+
+.alpha-cell.hole-cell {
+  border-color: var(--neon-pink);
+  background: rgba(255, 0, 127, 0.05);
+  box-shadow: inset 0 0 6px rgba(255, 0, 127, 0.2);
+  animation: pulseHole 1s infinite alternate;
+}
+
+@keyframes pulseHole {
+  from { border-color: var(--neon-pink); }
+  to { border-color: #ff80bf; }
+}
+
+.alpha-cell.solid-cell {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 243, 255, 0.1);
+}
+
+/* ⚡ 차원 베타 함정 리스트 */
+.beta-scan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.trap-item-btn {
+  background: rgba(255, 0, 127, 0.1);
+  border: 1.5px solid var(--neon-pink);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 0, 127, 0.15);
+  transition: transform 0.1s, background 0.1s;
+}
+
+.trap-item-btn:active {
+  transform: scale(0.97);
+  background: rgba(255, 0, 127, 0.25);
+}
+
+/* 🔑 차원 감마 삼색 게이트 */
+.gamma-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gate-btn {
+  color: #fff;
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 16px 0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.gate-btn:active {
+  transform: scale(0.96);
+}
+
+.gate-btn.red {
+  background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%);
+  border: 1px solid #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.35);
+}
+
+.gate-btn.blue {
+  background: linear-gradient(135deg, #00f3ff 0%, #0369a1 100%);
+  border: 1px solid #00f3ff;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.35);
+}
+
+.gate-btn.green {
+  background: linear-gradient(135deg, #22c55e 0%, #166534 100%);
+  border: 1px solid #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.35);
+}
+
+/* 복구 스피너 */
+.spinner {
+  font-size: 3rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.status-icon {
+  font-size: 4rem;
+}
+
+/* ⚠️ 위기 경보 및 조작 감각 햅틱 폴리싱 */
+@keyframes criticalBorderFlash {
+  0%, 100% { 
+    box-shadow: inset 0 0 10px rgba(255, 0, 127, 0.2), 0 0 10px rgba(255, 0, 127, 0.1); 
+    border-color: rgba(255, 0, 127, 0.3); 
+  }
+  50% { 
+    box-shadow: inset 0 0 25px rgba(255, 0, 127, 0.6), 0 0 20px rgba(255, 0, 127, 0.3); 
+    border-color: rgba(255, 0, 127, 1); 
+  }
+}
+
+.critical-hull-alert {
+  animation: criticalBorderFlash 0.8s infinite alternate !important;
+  background: rgba(255, 0, 127, 0.08) !important;
+}
+
+.tactile-bounce {
+  animation: buttonScaleBounce 0.15s ease-out;
+}
+
+@keyframes buttonScaleBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}

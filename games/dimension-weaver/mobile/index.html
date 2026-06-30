@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>디멘션 위버 — 모바일</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-board">
+
+  <div class="pp-mobile-container">
+    <header class="app-bar">
+      <h1 class="app-title">🌀 DIMENSION WEAVER</h1>
+      <div id="connection-status" class="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-label">연결 중...</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- 1. 대기실 -->
+      <div class="dw-screen" data-screen="waiting">
+        <div class="card-bg">
+          <h2>차원 동기화 대기실</h2>
+          <p id="lobby-status" class="status-desc">호스트에서 차원 봉합 조율 준비가 되면 비행이 개시됩니다.</p>
+
+          <div id="join-form" class="join-form hidden">
+            <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="8">
+            <button id="btn-join" class="sm-btn primary-btn">참가하기</button>
+          </div>
+
+          <button id="btn-ready" class="sm-btn primary-btn hidden">준비하기</button>
+        </div>
+      </div>
+
+      <!-- 2. 게임 본화면 -->
+      <div class="dw-screen hidden" data-screen="game">
+        <!-- HUD -->
+        <div class="hud-bar">
+          <div id="hud-dist-text" class="hud-tag">0 / 100m</div>
+          <div id="hud-hull-text" class="hud-tag hull-tag">HULL: 100%</div>
+        </div>
+
+        <!-- 2-A. 차원 알파: 길 개척사 (5행 5열 그리드 맵 빌더) -->
+        <div id="alpha-panel" class="card-bg hidden">
+          <span class="role-badge alpha-color">🌀 차원 알파: 길 개척사</span>
+          <p class="role-desc">화면의 빈 구멍(붉은 테두리)을 터치하여 다리를 메우세요!</p>
+          
+          <div class="alpha-grid-container">
+            <!-- 5행 5열 그리드가 동적으로 빌드됨 (러너 앞 5칸) -->
+          </div>
+        </div>
+
+        <!-- 2-B. 차원 베타: 장애물 소멸사 (함정 소거 스캐너 리스트) -->
+        <div id="beta-panel" class="card-bg hidden">
+          <span class="role-badge beta-color">⚡ 차원 베타: 장애물 소멸사</span>
+          <p class="role-desc">스캐너에 탐지된 가시 함정을 터치하여 무력화하세요!</p>
+          
+          <div id="beta-scans" class="beta-scan-list">
+            <!-- 감지된 함정 리스트 버튼 -->
+          </div>
+        </div>
+
+        <!-- 2-C. 차원 감마: 게이트 개방사 (삼색 게이트 개방 버튼) -->
+        <div id="gamma-panel" class="card-bg hidden">
+          <span class="role-badge gamma-color">🔑 차원 감마: 게이트 개방사</span>
+          <p class="role-desc">러너 앞을 가로막는 레이저 게이트의 색에 맞춰 코드를 일치시키세요!</p>
+          
+          <div class="gamma-buttons">
+            <button class="gate-btn red" data-color="red">🔴 RED LASER</button>
+            <button class="gate-btn blue" data-color="blue">🔵 BLUE LASER</button>
+            <button class="gate-btn green" data-color="green">🟢 GREEN LASER</button>
+          </div>
+        </div>
+
+        <!-- 긴급 대기 알림 (차원 이탈 시) -->
+        <div id="destabilized-alert" class="card-bg hidden" style="border-color: #ef4444;">
+          <div class="alert-box">
+            <div class="spinner">⚠️</div>
+            <p>시공간 차원 균열로 비행이 일시정지 되었습니다. 동료 파일럿들의 복구를 대기 중...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 결과 화면 -->
+      <div class="dw-screen hidden" data-screen="result">
+        <div class="card-bg result-card">
+          <div id="result-icon" class="status-icon">🏆</div>
+          <h2 id="result-headline">비행 성공!</h2>
+          <p id="result-summary">시공간을 안정적으로 돌파했습니다.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

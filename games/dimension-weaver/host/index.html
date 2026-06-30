@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>디멘션 위버 — 호스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="../../../platform/client/shared/LobbyPanel.js"></script>
+  <script type="module" src="../../../platform/client/shared/AppBar.js"></script>
+</head>
+<body class="host-board">
+
+  <!-- 1. 로비 오버레이 -->
+  <div class="dw-overlay" data-phase="lobby">
+    <game-lobby title="🌀 디멘션 위버 (Dimension Weaver)" min-players="2">
+      <div class="dw-intro">
+        <h3>스마트폰 기기별로 완전히 다른 차원의 차단막이 주어집니다!</h3>
+        <p>1. <strong>차원 알파(길 개척)</strong>: 보이지 않는 끊어진 다리를 폰 터치로 실시간 보강해야 합니다.</p>
+        <p>2. <strong>차원 베타(장애물 소멸)</strong>: 러너를 노리는 위험 가시 장애물을 폰에서 터치해 지워내야 합니다.</p>
+        <p>3. <strong>차원 감마(게이트 개방)</strong>: 삼색 레이저 게이트와 같은 색의 폰 스위치를 탭해 해제해야 합니다.</p>
+        <p style="color: var(--neon-gold); font-weight: bold; margin-top: 10px;">
+          서로 다른 차원의 위험을 목소리로 긴박하게 공유해 러너를 100m 골인 지점까지 인도하세요!
+        </p>
+        <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 15px; width: 100%;">🤖 데모 플레이 실행</button>
+      </div>
+    </game-lobby>
+  </div>
+
+  <!-- 2. 게임 메인 화면 -->
+  <div id="game-container" class="dw-host-container dw-overlay hidden" data-phase="playing">
+    <game-appbar title="🌀 디멘션 위버 — Asymmetric Space"></game-appbar>
+
+    <div class="dw-main-content">
+      <!-- 상단: HUD -->
+      <div class="dw-hud">
+        <div class="dw-hud-item">
+          <span class="hud-label">비행 거리</span>
+          <span id="hud-distance" class="hud-val">0 / 100m</span>
+        </div>
+        <div class="dw-hud-item">
+          <span class="hud-label">선체 보호막 (Hull)</span>
+          <span id="hud-hull" class="hud-val text-cyan">100%</span>
+        </div>
+        <div class="dw-hud-item">
+          <span class="hud-label">상태</span>
+          <span id="hud-phase-label" class="hud-val">차원 동기화 정상</span>
+        </div>
+      </div>
+
+      <!-- 중앙: 실시간 차원 횡스크롤 캔버스 -->
+      <div class="canvas-wrapper">
+        <canvas id="stage-canvas" width="960" height="360"></canvas>
+      </div>
+
+      <!-- 긴급 차원 균열 복구 대기 배너 -->
+      <div id="stabilization-banner" class="stabilization-banner hidden">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">
+          <h3>시공간 차원 균열 감지 (Dimension Destabilized)</h3>
+          <p>이탈한 파일럿의 복구를 대기 중입니다. (러너 비행 일시정지)</p>
+        </div>
+      </div>
+
+      <!-- 플레이어별 배정 역할 안내 -->
+      <div class="roles-board" id="roles-board">
+        <!-- 실시간 플레이어 캐릭터와 배정 차원(알파/베타/감마) 라벨링 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 결과 오버레이 -->
+  <div class="dw-overlay hidden" data-phase="result">
+    <div class="dw-result-panel">
+      <h2 id="result-headline" class="dw-result-title">🏆 시공간 돌파 성공!</h2>
+      <p id="result-summary" style="font-size: 1.1rem; color: #ccc; margin-bottom: 25px;">선체 피해 20% 이내 완주 달성</p>
+      <button id="btn-restart-result" class="dw-btn-restart">로비로 돌아가기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
