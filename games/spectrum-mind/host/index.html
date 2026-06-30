@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스펙트럼 마인드 — Host</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board">
+  <div id="game-board" class="sm-host-container">
+    <game-appbar title="🎯 스펙트럼 마인드"></game-appbar>
+
+    <!-- 1. 제시어 단계 화면 -->
+    <div class="sm-panel sm-overlay hidden" data-phase="clue">
+      <div class="sm-clue-waiting">
+        <h2 class="sm-main-title">제시어 출제 중</h2>
+        <p class="sm-desc">출제자가 주어진 목표 영역에 알맞은 힌트 제시어를 입력하고 있습니다.</p>
+        <div class="sm-giver-profile">
+          <div id="giver-avatar" class="sm-avatar">?</div>
+          <div id="giver-name" class="sm-nickname">출제자</div>
+        </div>
+        <div class="sm-loading-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 추측 단계 / 결과 공개 화면 -->
+    <div class="sm-panel sm-overlay hidden" data-phase="guess">
+      <div class="sm-game-play">
+        <div class="sm-clue-header">
+          <div class="sm-concept-pair">
+            <span id="concept-left" class="sm-concept-label left">차가움</span>
+            <span class="sm-vs">VS</span>
+            <span id="concept-right" class="sm-concept-label right">뜨거움</span>
+          </div>
+          <h2 id="display-clue" class="sm-clue-word">"제시어 대기"</h2>
+        </div>
+
+        <div class="sm-dial-wrapper">
+          <canvas id="sm-dial-canvas" width="600" height="360"></canvas>
+        </div>
+
+        <div id="guess-status-area" class="sm-status-area">
+          <div class="sm-guesser-info">
+            <span id="active-guesser-name">추측자</span>님이 다이얼을 회전하고 있습니다.
+          </div>
+          <div id="active-angle-display" class="sm-angle-val">0°</div>
+        </div>
+
+        <div id="reveal-controls" class="sm-reveal-controls hidden">
+          <div id="points-earned" class="sm-points-badge">+4점!</div>
+          <button id="btn-next-round" class="primary-btn sm-next-btn">다음 라운드</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 대기실 로비 -->
+    <div class="sm-overlay" data-phase="lobby">
+      <game-lobby title="🎯 스펙트럼 마인드" min-players="2">
+        <div class="lobby-desc-title">게임 방법</div>
+        <ul class="lobby-desc-list">
+          <li>출제자는 양극단 개념 카드와 비밀 목표 영역을 확인합니다.</li>
+          <li>영역에 걸맞은 힌트 제시어를 <b>단어 또는 문구</b>로 입력합니다.</li>
+          <li>추측자는 제시어만 보고 다이얼을 <b>목표 위치</b>로 회전시킵니다.</li>
+          <li>영역 정중앙에 가까울수록 높은 점수(4점 ➔ 3점 ➔ 2점)를 획득합니다.</li>
+        </ul>
+        <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🤖 데모 플레이 실행</button>
+      </game-lobby>
+    </div>
+
+    <!-- 4. 결과 발표 오버레이 -->
+    <div class="sm-overlay hidden" data-phase="result">
+      <div class="sm-result-panel">
+        <h2 class="sm-result-title">🏆 최종 순위 발표</h2>
+        <div id="sm-rankings" class="sm-rankings-list"></div>
+        <button id="btn-restart-result" class="primary-btn sm-restart-btn">다시하기</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

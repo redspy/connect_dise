@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>트리비아 베가스 — 호스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="../../../platform/client/shared/LobbyPanel.js"></script>
+  <script type="module" src="../../../platform/client/shared/AppBar.js"></script>
+</head>
+<body class="host-board">
+
+  <!-- 1. 로비 오버레이 -->
+  <div class="tv-overlay" data-phase="lobby">
+    <game-lobby title="🎲 트리비아 베가스 (Trivia Vegas)" min-players="2">
+      <div class="tv-intro">
+        <h3>상식을 맞히지 못해도 베팅으로 역전할 수 있습니다!</h3>
+        <p>1. 숫자로 된 퀴즈의 답을 휴대폰으로 추정하여 적습니다.</p>
+        <p>2. 제출된 답이 정렬되면, <strong>'정답을 초과하지 않고 가장 가까운 답'</strong>에 내 칩을 겁니다.</p>
+        <p>3. 올바른 정답 판정에 걸어 칩 배당금을 휩쓸고 최고의 자산가가 되세요!</p>
+        <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 15px; width: 100%;">🤖 데모 플레이 실행</button>
+      </div>
+    </game-lobby>
+  </div>
+
+  <!-- 2. 게임 본 화면 -->
+  <div id="game-container" class="tv-host-container tv-overlay hidden" data-phase="playing">
+    <game-appbar title="🎲 트리비아 베가스 — 카지노 Felt"></game-appbar>
+
+    <div class="tv-main-content">
+      <!-- 상단: HUD 정보 -->
+      <div class="tv-hud">
+        <div class="tv-hud-item">
+          <span class="hud-label">라운드</span>
+          <span id="hud-round" class="hud-val">1 / 3</span>
+        </div>
+        <div class="tv-hud-item">
+          <span class="hud-label">단계</span>
+          <span id="hud-phase-label" class="hud-val">추정 답안 작성 중</span>
+        </div>
+        <div class="tv-hud-item" id="timer-box" style="display: none;">
+          <span class="hud-label">베팅 남은 시간</span>
+          <span id="hud-timer" class="hud-val">20초</span>
+        </div>
+      </div>
+
+      <!-- 중앙: 질문 디스플레이 -->
+      <div class="q-section">
+        <div class="q-card">
+          <span class="q-badge">TRIVIA QUESTION</span>
+          <h2 id="current-question">질문을 불러오는 중...</h2>
+        </div>
+      </div>
+
+      <!-- 정렬되지 않은 임시 제출 보드 (답안 작성 단계) -->
+      <div id="submission-board" class="submission-grid">
+        <!-- "제출 완료" 또는 "작성 중" 상태 카드 노출 -->
+      </div>
+
+      <!-- 중앙 하단: 베팅 레이아웃 Felt 판 (베팅 단계 / 결과 공개 단계) -->
+      <div id="betting-table" class="betting-table-layout hidden">
+        <!-- 크랩스/베팅 판 스타일의 오름차순 정렬 슬롯 렌더링 -->
+      </div>
+
+      <!-- 호스트 전용 수동 조작 컨트롤러 -->
+      <div class="host-controls">
+        <button id="btn-sort-estimates" class="tv-action-btn hidden">답안 정렬하기 ➔</button>
+        <button id="btn-resolve-bets" class="tv-action-btn hidden">배당금 정산하기 👁️</button>
+        <button id="btn-next-round" class="tv-action-btn hidden">다음 라운드 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 최종 결과 리포트 -->
+  <div class="tv-overlay hidden" data-phase="result">
+    <div class="tv-result-panel">
+      <h2 class="tv-result-title">🏆 베가스 최종 뱅킹 리스트</h2>
+      <div id="ranking-list" class="ranking-container"></div>
+      <button id="btn-restart-result" class="tv-btn-restart">로비로 돌아가기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

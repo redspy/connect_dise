@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>패닉 콕핏 — 컨트롤러</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-controller">
+  <!-- 연결 상태 쉴드 -->
+  <div id="connection-status" class="connection-status">
+    <span class="status-indicator"></span>
+    <span class="status-label">서버 연결 중...</span>
+  </div>
+
+  <!-- 1. 대기 화면 -->
+  <div class="pc-screen" data-screen="waiting">
+    <div class="screen-content">
+      <h2>대기실</h2>
+      <p class="status-msg">다른 플레이어가 접속하고 준비 완료할 때까지 대기해주세요.</p>
+      
+      <!-- 닉네임 입력 (로그인 안 한 경우) -->
+      <div id="join-form" class="join-form hidden">
+        <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="8">
+        <button id="btn-join" class="sm-btn primary-btn">참가하기</button>
+      </div>
+
+      <button id="btn-ready" class="sm-btn primary-btn" style="margin-top: 20px; width: 100%; max-width: 200px; display: block; margin-left: auto; margin-right: auto;">준비하기</button>
+      <div id="lobby-status" class="ready-info" style="margin-top: 15px;">상대방을 기다리는 중...</div>
+    </div>
+  </div>
+
+  <!-- 2. 게임 화면 (Cockpit Panel) -->
+  <div class="pc-screen hidden" data-screen="game">
+    <!-- 상단: 나의 할당 지시사항 -->
+    <div class="instruction-panel">
+      <div class="inst-header">수신된 무선 지시</div>
+      <div id="instruction-text" class="inst-text">대기 중...</div>
+      <div class="inst-timer-wrap">
+        <div id="instruction-timer" class="inst-timer-fill"></div>
+      </div>
+    </div>
+
+    <!-- 중앙: 조종 위젯 배치 -->
+    <div class="cockpit-grid">
+      <!-- 1. 슬라이더 레버 -->
+      <div class="widget-box lever-widget">
+        <label id="label-lever" class="widget-label">메인 레버</label>
+        <div class="lever-control-wrap">
+          <input type="range" id="slider-lever" min="0" max="100" step="50" value="0" class="slider-control">
+          <div class="lever-markers">
+            <span>0</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. 토글 스위치 2개 -->
+      <div class="switches-row">
+        <div class="widget-box switch-widget">
+          <label id="label-switch-a" class="widget-label">파란 스위치</label>
+          <label class="switch-toggle">
+            <input type="checkbox" id="switch-a">
+            <span class="slider-round blue-switch"></span>
+          </label>
+        </div>
+        <div class="widget-box switch-widget">
+          <label id="label-switch-b" class="widget-label">빨간 스위치</label>
+          <label class="switch-toggle">
+            <input type="checkbox" id="switch-b">
+            <span class="slider-round red-switch"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. 대형 푸시 버튼 -->
+      <div class="widget-box button-widget">
+        <label id="label-btn-action" class="widget-label">가속 버튼</label>
+        <button id="btn-action" class="push-btn">PUSH TO ACTIVATE</button>
+      </div>
+    </div>
+
+    <!-- 하단: 우주선 내구도 및 진행 거리 게이지 -->
+    <div class="ship-hud-status">
+      <div class="hud-item">
+        <span>선체 내구도</span>
+        <div class="hud-bar-wrap">
+          <div id="hud-health-fill" class="hud-bar-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+      <div class="hud-item">
+        <span>성간 비행 거리</span>
+        <div class="hud-bar-wrap">
+          <div id="hud-distance-fill" class="hud-bar-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 결과 화면 -->
+  <div class="pc-screen hidden" data-screen="result">
+    <div class="screen-content">
+      <div id="result-icon" style="font-size: 5rem; margin-bottom: 20px;">🏆</div>
+      <h2 id="result-title">게임 종료</h2>
+      <p id="result-desc"></p>
+      <p style="margin-top: 30px; font-size: 0.9rem; color: #8b9bb4;">호스트 화면에서 다시 시작을 누르면 로비로 복귀합니다.</p>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

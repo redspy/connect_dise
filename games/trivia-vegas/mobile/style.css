@@ -1,0 +1,288 @@
+:root {
+  --felt-green: #0a2617;
+  --neon-gold: #ffd700;
+  --neon-cyan: #00f3ff;
+  --text-light: #f5f5f5;
+  --card-bg: rgba(255, 255, 255, 0.06);
+}
+
+.hidden {
+  display: none !important;
+}
+
+.pp-mobile-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: 0;
+  justify-content: center;
+}
+
+.tv-screen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* 카드 및 백그라운드 */
+.card-bg {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.card-bg h2 {
+  margin-top: 0;
+  color: var(--neon-gold);
+  font-size: 1.5rem;
+}
+
+.status-desc {
+  color: #ccc;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+/* 닉네임 */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.join-form input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  text-align: center;
+}
+
+.join-form input:focus {
+  border-color: var(--neon-gold);
+  outline: none;
+}
+
+/* 미니 HUD */
+.hud-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hud-tag {
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.money-tag {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+}
+
+/* 키패드 디스플레이 */
+.card-label {
+  font-size: 0.8rem;
+  color: #8b9bb4;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+}
+
+.numpad-display {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #fff;
+  text-align: right;
+  margin-bottom: 15px;
+  letter-spacing: 1px;
+}
+
+/* 키패드 격자 */
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.num-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: bold;
+  padding: 15px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.1s;
+}
+
+.num-btn:active {
+  background: rgba(255,215,0,0.2);
+  border-color: var(--neon-gold);
+  transform: scale(0.95);
+}
+
+.back-btn {
+  background: rgba(255, 102, 178, 0.15);
+  color: #ff99cc;
+}
+
+.back-btn:active {
+  background: rgba(255, 102, 178, 0.3);
+}
+
+/* 베팅 슬롯 리스트 */
+.slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding-right: 4px;
+}
+
+.slot-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.slot-item-card.selected-card {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 243, 255, 0.08);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
+
+.slot-item-card .slot-mult {
+  background: #ff3c3c;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.slot-item-card .slot-val {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.slot-item-card .slot-owner {
+  font-size: 0.75rem;
+  color: #8b9bb4;
+}
+
+/* 베팅 콘트롤러 */
+.betting-controls {
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bet-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.bet-info strong {
+  color: var(--neon-cyan);
+}
+
+.bet-adjust-row {
+  display: flex;
+  gap: 8px;
+}
+
+.adjust-btn {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: bold;
+  padding: 10px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.adjust-btn:active {
+  background: rgba(255,255,255,0.25);
+}
+
+.max-btn {
+  background: rgba(255, 215, 0, 0.2);
+  color: var(--neon-gold);
+  border-color: var(--neon-gold);
+}
+
+.max-btn:active {
+  background: rgba(255, 215, 0, 0.4);
+}
+
+/* 대기 및 스피너 */
+.alert-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 0;
+}
+
+.alert-spinner {
+  font-size: 3rem;
+  animation: spinWheel 2s linear infinite;
+}
+
+@keyframes spinWheel {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.gold-icon {
+  font-size: 3.5rem;
+  animation: float 2s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px); }
+}

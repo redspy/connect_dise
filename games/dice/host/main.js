@@ -6,15 +6,36 @@ import { DiceDemoSimulator } from './DiceDemoSimulator.js';
 const host = new HostSDK({ gameId: 'dice' });
 let playerCount = 0;
 let uiRestoreTimer = null;
+let idleTimeout = null;
+
+function resetIdleTimer() {
+  if (idleTimeout) {
+    clearTimeout(idleTimeout);
+    idleTimeout = null;
+  }
+  if (!demoSimulator.isDemo && playerCount === 0) {
+    idleTimeout = setTimeout(() => {
+      console.log('[Dice] Lobby idle for 60s. Auto-starting demo.');
+      demoSimulator.startDemo();
+      const demoBtn = document.getElementById('demoPlayBtn');
+      if (demoBtn) demoBtn.textContent = '⏹️ 데모 중지';
+    }, 60000);
+  }
+}
+
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
 
 const demoSimulator = new DiceDemoSimulator(host, {
   onStart: () => {
     playerCount = 3;
     updatePlayerStatus();
+    resetIdleTimer();
   },
   onStop: () => {
     playerCount = 0;
     updatePlayerStatus();
+    resetIdleTimer();
   }
 });
 
@@ -62,16 +83,19 @@ host.on('sessionReady', async ({ qrUrl }) => {
     text.textContent = 'Scan to Join';
     container.appendChild(text);
   }
+  resetIdleTimer();
 });
 
 host.on('playerJoin', () => {
   playerCount++;
   updatePlayerStatus();
+  resetIdleTimer();
 });
 
 host.on('playerLeave', () => {
   playerCount = Math.max(0, playerCount - 1);
   updatePlayerStatus();
+  resetIdleTimer();
 });
 
 function updatePlayerStatus() {
@@ -182,4 +206,5 @@ host.on('reset', () => {
   demoSimulator.stopDemo();
   const demoBtn = document.getElementById('demoPlayBtn');
   if (demoBtn) demoBtn.textContent = '🤖 데모 플레이 실행';
+  resetIdleTimer();
 });

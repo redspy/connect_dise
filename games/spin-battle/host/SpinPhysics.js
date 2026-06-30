@@ -160,7 +160,7 @@ export class SpinPhysics {
           // 벽 충돌 위치: 경계면 위 지점
           const wx = nx * limit;
           const wz = nz * limit;
-          wallHits.push({ x: wx, z: wz, color: s.color, speed: Math.abs(dot) });
+          wallHits.push({ id: s.id, x: wx, z: wz, color: s.color, speed: Math.abs(dot) });
         }
         s.rpm = Math.max(0, s.rpm - cfg.EDGE_PENALTY);
       }
@@ -249,6 +249,8 @@ export class SpinPhysics {
     b.rpm = Math.max(0, b.rpm - penaltyBase * (buffsA.cogs > 0 ? 2.5 : 1.0));
 
     return {
+      idA: a.id,
+      idB: b.id,
       ax: a.x,
       az: a.z,
       bx: b.x,

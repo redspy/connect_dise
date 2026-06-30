@@ -190,148 +190,210 @@ export class MobileSDK extends EventTarget {
 
   _hideReconnectUI() {
     document.getElementById('_sdk-reconnect-ui')?.remove();
+    if (this._passiveTimeout) {
+      clearTimeout(this._passiveTimeout);
+      this._passiveTimeout = null;
+    }
   }
 
   _showReconnectUI() {
     if (document.getElementById('_sdk-reconnect-ui')) return;
 
-    // 스타일 추가
-    if (!document.getElementById('_sdk-reconnect-style')) {
-      const style = document.createElement('style');
-      style.id = '_sdk-reconnect-style';
-      style.textContent = `
-        #_sdk-reconnect-ui {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.85);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          animation: _sdk-fade-in 0.3s ease;
-        }
-        @keyframes _sdk-fade-in {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        ._sdk-reconnect-modal {
-          background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-          border: 2px solid rgba(0, 238, 255, 0.3);
-          border-radius: 20px;
-          padding: 40px;
-          width: min(90vw, 400px);
-          text-align: center;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-          animation: _sdk-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes _sdk-slide-up {
-          from { transform: translateY(40px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-        ._sdk-reconnect-title {
-          font-size: 1.8rem;
-          font-weight: 700;
-          color: #e2e8f0;
-          margin-bottom: 32px;
-          letter-spacing: -0.5px;
-        }
-        ._sdk-input-section {
-          margin-bottom: 28px;
-        }
-        ._sdk-input-group {
-          display: flex;
-          gap: 8px;
-          margin-bottom: 16px;
-        }
-        ._sdk-input-group input {
-          flex: 1;
-          padding: 14px 16px;
-          border: 2px solid rgba(0, 238, 255, 0.4);
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.05);
-          color: #e2e8f0;
-          font-size: 1rem;
-          font-family: inherit;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          transition: all 0.2s;
-        }
-        ._sdk-input-group input::placeholder {
-          color: rgba(226, 232, 240, 0.5);
-          text-transform: none;
-          letter-spacing: normal;
-        }
-        ._sdk-input-group input:focus {
-          outline: none;
-          border-color: rgba(0, 238, 255, 0.8);
-          background: rgba(255, 255, 255, 0.08);
-          box-shadow: 0 0 12px rgba(0, 238, 255, 0.2);
-        }
-        ._sdk-input-group button {
-          padding: 14px 24px;
-          background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%);
-          border: none;
-          border-radius: 12px;
-          color: #000;
-          font-weight: 700;
-          font-size: 0.95rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          white-space: nowrap;
-        }
-        ._sdk-input-group button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 20px rgba(0, 238, 255, 0.4);
-        }
-        ._sdk-input-group button:active {
-          transform: translateY(0);
-        }
-        ._sdk-divider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 28px;
-          color: rgba(226, 232, 240, 0.5);
-          font-size: 0.9rem;
-          font-weight: 600;
-        }
-        ._sdk-divider::before,
-        ._sdk-divider::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: linear-gradient(to right, transparent, rgba(0, 238, 255, 0.3), transparent);
-        }
-        ._sdk-qr-btn {
-          width: 100%;
-          padding: 18px;
-          background: linear-gradient(135deg, rgba(0, 238, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
-          border: 2px solid rgba(0, 238, 255, 0.5);
-          border-radius: 12px;
-          color: #00eeff;
-          font-size: 1.1rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          letter-spacing: 0.5px;
-        }
-        ._sdk-qr-btn:hover {
-          border-color: rgba(0, 238, 255, 0.8);
-          background: linear-gradient(135deg, rgba(0, 238, 255, 0.25) 0%, rgba(0, 153, 255, 0.25) 100%);
-          box-shadow: 0 0 20px rgba(0, 238, 255, 0.3);
-        }
-        ._sdk-qr-btn:active {
-          transform: scale(0.98);
-        }
+    if (this._sessionId && this._player) {
+      this._showPassiveReconnectUI();
+    } else {
+      this._showFullReconnectUI();
+    }
+  }
+
+  _appendStyle() {
+    if (document.getElementById('_sdk-reconnect-style')) return;
+    const style = document.createElement('style');
+    style.id = '_sdk-reconnect-style';
+    style.textContent = `
+      #_sdk-reconnect-ui {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: _sdk-fade-in 0.3s ease;
+      }
+      @keyframes _sdk-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      ._sdk-reconnect-modal {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 2px solid rgba(0, 238, 255, 0.3);
+        border-radius: 20px;
+        padding: 40px;
+        width: min(90vw, 400px);
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        animation: _sdk-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes _sdk-slide-up {
+        from { transform: translateY(40px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      ._sdk-reconnect-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        margin-bottom: 32px;
+        letter-spacing: -0.5px;
+      }
+      ._sdk-input-section {
+        margin-bottom: 28px;
+      }
+      ._sdk-input-group {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      ._sdk-input-group input {
+        flex: 1;
+        padding: 14px 16px;
+        border: 2px solid rgba(0, 238, 255, 0.4);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        color: #e2e8f0;
+        font-size: 1rem;
+        font-family: inherit;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: all 0.2s;
+      }
+      ._sdk-input-group input::placeholder {
+        color: rgba(226, 232, 240, 0.5);
+        text-transform: none;
+        letter-spacing: normal;
+      }
+      ._sdk-input-group input:focus {
+        outline: none;
+        border-color: rgba(0, 238, 255, 0.8);
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 12px rgba(0, 238, 255, 0.2);
+      }
+      ._sdk-input-group button {
+        padding: 14px 24px;
+        background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%);
+        border: none;
+        border-radius: 12px;
+        color: #000;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      ._sdk-input-group button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 238, 255, 0.4);
+      }
+      ._sdk-input-group button:active {
+        transform: translateY(0);
+      }
+      ._sdk-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+        color: rgba(226, 232, 240, 0.5);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+      ._sdk-divider::before,
+      ._sdk-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to right, transparent, rgba(0, 238, 255, 0.3), transparent);
+      }
+      ._sdk-qr-btn {
+        width: 100%;
+        padding: 18px;
+        background: linear-gradient(135deg, rgba(0, 238, 255, 0.15) 0%, rgba(0, 153, 255, 0.15) 100%);
+        border: 2px solid rgba(0, 238, 255, 0.5);
+        border-radius: 12px;
+        color: #00eeff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        letter-spacing: 0.5px;
+      }
+      ._sdk-qr-btn:hover {
+        border-color: rgba(0, 238, 255, 0.8);
+        background: linear-gradient(135deg, rgba(0, 238, 255, 0.25) 0%, rgba(0, 153, 255, 0.25) 100%);
+        box-shadow: 0 0 20px rgba(0, 238, 255, 0.3);
+      }
+      ._sdk-qr-btn:active {
+        transform: scale(0.98);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  _showPassiveReconnectUI() {
+    this._appendStyle();
+
+    // 스핀 애니메이션 스타일 추가
+    if (!document.getElementById('_sdk-spin-style')) {
+      const spinStyle = document.createElement('style');
+      spinStyle.id = '_sdk-spin-style';
+      spinStyle.textContent = `
+        @keyframes _sdk-spin { to { transform: rotate(360deg); } }
       `;
-      document.head.appendChild(style);
+      document.head.appendChild(spinStyle);
     }
 
-    // UI 생성
+    const ui = document.createElement('div');
+    ui.id = '_sdk-reconnect-ui';
+
+    const modal = document.createElement('div');
+    modal.className = '_sdk-reconnect-modal';
+
+    const title = document.createElement('div');
+    title.className = '_sdk-reconnect-title';
+    title.textContent = '연결 복구 중...';
+    modal.appendChild(title);
+
+    const spinner = document.createElement('div');
+    spinner.style.cssText = [
+      'width: 48px; height: 48px; border: 4px solid rgba(0, 238, 255, 0.1);',
+      'border-top-color: #00eeff; border-radius: 50%;',
+      'animation: _sdk-spin 1s linear infinite; margin: 0 auto 24px auto;'
+    ].join(' ');
+    modal.appendChild(spinner);
+
+    const desc = document.createElement('div');
+    desc.style.cssText = 'color: rgba(226, 232, 240, 0.65); font-size: 0.95rem; line-height: 1.5;';
+    desc.textContent = '인터넷 연결이 원활하지 않아 복구를 시도하고 있습니다. 잠시만 기다려주세요.';
+    modal.appendChild(desc);
+
+    ui.appendChild(modal);
+    document.body.appendChild(ui);
+
+    // 30초 유예 만료 시 재연결 정보를 파괴하고 풀 재연결 창으로 유도
+    this._passiveTimeout = setTimeout(() => {
+      this._hideReconnectUI();
+      sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
+      this._player = null;
+      this._showFullReconnectUI();
+    }, 30000);
+  }
+
+  _showFullReconnectUI() {
+    this._appendStyle();
+
     const ui = document.createElement('div');
     ui.id = '_sdk-reconnect-ui';
 
@@ -343,7 +405,6 @@ export class MobileSDK extends EventTarget {
     title.textContent = '방에 연결하기';
     modal.appendChild(title);
 
-    // 방 코드 입력 섹션
     const inputSection = document.createElement('div');
     inputSection.className = '_sdk-input-section';
 
@@ -373,20 +434,17 @@ export class MobileSDK extends EventTarget {
     inputSection.appendChild(inputGroup);
     modal.appendChild(inputSection);
 
-    // 또는 구분선
     const divider = document.createElement('div');
     divider.className = '_sdk-divider';
     divider.textContent = '또는';
     modal.appendChild(divider);
 
-    // QR 스캔 버튼
     const qrBtn = document.createElement('button');
     qrBtn.className = '_sdk-qr-btn';
     qrBtn.innerHTML = '📷 <span>QR 코드 스캔</span>';
     qrBtn.addEventListener('click', () => this.showQRScanner());
     modal.appendChild(qrBtn);
 
-    // 게임 나가기 버튼 — 연결 끊김 시 로비로 돌아갈 수 있는 탈출구
     const homeBtn = document.createElement('button');
     homeBtn.className = '_sdk-home-btn';
     homeBtn.innerHTML = '⌂ 게임 선택으로 돌아가기';
@@ -413,7 +471,6 @@ export class MobileSDK extends EventTarget {
 
     ui.appendChild(modal);
 
-    // 배경 클릭 시 닫기 (선택사항)
     ui.addEventListener('click', (e) => {
       if (e.target === ui) {
         this._hideReconnectUI();
@@ -421,5 +478,25 @@ export class MobileSDK extends EventTarget {
     });
 
     document.body.appendChild(ui);
+  }
+
+  /**
+   * 모바일 기기에 진동(Haptic) 피드백을 발생시킵니다.
+   * @param {'light'|'medium'|'heavy'|'double'|number[]} [effect]
+   */
+  vibrate(effect = 'light') {
+    if (typeof navigator === 'undefined' || !navigator.vibrate) return;
+    const patterns = {
+      light: [30],
+      medium: [70],
+      heavy: [150],
+      double: [30, 40, 30]
+    };
+    const pattern = patterns[effect] || effect;
+    try {
+      navigator.vibrate(pattern);
+    } catch (e) {
+      console.warn('Vibrate failed:', e);
+    }
   }
 }

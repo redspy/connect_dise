@@ -1,0 +1,217 @@
+:root {
+  --pasture-green: #2e6f40;
+  --pasture-light: #e2f0d9;
+  --cow-pink: #ff66b2;
+  --btn-gold: #ffd700;
+  --text-dark: #2c241e;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.pp-mobile-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  min-height: 0;
+  justify-content: center;
+}
+
+.hl-screen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* 대기 카드 */
+.waiting-card, .result-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.waiting-card h2, .result-card h2 {
+  margin-top: 0;
+  color: var(--btn-gold);
+  font-size: 1.6rem;
+}
+
+.status-text {
+  color: #ccc;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+/* 닉네임 폼 */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.join-form input, .input-panel input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  font-size: 1.1rem;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  text-align: center;
+}
+
+.join-form input:focus, .input-panel input:focus {
+  border-color: var(--btn-gold);
+  outline: none;
+}
+
+/* 미니 HUD */
+.hud-mini {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hud-pill {
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.cow-pill {
+  background: linear-gradient(135deg, var(--cow-pink) 0%, #d43f8d 100%);
+  border-color: #ffb3d9;
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+/* 질문 컨테이너 */
+.question-container {
+  background: linear-gradient(135deg, #163820 0%, #0c2012 100%);
+  border: 1px solid var(--btn-gold);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--btn-gold);
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.question-text {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1.4;
+}
+
+/* 입력 패널 */
+.input-panel {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-panel .section-label {
+  color: #8b9bb4;
+}
+
+/* 알림 상자 */
+.success-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.success-alert.fail {
+  background: rgba(255, 102, 178, 0.08);
+  border-color: rgba(255, 102, 178, 0.25);
+  color: #ff99cc;
+}
+
+.alert-icon {
+  font-size: 1.3rem;
+}
+
+.alert-text {
+  font-size: 0.85rem;
+  color: #b0c4de;
+  line-height: 1.35;
+}
+
+.success-alert.fail .alert-text {
+  color: #ffc2e0;
+}
+
+.submitted-label {
+  text-align: center;
+  margin: 5px 0 0 0;
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.submitted-label strong {
+  color: var(--btn-gold);
+  font-size: 1.1rem;
+}
+
+/* 우승자 카드 */
+.result-icon-giant {
+  font-size: 4rem;
+  margin-bottom: 10px;
+  animation: bounce 2s infinite;
+}
+
+.result-desc-text {
+  font-size: 1.1rem;
+  color: #fff;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+
+.sub-hint {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}

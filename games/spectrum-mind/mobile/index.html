@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>스펙트럼 마인드 — Controller</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-controller">
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo">SPECTRUM</div>
+      <div id="connection-status" class="status-indicator"></div>
+      <div id="role-badge" class="sm-role-badge hidden">대기 중</div>
+    </header>
+
+    <!-- 1. 대기 화면 -->
+    <div class="sm-screen" data-screen="waiting">
+      <div class="screen-content">
+        <h2>대기실</h2>
+        <p class="status-msg">다른 플레이어가 접속하고 준비 완료할 때까지 대기해주세요.</p>
+        <button id="btn-ready" class="sm-btn primary-btn" style="margin-top: 20px; width: 100%; max-width: 200px; margin-left: auto; margin-right: auto; display: block;">준비하기</button>
+        <div id="lobby-status" class="ready-info">상대방을 기다리는 중...</div>
+      </div>
+    </div>
+
+    <!-- 2. 출제자 힌트 입력 화면 -->
+    <div class="sm-screen hidden" data-screen="giver-clue">
+      <div class="screen-content">
+        <h2 class="screen-title">힌트 출제하기 🎯</h2>
+        
+        <div class="sm-card">
+          <div class="sm-card-label">비밀 목표 각도</div>
+          <!-- 목표 각도 가이드 미니 보드 -->
+          <div class="mini-target-gauge">
+            <svg id="svg-mini-gauge" viewBox="0 0 200 120" width="100%" height="120">
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#2a3042" stroke-width="12"></path>
+              <!-- Target wedges (2점, 3점, 4점) -->
+              <path id="svg-wedge-2" fill="none" stroke="rgba(52, 152, 219, 0.4)" stroke-width="12"></path>
+              <path id="svg-wedge-3" fill="none" stroke="rgba(46, 204, 113, 0.6)" stroke-width="12"></path>
+              <path id="svg-wedge-4" fill="none" stroke="rgba(241, 196, 15, 0.85)" stroke-width="12"></path>
+              <!-- Needle indicator to target center -->
+              <line id="svg-target-needle" x1="100" y1="100" stroke="#f1c40f" stroke-width="3" stroke-dasharray="3,3"></line>
+              <circle cx="100" cy="100" r="8" fill="#ffd700"></circle>
+            </svg>
+            <div id="target-angle-label" class="mini-target-deg">목표: 90°</div>
+          </div>
+        </div>
+
+        <div class="sm-card">
+          <div class="sm-card-label">개념 양극단 카드</div>
+          <div class="sm-concept-row">
+            <span id="giver-concept-left" class="sm-concept left">차가움</span>
+            <span class="sm-vs">VS</span>
+            <span id="giver-concept-right" class="sm-concept right">뜨거움</span>
+          </div>
+        </div>
+
+        <div class="sm-input-row">
+          <input type="text" id="input-clue" placeholder="힌트 단어 또는 문구 입력" maxlength="20" class="sm-text-input">
+          <button id="btn-submit-clue" class="sm-btn primary-btn">힌트 전송</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 추측자 대기 화면 (출제자가 단어 쓸 때) -->
+    <div class="sm-screen hidden" data-screen="guesser-wait">
+      <div class="screen-content">
+        <h2>제시어 대기 중 ⏳</h2>
+        <p class="status-msg">출제자 <b id="guesser-wait-giver-name">플레이어</b>님이 비밀 목표 영역을 확인하고 힌트를 작성 중입니다.</p>
+        <div class="waiting-spinner"></div>
+      </div>
+    </div>
+
+    <!-- 4. 추측 조작 화면 (다이얼 회전) -->
+    <div class="sm-screen hidden" data-screen="guesser-play">
+      <div class="screen-content">
+        <h2 id="guesser-clue-title" class="clue-display">제시어: "솜사탕"</h2>
+        
+        <div class="sm-concept-row margin-bottom">
+          <span id="guesser-concept-left" class="sm-concept left">부드러움</span>
+          <span class="sm-vs">VS</span>
+          <span id="guesser-concept-right" class="sm-concept right">딱딱함</span>
+        </div>
+
+        <!-- 휠/다이얼 터치 컨트롤 영역 -->
+        <div class="wheel-control-container">
+          <div id="touch-wheel" class="touch-wheel">
+            <div class="wheel-knob"></div>
+            <div class="wheel-needle"></div>
+            <div class="wheel-center"></div>
+          </div>
+          <div id="dial-angle-display" class="dial-deg-label">90°</div>
+          <div class="precision-slider-row" style="margin-top: 15px; width: 100%; max-width: 280px; margin-left: auto; margin-right: auto; display: flex; flex-direction: column; gap: 6px;">
+            <input type="range" id="dial-slider" min="0" max="180" value="90" style="width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.15); outline: none; -webkit-appearance: none; cursor: pointer;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(226, 232, 240, 0.45); padding: 0 4px;">
+              <span>0°</span>
+              <span>정밀 각도 조절</span>
+              <span>180°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sm-active-notice">
+          <p id="dial-control-notice" class="notice-msg">다이얼을 드래그하여 목표 위치로 회전시키세요.</p>
+          <button id="btn-submit-guess" class="sm-btn primary-btn" disabled>추측 제출</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. 라운드 종료 결과 공개 화면 -->
+    <div class="sm-screen hidden" data-screen="reveal">
+      <div class="screen-content result-screen">
+        <div id="reveal-score-icon" class="result-icon">🎯</div>
+        <h2 id="reveal-score-title" class="result-title">+4점 획득!</h2>
+        <div class="sm-card">
+          <div class="reveal-compare-row">
+            <div>
+              <div class="label">목표 각도</div>
+              <div id="val-target-angle" class="val gold">90°</div>
+            </div>
+            <div class="reveal-divider"></div>
+            <div>
+              <div class="label">추측 각도</div>
+              <div id="val-guess-angle" class="val red">88°</div>
+            </div>
+          </div>
+        </div>
+        <p class="status-msg">다음 라운드가 시작될 때까지 화면을 유지하세요.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

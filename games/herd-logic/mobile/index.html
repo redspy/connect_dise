@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>허드 로직 — 모바일</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-board">
+
+  <div class="pp-mobile-container">
+    <!-- 상단 바 -->
+    <header class="app-bar">
+      <h1 class="app-title">🐄 HERD LOGIC</h1>
+      <div id="connection-status" class="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-label">연결 중...</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- 1. 대기 화면 -->
+      <div class="hl-screen" data-screen="waiting">
+        <div class="waiting-card">
+          <h2>로비 대기실</h2>
+          <p id="lobby-status" class="status-text">호스트 화면에서 게임이 시작되기를 기다리고 있습니다.</p>
+
+          <!-- 닉네임 입력 (로그인 안 한 경우) -->
+          <div id="join-form" class="join-form hidden">
+            <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="8">
+            <button id="btn-join" class="sm-btn primary-btn">참가하기</button>
+          </div>
+
+          <button id="btn-ready" class="sm-btn primary-btn hidden">준비하기</button>
+        </div>
+      </div>
+
+      <!-- 2. 게임 중 화면 (답변 작성 및 제출) -->
+      <div class="hl-screen hidden" data-screen="game">
+        <div class="hud-mini">
+          <div id="hud-round-mini" class="hud-pill">ROUND 1</div>
+          <div id="pink-cow-notice" class="hud-pill cow-pill hidden">🐄 핑크카우 보유 중!</div>
+        </div>
+
+        <div class="question-container">
+          <p class="section-label">질문</p>
+          <div id="display-question" class="question-text">여기에 질문이 노출됩니다.</div>
+        </div>
+
+        <!-- 답변 입력 창 -->
+        <div id="submit-section" class="input-panel">
+          <p class="section-label">내 생각 적기 (대다수가 적을 만한 답변)</p>
+          <input type="text" id="answer-input" placeholder="가장 평범한 단어를 적으세요" maxlength="15">
+          <button id="btn-submit-answer" class="sm-btn primary-btn">답변 전송 🔒</button>
+        </div>
+
+        <!-- 제출 완료 후 대기 창 -->
+        <div id="waiting-submission-section" class="input-panel hidden">
+          <div class="success-alert">
+            <div class="alert-icon">🔒</div>
+            <div class="alert-text">답변을 전송했습니다. 다른 파일럿들의 선택을 기다리는 중...</div>
+          </div>
+          <p class="submitted-label">제출된 답변: <strong id="submitted-answer-text">사과</strong></p>
+        </div>
+
+        <!-- 답변 채점 발표 레이어 -->
+        <div id="round-result-section" class="input-panel hidden">
+          <div id="round-result-alert" class="success-alert">
+            <div id="result-icon-mini" class="alert-icon">👍</div>
+            <div id="result-text-mini" class="alert-text">다수파와 의견이 일치했습니다! (+1점)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 최종 결과 화면 -->
+      <div class="hl-screen hidden" data-screen="result">
+        <div class="result-card">
+          <div id="result-icon" class="result-icon-giant">🏆</div>
+          <h2 id="result-title">우승자 발표</h2>
+          <p id="result-desc" class="result-desc-text">알파 조종사 님이 최종 다수파 수장으로 우승했습니다!</p>
+          <p class="sub-hint">새 게임은 호스트 화면에서 다시 시작할 수 있습니다.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

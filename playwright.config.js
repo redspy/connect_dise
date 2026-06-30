@@ -8,4 +8,11 @@ export default defineConfig({
     headless: true,
   },
   reporter: [['html', { open: 'never' }], ['line']],
+  webServer: {
+    command: 'npm run dev',
+    url: 'https://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    ignoreHTTPSErrors: true,
+    timeout: 120_000,
+  },
 });

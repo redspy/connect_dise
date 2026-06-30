@@ -75,10 +75,12 @@ export class DobbleMobile extends MobileBaseGame {
 
     this.onMessage('tapResult', ({ correct, newCard, symbolIndex, penaltyMs }) => {
       if (correct) {
+        this.vibrate('light');
         this._myCard = newCard;
         this._showFeedback(true, symbolIndex);
         setTimeout(() => this._renderCard(), 300);
       } else {
+        this.vibrate('double');
         this._applyFreeze(penaltyMs ?? FREEZE_MS);
         this._showFeedback(false, null);
       }
@@ -95,6 +97,13 @@ export class DobbleMobile extends MobileBaseGame {
       this._clearFreeze();
       this._renderResult(rankings);
       this.showScreen('result');
+
+      const myRank = rankings.findIndex(p => p.id === this.playerId);
+      if (myRank === 0) {
+        this.vibrate([100, 50, 100, 50, 300]);
+      } else {
+        this.vibrate('medium');
+      }
     });
 
     this.onMessage('playerListUpdated', ({ players }) => {

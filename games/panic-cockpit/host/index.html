@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>패닉 콕핏 — 호스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+  <!-- SDK 및 컴포넌트 임포트 -->
+  <script type="module" src="../../../platform/client/shared/LobbyPanel.js"></script>
+  <script type="module" src="../../../platform/client/shared/AppBar.js"></script>
+</head>
+<body class="host-board">
+
+  <!-- 1. 로비 오버레이 -->
+  <div class="pc-overlay" data-phase="lobby">
+    <game-lobby title="🚀 패닉 콕핏 (Panic Cockpit)" min-players="2">
+      <div class="pc-intro">
+        <h3>실시간 협동 우주 비행</h3>
+        <p>각자 모바일 화면에 배치된 계기판을 조작해야 합니다.</p>
+        <p><strong>중요:</strong> 나한테 뜨는 지시사항은 대전 상대 혹은 아군의 제어장치 이름입니다. 서로 소리치며 지시를 전달하세요!</p>
+        <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 15px; width: 100%;">🤖 데모 플레이 실행</button>
+      </div>
+    </game-lobby>
+  </div>
+
+  <!-- 2. 게임 영역 (Cockpit HUD) -->
+  <div id="cockpit-container" class="pc-host-container pc-overlay hidden" data-phase="playing">
+    <game-appbar title="🚀 패닉 콕핏 — 항행 중"></game-appbar>
+    
+    <div class="hud-main">
+      <!-- 좌측: 비행 시뮬레이터 및 선폭 상태 -->
+      <div class="hud-panel flight-sim-panel">
+        <div class="space-window">
+          <div class="spaceship-model">🚀</div>
+          <div class="stars-stream"></div>
+          <div class="warning-flash">🚨 HULL INTEGRITY CRITICAL 🚨</div>
+        </div>
+        <div class="health-container">
+          <div class="health-label">선체 내구도 (Hull Integrity)</div>
+          <div class="health-bar-wrap">
+            <div id="health-bar-fill" class="health-bar-fill" style="width: 100%;"></div>
+          </div>
+          <div id="health-text" class="health-text">100%</div>
+        </div>
+      </div>
+
+      <!-- 우측: 미션 현황 및 승무원 조작 현황 -->
+      <div class="hud-panel status-panel">
+        <div class="stat-row">
+          <div class="stat-box">
+            <div class="stat-value" id="stat-distance">0m</div>
+            <div class="stat-label">이동 거리</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="stat-goal">2,000m</div>
+            <div class="stat-label">목표 거리</div>
+          </div>
+        </div>
+
+        <div class="crew-commands-wrap">
+          <h4>실시간 할당된 명령 목록</h4>
+          <div id="active-commands-list" class="commands-grid">
+            <!-- 명령어가 카드 형태로 동적 추가됨 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 결과 오버레이 -->
+  <div class="pc-overlay hidden" data-phase="result">
+    <div class="pc-result-panel">
+      <h2 id="result-title" class="pc-result-title">게임 종료</h2>
+      <p id="result-message" class="pc-result-desc"></p>
+      <button id="btn-restart-result" class="pc-btn-restart">로비로 돌아가기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

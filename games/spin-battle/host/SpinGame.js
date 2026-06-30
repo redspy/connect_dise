@@ -281,12 +281,21 @@ export class SpinGame extends HostBaseGame {
       this.renderer.spawnCollisionParticles(
         (hit.ax + hit.bx) / 2,
         (hit.az + hit.bz) / 2,
-        hit.colorA,
+        hit.colorA
       );
+      if (hit.idA && !hit.idA.startsWith('bot_')) {
+        this.sendToPlayer(hit.idA, 'collisionFeedback', { intensity: 'heavy' });
+      }
+      if (hit.idB && !hit.idB.startsWith('bot_')) {
+        this.sendToPlayer(hit.idB, 'collisionFeedback', { intensity: 'heavy' });
+      }
     }
 
     for (const hit of wallHits) {
       this.renderer.spawnWallParticles(hit.x, hit.z, hit.color, hit.speed);
+      if (hit.id && !hit.id.startsWith('bot_')) {
+        this.sendToPlayer(hit.id, 'wallFeedback', { speed: hit.speed });
+      }
     }
 
     for (const { item } of pickedUp) {

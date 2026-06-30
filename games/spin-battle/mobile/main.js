@@ -112,6 +112,19 @@ mobile.onMessage('gameOver', () => {
   _showPhase('phase-result');
 });
 
+mobile.onMessage('collisionFeedback', ({ intensity }) => {
+  if (intensity === 'heavy') {
+    mobile.vibrate('medium');
+  } else {
+    mobile.vibrate('light');
+  }
+});
+
+mobile.onMessage('wallFeedback', ({ speed }) => {
+  const force = Math.min(150, Math.max(30, Math.round((speed || 0.1) * 800)));
+  mobile.vibrate([force]);
+});
+
 // ─── Permission flow ───────────────────────────────────────────────────────────
 
 btnGrant.addEventListener('click', async () => {
@@ -145,6 +158,9 @@ function _startLaunchPhase() {
 
   const onMotion = () => {
     shakeEnergy += latestShakeMag;
+    if (latestShakeMag > 15 && Math.random() < 0.25) {
+      mobile.vibrate('light');
+    }
   };
   window.addEventListener('devicemotion', onMotion);
 

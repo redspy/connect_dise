@@ -110,7 +110,7 @@ export class NunchiMobile extends MobileBaseGame {
         this._doublesLeft = myData.doublesLeft;
         this._totalScore = myData.totalScore;
       }
-      _vibrate([200, 150, 200, 150, 600]); // 둥 둥 두우우웅
+      this.vibrate([200, 150, 200, 150, 600]); // 둥 둥 두우우웅
       this._showScreen_RoundInput();
     });
 
@@ -122,15 +122,32 @@ export class NunchiMobile extends MobileBaseGame {
     });
 
     this.onMessage('roundRevealed', ({ roundResult }) => {
-      _vibrate([120, 80, 120]); // 두두
       const myScore = roundResult.scores[this.playerId];
       this._totalScore = roundResult.totals[this.playerId] ?? this._totalScore;
       this._myRoundResult = myScore;
       this._showScreen_RoundResult(roundResult);
+
+      if (myScore) {
+        if (myScore.final > 0) {
+          this.vibrate('medium');
+        } else {
+          // 충돌 탈락 또는 0점 획득 시 묵직한 진동
+          this.vibrate('heavy');
+        }
+      } else {
+        this.vibrate('light');
+      }
     });
 
     this.onMessage('gameFinished', ({ rankings }) => {
       this._showScreen_GameResult(rankings);
+      
+      const myIdx = rankings.findIndex(p => p.id === this.playerId);
+      if (myIdx === 0) {
+        this.vibrate([100, 50, 100, 50, 300]);
+      } else {
+        this.vibrate('medium');
+      }
     });
   }
 
@@ -296,6 +313,7 @@ export class NunchiMobile extends MobileBaseGame {
       btn.disabled = !available;
       if (available) {
         btn.addEventListener('click', () => {
+          this.vibrate('light');
           this._selectedCard = n;
           document.querySelectorAll('.card-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
@@ -317,6 +335,7 @@ export class NunchiMobile extends MobileBaseGame {
 
   _submitChoice() {
     this._submitted = true;
+    this.vibrate('medium');
     this.sendToHost('submitChoice', { card: this._selectedCard, useDouble: this._useDouble });
 
     // Switch to waiting_reveal

@@ -156,6 +156,9 @@ export class MobileBaseGame {
   /** 모션 센서 등록 */
   onMotion(callback) { this.sdk.onMotion(callback); }
 
+  /** 진동(Haptic) 피드백 발생 */
+  vibrate(effect = 'light') { this.sdk.vibrate(effect); }
+
   // ─── Lifecycle hooks ─────────────────────────────────────────────────────
   // 서브클래스에서 필요한 것만 override합니다.
 

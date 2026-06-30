@@ -49,9 +49,13 @@ export class HostBaseGame {
     this._disconnectedColors  = new Map();   // id → color (leave 후에도 색상 유지)
     this._playerNicknames     = new Map();   // id → nickname (게임이 setPlayerName으로 등록)
     this._reconnectBannerQrDone = false;
+    this._idleTimeout = null;
 
     this._wireSDK();
     this._initReconnectBanner();
+
+    document.addEventListener('click', () => this._resetIdleTimer());
+    document.addEventListener('mousemove', () => this._resetIdleTimer());
   }
 
   // ─── Internal ────────────────────────────────────────────────────────────
@@ -72,6 +76,7 @@ export class HostBaseGame {
 
     this.sdk.on('playerJoin', (player) => {
       this._players.set(player.id, player);
+      this._resetIdleTimer();
       this.onPlayerJoin(player);
     });
 
@@ -87,6 +92,7 @@ export class HostBaseGame {
       this._players.delete(playerId);
       this._disconnectedPlayers.delete(playerId);
       this._refreshReconnectBanner();
+      this._resetIdleTimer();
       this.onPlayerLeave(playerId);
 
       // 게임 진행 중 모든 플레이어가 퇴장하면 세션을 자동 리셋하여 로비로 복귀
@@ -99,6 +105,7 @@ export class HostBaseGame {
     });
 
     this.sdk.on('readyUpdate', ({ readyCount, total }) => {
+      this._resetIdleTimer();
       this.onReadyUpdate({ readyCount, total });
     });
 
@@ -110,6 +117,7 @@ export class HostBaseGame {
       this._players.set(player.id, player);
       this._disconnectedPlayers.delete(player.id);
       this._refreshReconnectBanner();
+      this._resetIdleTimer();
       this.onPlayerRejoin(player);
     });
 
@@ -122,6 +130,7 @@ export class HostBaseGame {
       this._disconnectedPlayers.clear();
       this._refreshReconnectBanner();
       this._phase = 'lobby';
+      this._resetIdleTimer();
       this.onReset();
     });
   }
@@ -248,7 +257,35 @@ export class HostBaseGame {
     document.querySelectorAll(`.${this._overlayClass}`).forEach(el => {
       el.classList.toggle('hidden', el.dataset.phase !== name);
     });
+    this._resetIdleTimer();
     this.onPhaseChange(prev, name);
+  }
+
+  // ─── Idle / Attract Mode ──────────────────────────────────────────────────
+
+  _resetIdleTimer() {
+    if (this._idleTimeout) {
+      clearTimeout(this._idleTimeout);
+      this._idleTimeout = null;
+    }
+    if (this._phase === 'lobby') {
+      const sim = this._demoSimulator || this.demoSimulator;
+      const isCurrentlyDemo = this._isDemo || sim?.isDemo || sim?.isDemoActive;
+      if (!isCurrentlyDemo) {
+        this._idleTimeout = setTimeout(() => {
+          this._triggerAutoDemo();
+        }, 60000); // 60초
+      }
+    }
+  }
+
+  _triggerAutoDemo() {
+    if (this._phase !== 'lobby') return;
+    const sim = this._demoSimulator || this.demoSimulator;
+    if (sim && typeof sim.startDemo === 'function') {
+      console.log('[Platform] Lobby idle for 60s. Auto-starting demo play.');
+      sim.startDemo();
+    }
   }
 
   /** 현재 페이즈 이름 */

@@ -16,6 +16,7 @@ const btnRetry = document.getElementById('btn-retry');
 let myColor = '#FFFFFF';
 let lastUpdate = 0;
 let lastThrowTime = 0;
+let lastShakeHapticTime = 0;
 
 const levelIndicator = new LevelIndicator({
   bubble: document.getElementById('level-bubble'),
@@ -80,6 +81,13 @@ function initSensors() {
       if (magnitude > 15) {
         triggerThrow();
       } else if (magnitude > 3 && !visualDice.classList.contains('throwing')) {
+        // 흔들기 진동 피드백 (200ms 스로틀링)
+        const shakeNow = Date.now();
+        if (shakeNow - lastShakeHapticTime > 200) {
+          lastShakeHapticTime = shakeNow;
+          mobile.vibrate('light');
+        }
+
         // 부드럽게 흔들리는 시각적 효과 유지 (3D Rotate)
         visualDice.style.transition = 'transform 0.05s ease';
         const rx = Math.random() * 40 - 20;
@@ -114,6 +122,10 @@ diceArea.addEventListener('touchstart', (e) => {
 
 diceArea.addEventListener('dblclick', () => triggerThrow());
 
+const manualControls = document.getElementById('manual-controls');
+const btnManualShake = document.getElementById('btn-manual-shake');
+const btnManualThrow = document.getElementById('btn-manual-throw');
+
 function triggerThrow() {
   const now = Date.now();
   if (now - lastThrowTime < 500) return;
@@ -127,6 +139,7 @@ function triggerThrow() {
 
   if (instructionMain) instructionMain.classList.add('hidden');
   if (instructionSub) instructionSub.classList.add('hidden');
+  if (manualControls) manualControls.classList.add('hidden');
 
   setTimeout(() => {
     if (btnRetry) {
@@ -139,6 +152,33 @@ function triggerThrow() {
   mobile.sendToHost('throwDice', { strength: 1.0, color: myColor });
 }
 
+if (btnManualShake) {
+  btnManualShake.addEventListener('click', () => {
+    if (visualDice.classList.contains('throwing')) return;
+
+    mobile.vibrate('light');
+
+    // 시각적 흔들림 효과
+    visualDice.style.transition = 'transform 0.05s ease';
+    const rx = Math.random() * 40 - 20;
+    const ry = Math.random() * 40 - 20;
+    const rz = Math.random() * 20 - 10;
+    visualDice.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(1.05)`;
+    setTimeout(() => {
+      if (!visualDice.classList.contains('throwing')) {
+        visualDice.style.transform = 'none';
+        visualDice.style.transition = 'transform 0.1s ease-out';
+      }
+    }, 50);
+  });
+}
+
+if (btnManualThrow) {
+  btnManualThrow.addEventListener('click', () => {
+    triggerThrow();
+  });
+}
+
 if (btnRetry) {
   btnRetry.addEventListener('click', () => {
     visualDice.classList.remove('throwing');
@@ -146,6 +186,7 @@ if (btnRetry) {
     setTimeout(() => btnRetry.classList.add('hidden'), 300);
     if (instructionMain) instructionMain.classList.remove('hidden');
     if (instructionSub) instructionSub.classList.remove('hidden');
+    if (manualControls) manualControls.classList.remove('hidden');
     
     // 호스트의 UI 다시 표시
     mobile.sendToHost('resetDice', {});

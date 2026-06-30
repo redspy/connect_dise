@@ -24,12 +24,6 @@ export class OmokAI {
     }
 
     findWinningMove(board, color) {
-        // Check all empty spots to see if placing a stone there creates 5 in a row
-        // Or if it blocks a 4-in-a-row (which is effectively a win for the opponent)
-        // Actually, for "winning move", we look for 4 existing stones that become 5.
-        // For "blocking", we look for opponent's 3 or 4 that become dangerous.
-        
-        // Let's simplify: Check for "Open 4" or "4" that can become 5.
         for (let r = 0; r < this.size; r++) {
             for (let c = 0; c < this.size; c++) {
                 if (board[r][c] === null) {

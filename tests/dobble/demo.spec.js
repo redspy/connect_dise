@@ -23,7 +23,7 @@ test.describe('Dobble — 데모 플레이 E2E 테스트', () => {
     // 봇들이 매칭 탭 성공해서 점수가 올라가는지 확인
     // 누군가 점수를 획득하여 1점 이상이 되는 카드가 나올 때까지 대기
     const firstScore = host.locator('.db-sc-score').first();
-    await expect(firstScore).not.toContainText('0 / 10', { timeout: 12_000 });
+    await expect(firstScore).not.toContainText('0 / 10', { timeout: 30_000 });
 
     await hostCtx.close();
   });

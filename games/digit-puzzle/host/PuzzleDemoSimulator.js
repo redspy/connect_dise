@@ -1,14 +1,17 @@
 export class PuzzleDemoSimulator {
   constructor(game) {
     this.game = game;
-    this.isDemo = false;
     this.demoInterval = null;
     this.demoTimeouts = [];
   }
 
+  get isDemo() {
+    return this.game._isDemo;
+  }
+
   startDemo() {
-    if (this.isDemo) return;
-    this.isDemo = true;
+    if (this.game._isDemo) return;
+    this.game._isDemo = true;
 
     // 1. 가상 봇 3명 등록
     const bots = [
@@ -60,8 +63,8 @@ export class PuzzleDemoSimulator {
   }
 
   stopDemo() {
-    if (!this.isDemo) return;
-    this.isDemo = false;
+    if (!this.game._isDemo) return;
+    this.game._isDemo = false;
 
     if (this.demoInterval) {
       clearInterval(this.demoInterval);
@@ -94,7 +97,7 @@ export class PuzzleDemoSimulator {
   }
 
   onPhaseChange(phase) {
-    if (!this.isDemo) return;
+    if (!this.game._isDemo) return;
 
     if (this.demoInterval) {
       clearInterval(this.demoInterval);

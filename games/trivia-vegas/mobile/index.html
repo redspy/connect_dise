@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>트리비아 베가스 — 모바일</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-board">
+
+  <div class="pp-mobile-container">
+    <header class="app-bar">
+      <h1 class="app-title">🎲 TRIVIA VEGAS</h1>
+      <div id="connection-status" class="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-label">연결 중...</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- 1. 대기실 -->
+      <div class="tv-screen" data-screen="waiting">
+        <div class="card-bg">
+          <h2>뱅킹 대기실</h2>
+          <p id="lobby-status" class="status-desc">호스트에서 게임이 시작되면 카지노가 개방됩니다.</p>
+
+          <!-- 닉네임 입력 -->
+          <div id="join-form" class="join-form hidden">
+            <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="8">
+            <button id="btn-join" class="sm-btn primary-btn">참가하기</button>
+          </div>
+
+          <button id="btn-ready" class="sm-btn primary-btn hidden">준비하기</button>
+        </div>
+      </div>
+
+      <!-- 2. 게임 본판 -->
+      <div class="tv-screen hidden" data-screen="game">
+        <!-- 미니 스펙 HUD -->
+        <div class="hud-bar">
+          <div id="hud-round-text" class="hud-tag">ROUND 1</div>
+          <div id="hud-money" class="hud-tag money-tag">$1,000</div>
+        </div>
+
+        <!-- 2-A. 추정답안 키패드 섹션 (estimates phase) -->
+        <div id="estimate-section" class="card-bg">
+          <p class="card-label">질문에 대한 추정 숫자를 입력하세요</p>
+          <div class="numpad-display" id="display-numpad-val">0</div>
+          
+          <!-- 커스텀 키패드 Grid (키보드 팝업 방지용) -->
+          <div class="numpad-grid">
+            <button class="num-btn" data-key="1">1</button>
+            <button class="num-btn" data-key="2">2</button>
+            <button class="num-btn" data-key="3">3</button>
+            <button class="num-btn" data-key="4">4</button>
+            <button class="num-btn" data-key="5">5</button>
+            <button class="num-btn" data-key="6">6</button>
+            <button class="num-btn" data-key="7">7</button>
+            <button class="num-btn" data-key="8">8</button>
+            <button class="num-btn" data-key="9">9</button>
+            <button class="num-btn" data-key=".">.</button>
+            <button class="num-btn" data-key="0">0</button>
+            <button class="num-btn back-btn" data-key="back">⌫</button>
+          </div>
+
+          <button id="btn-submit-estimate" class="sm-btn primary-btn" style="margin-top: 15px;">추정 답안 제출 🔒</button>
+        </div>
+
+        <!-- 2-B. 베팅 슬롯 선택 및 액수 조절 섹션 (betting phase) -->
+        <div id="betting-section" class="card-bg hidden">
+          <p class="card-label">베팅할 슬롯을 누르고 베팅 액수를 정하세요</p>
+          
+          <!-- 스크롤 가능한 정렬 답변 리스트 -->
+          <div id="betting-slots-container" class="slots-list">
+            <!-- 동적으로 답변 슬롯들이 렌더링됨 -->
+          </div>
+
+          <!-- 베팅 머니 제어 패널 -->
+          <div class="betting-controls">
+            <div class="bet-info">
+              <span>선택 슬롯: <strong id="selected-slot-text">선택 안 함</strong></span>
+              <span>배팅 칩: <strong id="current-bet-value">$100</strong></span>
+            </div>
+            
+            <div class="bet-adjust-row">
+              <button class="adjust-btn" id="btn-bet-minus">-$100</button>
+              <button class="adjust-btn" id="btn-bet-plus">+$100</button>
+              <button class="adjust-btn max-btn" id="btn-bet-max">ALL IN</button>
+            </div>
+
+            <button id="btn-confirm-bet" class="sm-btn primary-btn" style="margin-top: 10px;">베팅 칩 투척 🎲</button>
+          </div>
+        </div>
+
+        <!-- 2-C. 대기 섹션 (정산 대기) -->
+        <div id="waiting-result-section" class="card-bg hidden">
+          <div class="alert-box">
+            <div class="alert-spinner">🎲</div>
+            <p id="waiting-status-text">배팅이 마감되었습니다. 호스트의 정답 정산을 기다리는 중...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. 결과 창 -->
+      <div class="tv-screen hidden" data-screen="result">
+        <div class="card-bg result-card">
+          <div class="gold-icon">💰</div>
+          <h2 id="result-title">카지노 종료</h2>
+          <p id="result-desc" class="result-summary">최종 자산 결과 순위가 집계되었습니다.</p>
+          <p class="helper-hint">다음 매치는 호스트 로비에서 새로 시작할 수 있습니다.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

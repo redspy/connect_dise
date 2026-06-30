@@ -1,0 +1,317 @@
+:root {
+  --primary-color: #e94560;
+  --bg-color: #1a1a2e;
+  --card-bg: #16213e;
+  --text-color: #e2e8f0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --gold-color: #ffd700;
+}
+
+.hidden {
+  display: none !important;
+}
+
+body.mobile-controller {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 16px) + 16px) 16px;
+  box-sizing: border-box;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--primary-color);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4444;
+}
+
+.status-indicator.connected {
+  background: #00c851;
+  box-shadow: 0 0 8px #00c851;
+}
+
+.sm-role-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sm-role-badge.giver {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  color: #000;
+}
+
+.sm-role-badge.guesser {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: #fff;
+}
+
+.sm-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen-content {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  text-align: center;
+}
+
+.sm-card {
+  width: 100%;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.sm-card-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #718096;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+/* 미니 다이얼 SVG 게이지 */
+.mini-target-gauge {
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.mini-target-deg {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--gold-color);
+  margin-top: 5px;
+}
+
+/* 개념 행 */
+.sm-concept-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: rgba(0,0,0,0.25);
+  padding: 12px 20px;
+  border-radius: 50px;
+  box-sizing: border-box;
+}
+
+.sm-concept-row.margin-bottom {
+  margin-bottom: 10px;
+}
+
+.sm-concept {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.sm-concept.left { color: #5dade2; }
+.sm-concept.right { color: #f1948a; }
+
+.sm-vs {
+  font-size: 0.75rem;
+  color: #718096;
+  font-weight: bold;
+}
+
+/* 제시어 입력 인풋 */
+.sm-input-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.sm-text-input {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: rgba(0,0,0,0.3);
+  color: #fff;
+  font-size: 1.1rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.sm-text-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.2);
+}
+
+.sm-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* 제시어 타이틀 */
+.clue-display {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #f39c12;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(243, 156, 18, 0.2);
+}
+
+/* 터치 회전 휠 다이얼 */
+.wheel-control-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.touch-wheel {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #2d3748 40%, #1a202c 100%);
+  border: 8px solid #4a5568;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 4px 10px rgba(255,255,255,0.05);
+  touch-action: none;
+  cursor: grab;
+}
+
+.touch-wheel:active {
+  cursor: grabbing;
+}
+
+.wheel-knob {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #718096, #4a5568);
+  border: 2px solid #a0aec0;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
+}
+
+.wheel-needle {
+  position: absolute;
+  top: 15px;
+  bottom: 50%;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  background: var(--primary-color);
+  box-shadow: 0 0 8px var(--primary-color);
+}
+
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f7fafc, #cbd5e0, #4a5568);
+  border: 3px solid #2d3748;
+}
+
+.dial-deg-label {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+.sm-active-notice {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notice-msg {
+  font-size: 0.9rem;
+  color: #718096;
+  margin: 0;
+}
+
+/* 결과 공개 스크린 */
+.reveal-compare-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.reveal-compare-row .label {
+  font-size: 0.85rem;
+  color: #a0aec0;
+  margin-bottom: 5px;
+}
+
+.reveal-compare-row .val {
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.reveal-compare-row .val.gold { color: var(--gold-color); }
+.reveal-compare-row .val.red { color: var(--primary-color); }
+
+.reveal-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border-color);
+}

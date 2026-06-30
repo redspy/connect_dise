@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>허드 로직 — 호스트</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="../../../src/style.css">
+  <link rel="stylesheet" href="./style.css">
+  <!-- SDK 및 컴포넌트 임포트 -->
+  <script type="module" src="../../../platform/client/shared/LobbyPanel.js"></script>
+  <script type="module" src="../../../platform/client/shared/AppBar.js"></script>
+</head>
+<body class="host-board">
+
+  <!-- 1. 로비 오버레이 -->
+  <div class="hl-overlay" data-phase="lobby">
+    <game-lobby title="🐄 허드 로직 (Herd Logic)" min-players="2">
+      <div class="hl-intro">
+        <h3>대다수의 평범한 생각에 정답이 있습니다!</h3>
+        <p>어떤 질문이 주어지면, 남들이 가장 많이 적을 것 같은 답변을 적어야 합니다.</p>
+        <p>다수파에 동조하면 점수를 얻지만, 혼자만 튀는 엉뚱한 답을 적은 플레이어는 <strong>핑크 카우(Pink Cow) 🐄</strong> 토큰을 가져가며 점수를 빼앗깁니다!</p>
+        <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 15px; width: 100%;">🤖 데모 플레이 실행</button>
+      </div>
+    </game-lobby>
+  </div>
+
+  <!-- 2. 게임 본 화면 -->
+  <div id="game-container" class="hl-host-container hl-overlay hidden" data-phase="playing">
+    <game-appbar title="🐄 허드 로직 — 동조 중"></game-appbar>
+
+    <div class="hl-main-content">
+      <!-- 상단: 라운드 정보 및 현황판 -->
+      <div class="hl-hud">
+        <div class="hl-hud-item">
+          <span class="hud-label">라운드</span>
+          <span id="hud-round" class="hud-val">1 / 3</span>
+        </div>
+        <div class="hl-hud-item">
+          <span class="hud-label">단계</span>
+          <span id="hud-phase-label" class="hud-val">답변 제출 단계</span>
+        </div>
+      </div>
+
+      <!-- 중앙: 질문 카드 섹션 -->
+      <div class="question-section">
+        <div class="question-card">
+          <span class="question-badge">QUESTION</span>
+          <h2 id="current-question">질문을 로드하고 있습니다...</h2>
+        </div>
+      </div>
+
+      <!-- 하단: 플레이어 카드 그리드 (답변 플립 / 상태 표시) -->
+      <div class="players-cards-grid" id="players-grid">
+        <!-- 동적으로 플레이어 카드가 렌더링됨 -->
+      </div>
+
+      <!-- 콘트롤 패널 (호스트 전용 조작 버튼) -->
+      <div class="host-controls-panel">
+        <button id="btn-action-host" class="hl-action-btn hidden">답변 공개! 👁️</button>
+        <button id="btn-next-round" class="hl-action-btn hidden">다음 질문 ➔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 최종 결과 오버레이 -->
+  <div class="hl-overlay hidden" data-phase="result">
+    <div class="hl-result-panel">
+      <h2 class="hl-result-title">🏆 성적 발표</h2>
+      <div id="ranking-list" class="ranking-container"></div>
+      <button id="btn-restart-result" class="hl-btn-restart">로비로 돌아가기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
