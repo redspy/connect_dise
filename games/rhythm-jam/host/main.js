@@ -289,7 +289,14 @@ export class RhythmJamHost extends HostBaseGame {
       const titles = {
         disco: '🕺 Neon Disco (110 BPM)',
         lounge: '🌌 Space Lounge (90 BPM)',
-        rave: '⚡ Cyber Rave (130 BPM)'
+        rave: '⚡ Cyber Rave (130 BPM)',
+        retro: '👾 Retro 8-Bit (100 BPM)',
+        funk: '🎸 Future Funk (115 BPM)',
+        synth: '🌆 Synthwave Dream (120 BPM)',
+        techno: '🏭 Acid Techno (140 BPM)',
+        lofi: '☕ Hip-Hop Lo-Fi (80 BPM)',
+        waltz: '🎡 Galaxy Waltz (120 BPM)',
+        chaos: '🔥 Chaos Drummer (150 BPM)'
       };
       trackTitleEl.textContent = titles[trackName] || trackName;
     }
@@ -311,35 +318,98 @@ export class RhythmJamHost extends HostBaseGame {
     const notes = [];
     let bpm = 110;
     let length = 20; // 20초 단축 플레이
-    const beatLen = 60 / bpm;
+    
+    // BPM 매핑
+    const bpms = {
+      disco: 110, lounge: 90, rave: 130, retro: 100,
+      funk: 115, synth: 120, techno: 140, lofi: 80,
+      waltz: 120, chaos: 150
+    };
+    bpm = bpms[trackName] || 110;
+    const bLen = 60 / bpm;
+    const totalBeats = Math.floor(length / bLen);
 
     if (trackName === 'disco') {
-      bpm = 110;
-      const bLen = 60 / bpm;
-      for (let b = 2; b < 36; b++) {
+      for (let b = 2; b < totalBeats; b++) {
         const time = b * bLen;
-        notes.push({ time, lane: 2 }); // 하이햇 온비트
-        if (b % 2 === 0) notes.push({ time, lane: 0 }); // 킥
-        if (b % 2 === 1) notes.push({ time, lane: 1 }); // 스네어
+        notes.push({ time, lane: 2 });
+        if (b % 2 === 0) notes.push({ time, lane: 0 });
+        if (b % 2 === 1) notes.push({ time, lane: 1 });
       }
     } else if (trackName === 'lounge') {
-      bpm = 90;
-      const bLen = 60 / bpm;
-      for (let b = 2; b < 28; b++) {
+      for (let b = 2; b < totalBeats; b++) {
         const time = b * bLen;
         notes.push({ time, lane: 2 });
         if (b % 4 === 0 || b % 4 === 2) notes.push({ time, lane: 0 });
-        if (b % 4 === 1) notes.push({ time: time + bLen * 0.5, lane: 1 }); // 엇박 스네어
+        if (b % 4 === 1) notes.push({ time: time + bLen * 0.5, lane: 1 });
       }
     } else if (trackName === 'rave') {
-      bpm = 130;
-      const bLen = 60 / bpm;
-      for (let b = 2; b < 42; b++) {
+      for (let b = 2; b < totalBeats; b++) {
         const time = b * bLen;
         notes.push({ time, lane: 2 });
-        notes.push({ time: time + bLen * 0.5, lane: 2 }); // 더블 하이햇
+        notes.push({ time: time + bLen * 0.5, lane: 2 });
         if (b % 2 === 0) notes.push({ time, lane: 0 });
         else notes.push({ time, lane: 1 });
+      }
+    } else if (trackName === 'retro') {
+      // 8비트 레트로
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        notes.push({ time, lane: 2 });
+        if (b % 4 === 0) notes.push({ time, lane: 0 });
+        if (b % 4 === 2) notes.push({ time: time + bLen * 0.5, lane: 0 });
+        if (b % 2 === 1) notes.push({ time, lane: 1 });
+      }
+    } else if (trackName === 'funk') {
+      // 퓨처 펑크
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        notes.push({ time, lane: 2 });
+        if (b % 4 === 0 || b % 4 === 3) notes.push({ time: time + bLen * 0.25, lane: 0 });
+        if (b % 2 === 1) notes.push({ time, lane: 1 });
+      }
+    } else if (trackName === 'synth') {
+      // 신스웨이브
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        notes.push({ time, lane: 0 });
+        notes.push({ time: time + bLen * 0.5, lane: 0 });
+        if (b % 2 === 1) notes.push({ time, lane: 1 });
+        if (b % 4 === 0) notes.push({ time, lane: 2 });
+      }
+    } else if (trackName === 'techno') {
+      // 애시드 테크노
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        notes.push({ time, lane: 0 });
+        notes.push({ time, lane: 2 });
+        if (b % 4 === 2 || b % 4 === 3.5) {
+          notes.push({ time: time + bLen * 0.25, lane: 1 });
+        }
+      }
+    } else if (trackName === 'lofi') {
+      // 힙합 로파이
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        if (b % 2 === 0) notes.push({ time, lane: 2 });
+        if (b % 4 === 0) notes.push({ time, lane: 0 });
+        if (b % 4 === 2) notes.push({ time, lane: 1 });
+      }
+    } else if (trackName === 'waltz') {
+      // 3/4 왈츠
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        if (b % 3 === 0) notes.push({ time, lane: 0 });
+        if (b % 3 === 1) notes.push({ time, lane: 1 });
+        if (b % 3 === 2) notes.push({ time, lane: 2 });
+      }
+    } else if (trackName === 'chaos') {
+      // 카오스 드러머
+      for (let b = 2; b < totalBeats; b++) {
+        const time = b * bLen;
+        if (Math.random() < 0.8) notes.push({ time, lane: 2 });
+        if (Math.random() < 0.6) notes.push({ time: time + bLen * 0.5, lane: 1 });
+        if (b % 2 === 0) notes.push({ time, lane: 0 });
       }
     }
     return { bpm, notes, length };
