@@ -187,4 +187,15 @@ export const GAMES = [
     thumbnail: '🌀',
     group: 'multi',
   },
+  {
+    id: 'rhythm-jam',
+    name: '리듬 잼 (Rhythm Jam)',
+    description: '신나는 드럼 비트 오케스트라! 다이내믹 합성 0ms 사운드로 리듬 타이밍을 연주하는 잼 세션 🥁',
+    hostPath: '/games/rhythm-jam/host/',
+    mobilePath: '/games/rhythm-jam/mobile/',
+    minPlayers: 1,
+    maxPlayers: 8,
+    thumbnail: '🥁',
+    group: 'multi',
+  },
 ];

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>리듬 잼 - Host</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board">
+  <!-- 메인 컨테이너 (z-index: 10 가드) -->
+  <div class="pp-host-container">
+    
+    <!-- ─── 1. 대기실 페이즈 ─── -->
+    <div class="dw-overlay" data-phase="lobby">
+      <div class="lobby-header">
+        <h1 class="lobby-title">🥁 RHYTHM JAM 🥁</h1>
+        <p class="lobby-desc">서로의 스마트폰을 드럼 패드 삼아, 떨어지는 박자에 맞춰 완벽한 합주를 연출하세요!</p>
+      </div>
+
+      <div class="lobby-setup-row">
+        <!-- QR & 접속 박스 -->
+        <div class="qr-section card-bg">
+          <div id="qr-box" class="qr-container"></div>
+          <div class="session-info">
+            <span class="session-label">ROOM CODE</span>
+            <span id="room-code-val" class="session-code">----</span>
+          </div>
+        </div>
+
+        <!-- 설정 & 플레이어 보드 -->
+        <div class="setup-section card-bg">
+          <h2 class="section-title">🎵 수록곡 설정</h2>
+          <div class="select-wrapper">
+            <select id="track-select-box" class="track-select">
+              <option value="disco">🕺 네온 디스코 (Neon Disco) - 110 BPM (보통)</option>
+              <option value="lounge">🌌 스페이스 라운지 (Space Lounge) - 90 BPM (쉬움/엇박)</option>
+              <option value="rave">⚡ 사이버 레이브 (Cyber Rave) - 130 BPM (매우 빠름)</option>
+            </select>
+          </div>
+
+          <div class="players-headline">참가 플레이어 목록</div>
+          <div id="roles-board" class="players-grid"></div>
+
+          <button id="demoPlayBtn" class="btn-demo">🤖 데모 플레이 실행</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── 2. 인게임 플레이 페이즈 ─── -->
+    <div class="dw-overlay hidden" data-phase="playing">
+      <!-- HUD 헤더 -->
+      <div class="hud-header">
+        <div class="hud-item">
+          <span class="hud-label">SCORE</span>
+          <span id="hud-score" class="hud-val neon-text-cyan">0</span>
+        </div>
+        <div class="hud-item-center">
+          <span id="hud-track-title" class="hud-track">Neon Disco</span>
+          <div class="progress-bar-wrap">
+            <div id="hud-progress-bar" class="progress-bar-fill"></div>
+          </div>
+        </div>
+        <div class="hud-item align-right">
+          <span class="hud-label">MAX COMBO</span>
+          <span id="hud-max-combo" class="hud-val neon-text-yellow">0</span>
+        </div>
+      </div>
+
+      <!-- 타격 이펙트 및 판정 메시지 오버레이 -->
+      <div class="stage-overlay">
+        <div id="judge-stamp" class="judge-stamp hidden">대박!</div>
+        <div id="combo-display" class="combo-display hidden">
+          <span id="combo-count" class="combo-num">0</span>
+          <span class="combo-text">COMBO</span>
+        </div>
+      </div>
+
+      <!-- 리듬 게임 메인 캔버스 무대 -->
+      <div class="canvas-wrapper">
+        <canvas id="stage-canvas" width="900" height="450"></canvas>
+      </div>
+
+      <div id="stabilization-banner" class="stabilize-banner hidden">
+        ⚠️ 플레이어 재연결 대기 중... 게임이 일시정지 되었습니다.
+      </div>
+    </div>
+
+    <!-- ─── 3. 결과 페이즈 ─── -->
+    <div class="dw-overlay hidden" data-phase="result">
+      <div class="result-box card-bg">
+        <h1 id="result-headline" class="result-title">🏆 합주 완료!</h1>
+        
+        <div class="rank-container">
+          <span id="result-grade" class="result-grade">S</span>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-lbl">최종 점수</span>
+            <span id="result-score" class="stat-val neon-text-cyan">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">최대 콤보</span>
+            <span id="result-max-combo" class="stat-val neon-text-yellow">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">정확도 (대박/나이스 비율)</span>
+            <span id="result-accuracy" class="stat-val text-green">0%</span>
+          </div>
+        </div>
+
+        <button id="btn-restart-result" class="btn-primary">🔄 로비로 돌아가기</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SDK 및 로직 스크립트 -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

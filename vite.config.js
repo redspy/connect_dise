@@ -105,6 +105,8 @@ export default defineConfig({
         triviaVegasMobile:   resolve(__dirname, 'games/trivia-vegas/mobile/index.html'),
         dimensionWeaverHost:   resolve(__dirname, 'games/dimension-weaver/host/index.html'),
         dimensionWeaverMobile: resolve(__dirname, 'games/dimension-weaver/mobile/index.html'),
+        rhythmJamHost:   resolve(__dirname, 'games/rhythm-jam/host/index.html'),
+        rhythmJamMobile: resolve(__dirname, 'games/rhythm-jam/mobile/index.html'),
       },
     },
   },
