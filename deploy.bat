@@ -22,7 +22,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [Step 4] Starting server...
-start "ConnectDiseServer" /min cmd /c "cd /d %~dp0 && node server/index.js > server.log 2>&1"
+powershell -Command "Start-Process -FilePath 'node' -ArgumentList 'server/index.js' -WorkingDirectory '%cd%' -RedirectStandardOutput 'server.log' -RedirectStandardError 'server.log'"
 
 echo ========================================
 echo  Deploy complete!
