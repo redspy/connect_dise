@@ -22,7 +22,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo [Step 4] Starting server...
-powershell -Command "Start-Process -FilePath 'node' -ArgumentList 'server/index.js' -WorkingDirectory '%cd%' -RedirectStandardOutput 'server.log' -RedirectStandardError 'server.log'"
+powershell -Command "Start-Process -FilePath 'node' -ArgumentList 'server/index.js' -WorkingDirectory '%cd%' -RedirectStandardOutput 'server.log' -RedirectStandardError 'server_error.log'"
 
 echo ========================================
 echo  Deploy complete!
