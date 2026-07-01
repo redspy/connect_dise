@@ -318,9 +318,10 @@ class PitTradeHost extends HostBaseGame {
       const card = document.createElement('div');
       card.className = `player-hud-card ${isWarning ? 'warning-near' : ''}`;
       card.innerHTML = `
-        <span>${nick}</span>
+        <span></span>
         <span>최다 ${currentMax}장</span>
       `;
+      card.firstElementChild.textContent = nick;
       grid.appendChild(card);
     });
   }
@@ -351,9 +352,10 @@ class PitTradeHost extends HostBaseGame {
       const card = document.createElement('div');
       card.className = 'trade-item-card';
       card.innerHTML = `
-        <span class="trade-user">${t.nickname}</span>
+        <span class="trade-user"></span>
         <span class="trade-card-count">${t.cardCount}장 교환 희망</span>
       `;
+      card.querySelector('.trade-user').textContent = t.nickname;
       container.appendChild(card);
     });
   }
@@ -428,9 +430,10 @@ class PitTradeHost extends HostBaseGame {
         const row = document.createElement('div');
         row.className = 'ranking-row';
         row.innerHTML = `
-          <span>${this._playerNicknames.get(pid) || 'Player'}</span>
+          <span></span>
           <span>${score} 점</span>
         `;
+        row.firstElementChild.textContent = this._playerNicknames.get(pid) || 'Player';
         ranking.appendChild(row);
       });
     }

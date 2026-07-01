@@ -145,9 +145,10 @@ class PitTradeMobile extends MobileBaseGame {
         const row = document.createElement('div');
         row.className = 'market-trade-row';
         row.innerHTML = `
-          <span>${t.nickname}</span>
+          <span></span>
           <span class="badge">${t.cardCount}장 교환 희망</span>
         `;
+        row.firstElementChild.textContent = t.nickname;
         row.onclick = () => this._onAcceptTrade(t.playerId, t.cardCount);
         container.appendChild(row);
       });
@@ -178,9 +179,10 @@ class PitTradeMobile extends MobileBaseGame {
           const row = document.createElement('div');
           row.className = 'score-row';
           row.innerHTML = `
-            <span>${nick}</span>
+            <span></span>
             <span>${val} 점</span>
           `;
+          row.firstElementChild.textContent = nick;
           scoreList.appendChild(row);
         });
       }
