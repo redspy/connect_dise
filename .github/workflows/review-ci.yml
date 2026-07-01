@@ -1,0 +1,44 @@
+name: Headless Agent Audit CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  agent-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Claude Code CLI Audit
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            git diff HEAD~1 | npx @anthropic-ai/claude-code -p "아키텍처 결함, 소켓 지터, 메모리 누수 및 SDK 규칙 준수 여부 리뷰" --allowedTools "Read"
+          else
+            echo "Skipping Claude Code: ANTHROPIC_API_KEY secret is not set."
+          fi
+
+      - name: Run Codex Document Sync Audit
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "$OPENAI_API_KEY" ]; then
+            npx @openai/codex exec "설계 문서(AGENTS.md, ARCHITECTURE.md)와 소스 코드 간 정합성 감사"
+          else
+            echo "Skipping Codex: OPENAI_API_KEY secret is not set."
+          fi

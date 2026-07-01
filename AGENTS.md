@@ -210,4 +210,19 @@ node server/index.js
 *   도출된 두 보고서의 이슈에 대하여 가상 전문가 회의(Revision 16 등)를 거쳐 코드의 오작동 요소를 즉시 보강 수정한 뒤에 비로소 릴리즈 커밋 및 원격 저장소 푸쉬를 수행합니다.
 *   로컬 셸 프로필(API Key, OAuth Token) 환경 변수 로드가 필요한 경우, 비대화형 셸 환경에서는 `zsh -l -c "command"` 형태로 명령을 랩핑하여 환경 변수 누락을 방지합니다.
 
+### 4. 4대 개발 프로세스 라이프사이클 결합 (Full Pipeline Integration)
+
+이 프로젝트는 개발 프로세스의 모든 단계에서 두 CLI의 정적 리뷰를 강제 탑재하여 무결성을 보존합니다.
+
+1.  **로컬 Git 커밋 예방 단계 (Pre-commit Hook)**
+    *   커밋(`git commit`) 호출 시, `.git/hooks/pre-commit` 스크립트가 자동으로 트리거되어 스테이징된 변경 코드와 문서 정합성을 헤드리스 진단 후 결과를 화면에 보여줍니다.
+2.  **원격 서버 CI/CD 정밀 단계 (GitHub Actions CI)**
+    *   원격 브랜치 푸쉬 및 PR(Pull Request) 병합 검수 시, `.github/workflows/review-ci.yml` 액션 파일에 의해 서버사이드에서 클라우드 키 기반 에이전트 품질 리뷰가 자동 가동됩니다.
+3.  **실시간 변경 모니터링 단계 (NPM Scripts & Watcher)**
+    *   `npm run review:watch`: 파일 저장 시마다 실시간으로 로컬 소스와 아키텍처 문서의 스펙 충돌 유무를 감시합니다.
+    *   `npm run review:code` / `npm run review:docs`: 수동으로 1회성 코드 아키텍처 결함 및 명세 대조 리포트를 생성할 때 사용합니다.
+4.  **릴리즈 자동 문서 동기화 단계 (Auto-Docs Generation)**
+    *   `npm run review:write` 명령을 실행하여 릴리즈 전 변경 사안들을 `walkthrough.md`나 아키텍처 기록부에 자동으로 기재 및 동기화합니다.
+
+
 

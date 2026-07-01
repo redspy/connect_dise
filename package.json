@@ -11,7 +11,11 @@
     "test": "playwright test",
     "test:unit": "node --test tests/unit-canvas.test.js",
     "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "review:code": "zsh -l -c \"git diff HEAD~1 | claude -p '아키텍처 결함, 소켓 지터, 메모리 누수 및 SDK 규칙 준수 여부 리뷰' --allowedTools 'Read'\"",
+    "review:docs": "zsh -l -c \"codex exec '설계 문서(AGENTS.md, ARCHITECTURE.md)와 소스 코드 간 정합성 감사'\"",
+    "review:write": "zsh -l -c \"codex exec --sandbox workspace-write '요구사항과 구현 코드의 불일치 분석 및 자동 문서 갱신'\"",
+    "review:watch": "nodemon --watch games --watch platform --ext js,md --exec \"npm run review:docs\""
   },
   "keywords": [],
   "author": "",
