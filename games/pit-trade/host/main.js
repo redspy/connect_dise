@@ -443,11 +443,15 @@ class PitTradeHost extends HostBaseGame {
     }
 
     // 전체 모바일에 종료 전송
+    const scoresWithNicks = Array.from(this._scores.entries()).map(([pid, val]) => {
+      return [this._playerNicknames.get(pid) || 'Player', val];
+    });
+
     this.broadcast('gameFinished', {
       winnerId,
       winnerNick,
       bearHolderId,
-      scores: Array.from(this._scores.entries())
+      scores: scoresWithNicks
     });
 
     this.setPhase('result');
