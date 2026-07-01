@@ -666,6 +666,12 @@ export class RhythmJamHost extends HostBaseGame {
   // ─── 모바일 탭 수신 핸들러 ───────────────────────────────────────────────
 
   _wireMessages() {
+    this.onMessage('setProfile', (player, { nickname }) => {
+      const name = nickname.trim() || '익명';
+      this.setPlayerName(player.id, name);
+      this.renderLobbyPlayers(this._playerNicknames);
+    });
+
     // 플레이어 탭 노트 입력 처리
     this.onMessage('tapNote', (payload, playerId) => {
       if (!this._gameActive || this._isPausedForRejoin) return;

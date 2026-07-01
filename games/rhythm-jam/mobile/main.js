@@ -14,6 +14,16 @@ class RhythmJamMobile extends MobileBaseGame {
     this._wireMessages();
   }
 
+  onReset() {
+    const btnReady = document.getElementById('btn-ready');
+    if (btnReady) {
+      btnReady.disabled = false;
+      btnReady.classList.remove('ready-btn');
+      btnReady.textContent = '준비 완료';
+    }
+    this.showScreen('setup');
+  }
+
   _setupUI() {
     const btnJoin = document.getElementById('btn-join');
     const btnReady = document.getElementById('btn-ready');
@@ -25,8 +35,7 @@ class RhythmJamMobile extends MobileBaseGame {
     if (btnJoin) {
       btnJoin.addEventListener('click', () => {
         const nickname = inputNick?.value.trim() || 'Player';
-        this.sdk.setNickname(nickname);
-        this.sdk.joinSession();
+        this.sdk.sendToHost('setProfile', { nickname });
         this.showScreen('waiting');
       });
     }
@@ -34,8 +43,9 @@ class RhythmJamMobile extends MobileBaseGame {
     // 2. 준비 완료
     if (btnReady) {
       btnReady.addEventListener('click', () => {
-        btnReady.classList.toggle('ready-btn');
-        btnReady.textContent = btnReady.classList.contains('ready-btn') ? '준비 완료' : '준비 완료!';
+        btnReady.classList.add('ready-btn');
+        btnReady.textContent = '준비 완료!';
+        btnReady.disabled = true;
         this.sdk.ready();
       });
     }

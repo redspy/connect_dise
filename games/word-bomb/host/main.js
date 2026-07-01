@@ -140,12 +140,12 @@ class WordBombHost extends HostBaseGame {
     this._renderLobbyGrid();
   }
 
-  onPlayerLeave(player) {
+  onPlayerLeave(playerId) {
     this._renderLobbyGrid();
     
     // 게임 진행 도중 이탈 시 턴 매니징 예외 가드
     if (this._gameActive) {
-      const idx = this._playersList.indexOf(player.id);
+      const idx = this._playersList.indexOf(playerId);
       if (idx !== -1) {
         this._playersList.splice(idx, 1);
         
@@ -155,9 +155,13 @@ class WordBombHost extends HostBaseGame {
           return;
         }
 
-        // 이탈한 사람이 현재 설명 주도자였다면 턴 순서 조정
-        if (this._activePlayerIndex >= this._playersList.length) {
-          this._activePlayerIndex = 0;
+        // 턴 인덱스 보정
+        if (idx < this._activePlayerIndex) {
+          this._activePlayerIndex--;
+        } else if (idx === this._activePlayerIndex) {
+          if (this._activePlayerIndex >= this._playersList.length) {
+            this._activePlayerIndex = 0;
+          }
         }
         
         this._pickNextKeyword();
@@ -373,6 +377,12 @@ class WordBombHost extends HostBaseGame {
 
   // ─── 메시지 수신 핸들러 ───
   _wireMessages() {
+    this.onMessage('setProfile', (player, { nickname }) => {
+      const name = nickname.trim() || '익명';
+      this.setPlayerName(player.id, name);
+      this._renderLobbyGrid();
+    });
+
     this.onMessage('submitCorrect', (player) => {
       if (!this._gameActive || this._isExploded) return;
 

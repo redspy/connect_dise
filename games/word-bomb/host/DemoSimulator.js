@@ -16,6 +16,7 @@ export class DemoSimulator {
     ];
 
     this.game.players.clear();
+    this.game._playerNicknames.clear();
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
       this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
