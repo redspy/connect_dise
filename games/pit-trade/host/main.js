@@ -88,9 +88,12 @@ class PitTradeHost extends HostBaseGame {
     this._resetIdleTimer();
     this._renderLobbyGrid();
     if (this._gameActive) {
-      // 기존 카드 핸드 재전파
+      // 기존 카드 핸드 재전파 (재연결 시 poolCounts 전송 필수 누락 수정)
       const hand = this._playerHands.get(player.id) || [];
-      this.sendToPlayer(player.id, 'tradeExecuted', { hand });
+      this.sendToPlayer(player.id, 'tradeExecuted', { 
+        hand, 
+        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+      });
       this._broadcastTradeState();
     }
   }
@@ -301,13 +304,19 @@ class PitTradeHost extends HostBaseGame {
       });
       
       let maxSame = 0;
+      let maxComm = 'diamond';
       Object.keys(counts).forEach(c => {
-        if (counts[c] > maxSame) maxSame = counts[c];
+        if (counts[c] > maxSame) {
+          maxSame = counts[c];
+          maxComm = c;
+        }
       });
       const currentMax = maxSame + bullCount;
+      const target = (this._commodityPoolCounts.get(maxComm) || 9) - 1;
+      const isWarning = currentMax >= target - 1;
 
       const card = document.createElement('div');
-      card.className = `player-hud-card ${currentMax >= 7 ? 'warning-near' : ''}`;
+      card.className = `player-hud-card ${isWarning ? 'warning-near' : ''}`;
       card.innerHTML = `
         <span>${nick}</span>
         <span>최다 ${currentMax}장</span>

@@ -8,6 +8,8 @@ const COMM_META = {
   wheat: { name: '밀', emoji: '🌾' },
   coffee: { name: '커피', emoji: '☕' },
   wood: { name: '목재', emoji: '🪵' },
+  sugar: { name: '설탕', emoji: '🍬' },
+  spices: { name: '향신료', emoji: '🌶️' },
   bull: { name: '황소(조커)', emoji: '🐂' },
   bear: { name: '곰(패널티)', emoji: '🐻' }
 };

@@ -192,6 +192,7 @@ export class DemoSimulator {
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
     this.game._isDemo = false;
     this.stopTradingLoop();
