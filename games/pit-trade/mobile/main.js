@@ -99,9 +99,12 @@ class PitTradeMobile extends MobileBaseGame {
 
   _wireMessages() {
     // 1. 거래 매칭 결과 수령
-    this.sdk.onMessage('tradeExecuted', ({ hand, gotBear }) => {
+    this.sdk.onMessage('tradeExecuted', ({ hand, gotBear, poolCounts }) => {
       this._hand = hand;
       this._selectedCardIds = [];
+      if (poolCounts) {
+        this._poolCounts = poolCounts;
+      }
 
       // 곰 카드를 인계받았을 경우 비밀 햅틱 노티 작동
       if (gotBear) {
@@ -296,7 +299,8 @@ class PitTradeMobile extends MobileBaseGame {
 
     let isCornered = false;
     Object.keys(counts).forEach(c => {
-      if (counts[c] + bullCount >= 8) {
+      const target = ((this._poolCounts && this._poolCounts[c]) || 9) - 1;
+      if (counts[c] + bullCount >= target) {
         isCornered = true;
       }
     });

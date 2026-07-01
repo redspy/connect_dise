@@ -110,6 +110,9 @@ class PitTradeHost extends HostBaseGame {
     this._scores.clear();
     this._isTradingLocked = false;
 
+    // 데모 시뮬레이터 정지 및 가상 봇 해제
+    this._demoSimulator.stopDemo();
+
     // 가격 변동 타이머 정리
     if (this._priceTimer) {
       clearInterval(this._priceTimer);
@@ -146,16 +149,12 @@ class PitTradeHost extends HostBaseGame {
       }
     });
 
-    // 1. 상품 분기 설정
-    const allCommodities = ['diamond', 'gold', 'oil', 'wheat', 'coffee', 'wood'];
-    let activeCommodities = [];
-    if (P === 3) activeCommodities = allCommodities.slice(0, 3);
-    else if (P === 4) activeCommodities = allCommodities.slice(0, 4);
-    else if (P === 5) activeCommodities = allCommodities.slice(0, 5);
-    else activeCommodities = allCommodities;
+    // 1. 상품 분기 설정 (최대 8인 대응을 위해 설탕 및 향신료 추가)
+    const allCommodities = ['diamond', 'gold', 'oil', 'wheat', 'coffee', 'wood', 'sugar', 'spices'];
+    const activeCommodities = allCommodities.slice(0, P);
 
     // 초기 시세 설정
-    const defaultPrices = { diamond: 100, gold: 80, oil: 70, wheat: 60, coffee: 50, wood: 40 };
+    const defaultPrices = { diamond: 100, gold: 80, oil: 70, wheat: 60, coffee: 50, wood: 40, sugar: 30, spices: 20 };
     this._prices = {};
     activeCommodities.forEach(c => {
       this._prices[c] = defaultPrices[c];
@@ -176,6 +175,14 @@ class PitTradeHost extends HostBaseGame {
       cardPool[1] = 'bear';
     }
 
+    // 실제 풀에 주입된 최종 상품별 수량 카운트 (일부 상품은 조커/감점 대체로 7~8장으로 줄어듦)
+    this._commodityPoolCounts = new Map();
+    cardPool.forEach(c => {
+      if (c !== 'bull' && c !== 'bear') {
+        this._commodityPoolCounts.set(c, (this._commodityPoolCounts.get(c) || 0) + 1);
+      }
+    });
+
     // 카드 풀 피셔-예이츠 셔플
     for (let i = cardPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -187,7 +194,10 @@ class PitTradeHost extends HostBaseGame {
       const start = idx * 9;
       const hand = cardPool.slice(start, start + 9);
       this._playerHands.set(pid, hand);
-      this.sendToPlayer(pid, 'tradeExecuted', { hand });
+      this.sendToPlayer(pid, 'tradeExecuted', { 
+        hand, 
+        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+      });
     });
 
     // 4. 전광판 렌더링
@@ -227,7 +237,7 @@ class PitTradeHost extends HostBaseGame {
 
       const ticker = document.getElementById('news-ticker');
       if (ticker) {
-        const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재' };
+        const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재', sugar: '🍬 설탕', spices: '🌶️ 향신료' };
         ticker.textContent = `📢 [속보] ${commNames[randomComm]}${event.text}`;
       }
 
@@ -240,7 +250,7 @@ class PitTradeHost extends HostBaseGame {
     if (!container) return;
     container.innerHTML = '';
 
-    const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재' };
+    const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재', sugar: '🍬 설탕', spices: '🌶️ 향신료' };
 
     Object.keys(this._prices).forEach(c => {
       const row = document.createElement('div');
@@ -527,8 +537,16 @@ class PitTradeHost extends HostBaseGame {
       const hasBearA = trade.cardIds.includes('bear');
       const hasBearB = cardIds.includes('bear');
 
-      this.sendToPlayer(player.id, 'tradeExecuted', { hand: handA, gotBear: hasBearA });
-      this.sendToPlayer(targetPlayerId, 'tradeExecuted', { hand: handB, gotBear: hasBearB });
+      this.sendToPlayer(player.id, 'tradeExecuted', { 
+        hand: handA, 
+        gotBear: hasBearA, 
+        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+      });
+      this.sendToPlayer(targetPlayerId, 'tradeExecuted', { 
+        hand: handB, 
+        gotBear: hasBearB, 
+        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+      });
 
       this._isTradingLocked = false;
       this._broadcastTradeState();
@@ -555,7 +573,8 @@ class PitTradeHost extends HostBaseGame {
       });
       let isCornered = false;
       Object.keys(counts).forEach(c => {
-        if (counts[c] + bullCount >= 8) {
+        const target = (this._commodityPoolCounts.get(c) || 9) - 1;
+        if (counts[c] + bullCount >= target) {
           isCornered = true;
         }
       });

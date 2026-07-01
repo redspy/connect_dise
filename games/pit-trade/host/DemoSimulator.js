@@ -60,7 +60,8 @@ export class DemoSimulator {
       let isCornered = false;
       let targetCommodity = '';
       Object.keys(counts).forEach(c => {
-        if (counts[c] + bullCount >= 8) {
+        const target = (this.game._commodityPoolCounts.get(c) || 9) - 1;
+        if (counts[c] + bullCount >= target) {
           isCornered = true;
           targetCommodity = c;
         }
