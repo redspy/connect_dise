@@ -1,0 +1,392 @@
+/* ─── 단어 폭탄 모바일 스타일 ─── */
+
+:root {
+  --neon-gold: #ffd700;
+  --neon-red: #ff3333;
+  --neon-cyan: #00f3ff;
+  --neon-green: #39ff14;
+  --dark-bg: #0b111e;
+  --card-bg: rgba(18, 28, 48, 0.9);
+  --border-glow: 0 0 20px rgba(255, 215, 0, 0.5);
+  --green-glow: 0 0 25px rgba(57, 255, 20, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.mobile-controller {
+  font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+  background-color: var(--dark-bg);
+  color: #ffffff;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.mobile-screen {
+  width: 100%;
+  height: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.4s ease;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 카드 및 백그라운드 */
+.card-bg {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── 설정 & 로그인 ─── */
+.header-area {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo-text {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+  letter-spacing: 2px;
+}
+
+.logo-sub {
+  font-size: 1rem;
+  color: #8b9bb4;
+  margin-top: 5px;
+}
+
+.input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lbl-text {
+  font-size: 0.95rem;
+  color: #8b9bb4;
+  font-weight: 600;
+}
+
+.nick-input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  background: #19263f;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.1rem;
+  outline: none;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.nick-input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, #0077b6 100%);
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0, 243, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ─── 대기 상태 ─── */
+.waiting-card {
+  text-align: center;
+}
+
+.waiting-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--neon-cyan);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin: 0 auto 20px;
+}
+
+.waiting-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.waiting-desc {
+  font-size: 1rem;
+  color: #8b9bb4;
+  margin-bottom: 25px;
+}
+
+.btn-ready {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  background: #19263f;
+  border: 1px solid var(--neon-cyan);
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-ready.ready-btn {
+  background: var(--neon-cyan);
+  color: #0b111e;
+  box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+/* ─── 인게임 상태 ─── */
+.state-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  border-radius: 24px;
+}
+
+/* 설명 대기 패널 */
+.ticking-indicator {
+  font-size: 3.5rem;
+  margin-bottom: 25px;
+  animation: pulse-zoom 1.5s infinite alternate ease-in-out;
+}
+
+.wait-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.wait-desc {
+  font-size: 1.1rem;
+  color: #8b9bb4;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.highlight-nick {
+  color: var(--neon-gold);
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.game-hud {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 25px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+}
+
+.hud-lbl {
+  color: #8b9bb4;
+  margin-right: 8px;
+}
+
+.hud-cnt {
+  font-weight: 800;
+  color: var(--neon-cyan);
+}
+
+/* 설명자 액티브 모드 */
+.state-panel.active-gold {
+  border: 3px solid var(--neon-gold);
+  box-shadow: var(--border-glow);
+  background: rgba(255, 215, 0, 0.03);
+}
+
+.active-badge {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--neon-gold);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+  margin-bottom: 25px;
+  letter-spacing: 1px;
+}
+
+.keyword-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 25px;
+  width: 100%;
+  margin-bottom: 30px;
+}
+
+.card-lbl {
+  font-size: 0.9rem;
+  color: #8b9bb4;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.card-word {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(255,255,255,0.4);
+}
+
+.btn-correct-pass {
+  width: 100%;
+  padding: 25px 20px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--neon-green) 0%, #00aa00 100%);
+  border: none;
+  color: #0b111e;
+  font-size: 1.6rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: var(--green-glow);
+  transition: all 0.2s ease;
+  margin-bottom: 25px;
+}
+
+.btn-correct-pass:active {
+  transform: scale(0.95);
+  filter: brightness(1.2);
+}
+
+.active-guide {
+  font-size: 0.95rem;
+  color: #8b9bb4;
+  line-height: 1.5;
+}
+
+/* ─── 결과 화면 ─── */
+.result-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--neon-red);
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(255, 51, 51, 0.4);
+}
+
+.bomb-icon {
+  font-size: 3.5rem;
+  margin-bottom: 15px;
+  animation: shake 0.5s infinite;
+}
+
+.result-status {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.result-status.loser {
+  color: var(--neon-red);
+}
+
+.result-status.winner {
+  color: var(--neon-green);
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(0,0,0,0.2);
+  padding: 15px 20px;
+  border-radius: 12px;
+  width: 100%;
+  margin-bottom: 25px;
+}
+
+.stat-lbl {
+  color: #8b9bb4;
+  font-weight: 600;
+}
+
+.stat-val {
+  font-weight: 800;
+  color: var(--neon-cyan);
+}
+
+.result-guide {
+  font-size: 0.9rem;
+  color: #8b9bb4;
+}
+
+/* ─── 폭발 플래시 ─── */
+.explosion-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 51, 51, 0.6);
+  z-index: 100;
+  pointer-events: none;
+  animation: flash-out 0.2s ease-out;
+}
+
+/* ─── 애니메이션 ─── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse-zoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
+
+@keyframes flash-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>단어 폭탄 - Controller</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="mobile-controller">
+  <!-- 폭발 시 적색 경보 사이렌 레이어 -->
+  <div id="explosion-flash-alert" class="explosion-flash hidden"></div>
+
+  <!-- 1. 로그인 화면 -->
+  <div class="mobile-screen" data-screen="setup">
+    <div class="header-area">
+      <h1 class="logo-text">💣 WORD BOMB 💥</h1>
+      <p class="logo-sub">단어 패스 폭탄 게임</p>
+    </div>
+    <div class="input-panel card-bg">
+      <div class="input-group">
+        <label for="nickname-input" class="lbl-text">플레이어 닉네임</label>
+        <input type="text" id="nickname-input" class="nick-input" placeholder="닉네임을 입력하세요" maxlength="8">
+      </div>
+      <button id="btn-join" class="btn-primary">입장하기</button>
+    </div>
+  </div>
+
+  <!-- 2. 대기 화면 -->
+  <div class="mobile-screen hidden" data-screen="waiting">
+    <div class="waiting-card card-bg">
+      <div class="waiting-spinner"></div>
+      <h2 class="waiting-title">대기실 입장 완료</h2>
+      <p class="waiting-desc">다른 플레이어들이 조인하고 있습니다.</p>
+      <button id="btn-ready" class="btn-ready">준비 완료</button>
+    </div>
+  </div>
+
+  <!-- 3. 인게임 화면 -->
+  <div class="mobile-screen hidden" data-screen="game">
+    <!-- 타인 설명중 대기 모드 -->
+    <div id="describer-wait-panel" class="state-panel">
+      <div class="ticking-indicator">⏳</div>
+      <h2 class="wait-title">설명 대기 중</h2>
+      <p class="wait-desc">
+        현재 <span id="wait-active-name" class="highlight-nick">플레이어</span>가 설명 중입니다.<br>
+        방에서 소리내어 정답을 맞혀보세요!
+      </p>
+      <div class="game-hud">
+        <span class="hud-lbl">현재 통과 개수:</span>
+        <span class="hud-cnt" id="wait-passed-count">0</span>
+      </div>
+    </div>
+
+    <!-- 자기 차례 키워드 설명 모드 -->
+    <div id="describer-active-panel" class="state-panel active-gold hidden">
+      <div class="active-badge">🎤 설명할 차례입니다!</div>
+      
+      <!-- 비밀 키워드 카드 -->
+      <div class="keyword-card">
+        <div class="card-lbl">비밀 제시어</div>
+        <div id="secret-keyword-text" class="card-word">제시어</div>
+      </div>
+
+      <!-- 거대 정답 확인/패스 단축 단추 -->
+      <button id="btn-correct" class="btn-correct-pass">
+        🙆‍♂️ 정답! (다음으로 패스)
+      </button>
+
+      <div class="active-guide">
+        방 안 사람들이 단어를 맞추면 정답 버튼을 즉시 탭해 폭탄 차례를 넘기세요!
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 게임 결과 화면 -->
+  <div class="mobile-screen hidden" data-screen="result">
+    <div class="result-card card-bg">
+      <div class="bomb-icon">💥</div>
+      <h2 class="result-title">폭발 종료!</h2>
+      
+      <div id="result-status-text" class="result-status"></div>
+
+      <div class="stats-row">
+        <div class="stat-lbl">총 성공 단어 패스</div>
+        <div id="result-passed" class="stat-val">0</div>
+      </div>
+
+      <p class="result-guide">호스트 화면에서 복귀 버튼을 기다려 주세요.</p>
+    </div>
+  </div>
+
+  <!-- SDK 및 컨트롤러 소스 모드 로드 -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>

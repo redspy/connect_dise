@@ -107,6 +107,8 @@ export default defineConfig({
         dimensionWeaverMobile: resolve(__dirname, 'games/dimension-weaver/mobile/index.html'),
         rhythmJamHost:   resolve(__dirname, 'games/rhythm-jam/host/index.html'),
         rhythmJamMobile: resolve(__dirname, 'games/rhythm-jam/mobile/index.html'),
+        wordBombHost:   resolve(__dirname, 'games/word-bomb/host/index.html'),
+        wordBombMobile: resolve(__dirname, 'games/word-bomb/mobile/index.html'),
       },
     },
   },

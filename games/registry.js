@@ -198,4 +198,15 @@ export const GAMES = [
     thumbnail: '🥁',
     group: 'multi',
   },
+  {
+    id: 'word-bomb',
+    name: '단어 폭탄 (Word Bomb)',
+    description: '째깍째깍 터지기 전에 넘겨라! 폰을 패드로 삼아 단어를 설명하는 초고속 릴레이 스피드 단어 파티 💥',
+    hostPath: '/games/word-bomb/host/',
+    mobilePath: '/games/word-bomb/mobile/',
+    minPlayers: 2,
+    maxPlayers: 8,
+    thumbnail: '💥',
+    group: 'multi',
+  },
 ];

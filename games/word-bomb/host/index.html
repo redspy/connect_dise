@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>단어 폭탄 (Word Bomb) - Host</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="host-board">
+  <!-- 전체 호스트 레이아웃 컨테이너 -->
+  <div class="pp-host-container">
+
+    <!-- 1. 로비 단계 -->
+    <div class="dw-overlay" data-phase="lobby">
+      <div class="lobby-header">
+        <h1 class="lobby-title">💣 WORD BOMB 💥</h1>
+        <p class="lobby-subtitle">째깍째깍 터지기 전에 단어를 묘사하고 패스하세요!</p>
+      </div>
+
+      <div class="setup-layout">
+        <!-- 설정 및 플레이어 보드 -->
+        <div class="setup-section card-bg">
+          <h2 class="section-title">📦 단어 카테고리</h2>
+          <div class="select-wrapper">
+            <select id="category-select-box" class="category-select">
+              <option value="all">🌐 종합 제시어 (All-round)</option>
+              <option value="food">🍕 맛있는 음식 (Delicious Food)</option>
+              <option value="animal">🦁 동물 나라 (Animal Kingdom)</option>
+              <option value="place">✈️ 세계 여행 & 사물 (Places & Objects)</option>
+            </select>
+          </div>
+
+          <div class="players-headline">참가 플레이어 목록</div>
+          <div id="roles-board" class="players-grid"></div>
+
+          <button id="demoPlayBtn" class="btn-demo">🤖 데모 시뮬레이터 가동</button>
+        </div>
+
+        <!-- 입장 QR 안내 보드 -->
+        <div class="qr-section card-bg">
+          <div id="qr-box"></div>
+          <div class="qr-instruction">
+            <p class="qr-main">개인 스마트폰으로 QR 코드를 스캔하세요!</p>
+            <p class="qr-sub">접속 후 대기실에서 닉네임을 설정해 주세요.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 게임 플레이 단계 -->
+    <div class="dw-overlay hidden" data-phase="playing">
+      <div class="hud-header">
+        <div class="hud-item">
+          <span class="hud-label">CATEGORY</span>
+          <span id="hud-category-title" class="hud-value">-</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">SUCCESS PASSES</span>
+          <span id="hud-passed-count" class="hud-value">0</span>
+        </div>
+      </div>
+
+      <div class="game-arena">
+        <!-- 중앙 다이너마이트 폭탄 시각화 영역 -->
+        <div class="bomb-wrap" id="bomb-area">
+          <canvas id="bomb-canvas" width="400" height="400"></canvas>
+          <div id="timer-text" class="timer-countdown">째깍.. 째깍..</div>
+        </div>
+
+        <!-- 현재 발언/설명권 전광판 -->
+        <div class="describer-card" id="describer-spotlight">
+          <div class="spotlight-title">🎤 현재 제시어 설명자</div>
+          <div id="active-describer-name" class="active-name">플레이어 대기 중</div>
+          <div class="spotlight-sub">방 사람들에게 제시어를 설명하고 정답 시 패스하세요!</div>
+        </div>
+      </div>
+
+      <!-- 플레이어들 실시간 턴 위치 시각화 -->
+      <div class="carousel-wrapper">
+        <div id="playing-players-row" class="players-row"></div>
+      </div>
+    </div>
+
+    <!-- 3. 게임 결과 단계 -->
+    <div class="dw-overlay hidden" data-phase="result">
+      <div class="result-card card-bg">
+        <div class="explosion-header">💥 폭탄 폭발! 💥</div>
+        
+        <div class="loser-spotlight">
+          <div class="loser-title">💀 오늘의 벌칙 대상자 💀</div>
+          <div id="loser-name" class="loser-name">Player</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-lbl">총 성공 패스 횟수</div>
+            <div id="result-passed-words" class="stat-val">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-lbl">선택 카테고리</div>
+            <div id="result-category" class="stat-val">종합</div>
+          </div>
+        </div>
+
+        <button id="btn-restart-result" class="btn-restart">🔄 대기실로 복귀</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SDK 및 로직 스크립트 모듈 로드 -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
