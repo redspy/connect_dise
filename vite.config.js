@@ -109,6 +109,8 @@ export default defineConfig({
         rhythmJamMobile: resolve(__dirname, 'games/rhythm-jam/mobile/index.html'),
         wordBombHost:   resolve(__dirname, 'games/word-bomb/host/index.html'),
         wordBombMobile: resolve(__dirname, 'games/word-bomb/mobile/index.html'),
+        pitTradeHost:   resolve(__dirname, 'games/pit-trade/host/index.html'),
+        pitTradeMobile: resolve(__dirname, 'games/pit-trade/mobile/index.html'),
       },
     },
   },

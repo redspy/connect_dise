@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>왁자지껄 거래소 — Mobile</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="mobile-container">
+    <!-- Screen 1: Setup (Nickname registration) -->
+    <div class="mobile-screen" data-screen="setup">
+      <div class="setup-box">
+        <h1 class="logo-text">🔔 PIT TRADE</h1>
+        <p class="guide-text">실시간 트레이딩 카드 게임</p>
+        
+        <div class="input-group">
+          <input type="text" id="nickname-input" placeholder="닉네임 입력 (최대 6자)" maxlength="6" value="Player">
+        </div>
+        
+        <button id="btn-join" class="btn-action">입장하기</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Waiting Room -->
+    <div class="mobile-screen hidden" data-screen="waiting">
+      <div class="waiting-box">
+        <div class="spinner"></div>
+        <p class="status-msg">다른 플레이어가 조인할 때까지<br>대기 중입니다...</p>
+        <button id="btn-ready" class="btn-action btn-ready-toggle">준비 완료</button>
+      </div>
+    </div>
+
+    <!-- Screen 3: Trading Dashboard -->
+    <div class="mobile-screen hidden" data-screen="game">
+      <!-- Silent Haptic Red Flash Alert Screen -->
+      <div id="explosion-flash-alert" class="flash-alert hidden"></div>
+
+      <!-- Ring Bell Trigger Panel -->
+      <div id="bell-trigger-zone" class="bell-trigger-box hidden">
+        <button id="btn-ring-bell" class="btn-ring-bell">🔔 독점 완료! 종 울리기</button>
+      </div>
+
+      <!-- Main Trading Screen -->
+      <div class="game-dashboard">
+        <!-- Top HUD -->
+        <div class="game-hud">
+          <span class="user-badge" id="hud-my-nick">Player</span>
+          <span class="hud-alert-msg" id="hud-bear-alert">🐻 곰 카드 보유 중! 빨리 떠넘기세요!</span>
+        </div>
+
+        <!-- 1. Hand Cards Grid -->
+        <div class="hand-section">
+          <h3>🃏 나의 보유 카드 (9장)</h3>
+          <div id="cards-hand-grid" class="cards-grid">
+            <!-- Render 9 cards -->
+          </div>
+        </div>
+
+        <!-- 2. My Trade Box -->
+        <div class="trade-box-section">
+          <h3>📤 나의 교환 상자</h3>
+          <div id="selected-trade-slots" class="trade-slots-row">
+            <!-- Selected cards for trade -->
+          </div>
+          <div class="trade-box-controls">
+            <button id="btn-list-trade" class="btn-small-action">시장에 올리기</button>
+            <button id="btn-cancel-trade" class="btn-small-action btn-danger">등록 취소</button>
+          </div>
+        </div>
+
+        <!-- 3. Market Trading Floor -->
+        <div class="market-section">
+          <h3>🤝 다른 상인의 교환 요청 (터치 시 거래)</h3>
+          <div id="mobile-market-list" class="market-trades-list">
+            <!-- Real-time other trades -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Result Screen -->
+    <div class="mobile-screen hidden" data-screen="result">
+      <div class="result-box">
+        <h1 id="result-winner-text" class="winner-title">누군가 승리했습니다!</h1>
+        <p id="result-bear-text" class="bear-status">---</p>
+        
+        <div class="scoreboard">
+          <h3>📊 실시간 스코어보드</h3>
+          <div id="mobile-score-list" class="score-list-container">
+            <!-- Player scores -->
+          </div>
+        </div>
+        <p class="waiting-restart-msg">호스트가 대기방으로 리셋할 때까지 기다려 주세요...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform SDK -->
+  <script type="module" src="/platform/client/MobileSDK.js"></script>
+  <!-- Game logic Entry -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

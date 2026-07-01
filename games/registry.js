@@ -209,4 +209,15 @@ export const GAMES = [
     thumbnail: '💥',
     group: 'multi',
   },
+  {
+    id: 'pit-trade',
+    name: '왁자지껄 거래소 (Pit Trade)',
+    description: '실시간 시장 독점 전쟁! 상품 카드를 실시간으로 교환하고 종을 울려라 🔔',
+    hostPath: '/games/pit-trade/host/',
+    mobilePath: '/games/pit-trade/mobile/',
+    minPlayers: 3,
+    maxPlayers: 8,
+    thumbnail: '🔔',
+    group: 'multi',
+  },
 ];

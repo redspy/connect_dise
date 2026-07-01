@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>왁자지껄 거래소 — Host</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board">
+  <div class="pp-host-container">
+    <!-- Header -->
+    <header class="game-header">
+      <div class="logo">🔔 PIT TRADE</div>
+      <div class="room-code">방 코드: <span id="room-code-val">----</span></div>
+    </header>
+
+    <!-- Phase 1: Lobby Screen -->
+    <div class="phase-overlay" data-phase="lobby">
+      <div class="lobby-box">
+        <h1 class="title">왁자지껄 거래소 (Pit Trade)</h1>
+        <p class="subtitle">실시간 상품 독점 전쟁! 똑같은 장수의 카드를 교환해 9장을 독점하라!</p>
+
+        <!-- QR Display container -->
+        <div id="qr-box" class="qr-display-container"></div>
+
+        <div class="lobby-controls">
+          <button id="demoPlayBtn" class="btn-demo">🤖 데모 플레이 실행</button>
+        </div>
+
+        <h2 class="section-title">참가자 목록 (<span id="player-count">0</span>명)</h2>
+        <div id="lobby-grid" class="player-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2: Active Game Screen -->
+    <div class="phase-overlay hidden" data-phase="game">
+      <div class="game-screen">
+        <div class="game-layout">
+          <!-- Left: Commodities Ticker & Live Event News -->
+          <div class="market-board">
+            <h2>📈 실시간 뉴욕 상업 거래소</h2>
+            <div id="news-ticker" class="news-ticker-box">
+              📢 거래소가 개장했습니다! 자유롭게 카드를 맞교환하세요!
+            </div>
+            <div id="commodity-prices" class="commodity-grid">
+              <!-- Dynamically populated commodity prices -->
+            </div>
+          </div>
+
+          <!-- Center: Giant Swinging Bell -->
+          <div class="bell-center-zone">
+            <div id="brass-bell" class="bell-container">
+              <svg viewBox="0 0 100 100" class="bell-svg">
+                <path d="M50,15 C35,15 30,35 30,60 C30,70 20,75 20,80 L80,80 C80,75 70,70 70,60 C70,35 65,15 50,15 Z" fill="#FBBF24" stroke="#D97706" stroke-width="2"/>
+                <circle cx="50" cy="85" r="7" fill="#D97706"/>
+                <rect x="47" y="10" width="6" height="5" rx="2" fill="#D97706"/>
+              </svg>
+            </div>
+            <div class="market-status-badge">🔥 실시간 거래 진행 중!</div>
+          </div>
+
+          <!-- Right: Active Trading Floor Cards -->
+          <div class="trading-floor">
+            <h2>📣 현재 등록된 거래 요청</h2>
+            <div id="active-trades-container" class="active-trades-list">
+              <!-- Render other player trade counts -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom: Player Standings -->
+        <div class="hud-player-standings">
+          <h3>👥 플레이어 현황</h3>
+          <div id="game-players-grid" class="players-hud-grid">
+            <!-- Show name, ready status, or card cornering alerts -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3: Result Screen -->
+    <div class="phase-overlay hidden" data-phase="result">
+      <div class="result-box">
+        <h1 class="result-title">🔔 MARKET CORNERED!</h1>
+        <h2 class="winner-announcement"><span id="winner-name" class="highlight">---</span> 독점 승리!</h2>
+        
+        <div class="result-summary">
+          <div class="result-card">
+            <h3>🏆 최종 랭킹</h3>
+            <div id="ranking-list" class="ranking-container">
+              <!-- Ranking list -->
+            </div>
+          </div>
+          <div class="result-card penalty-card">
+            <h3>⚠️ 곰 카드(Bear) 벌칙자</h3>
+            <p id="bear-loser-text" class="loser-text">--- (-50점 감점)</p>
+          </div>
+        </div>
+
+        <button id="btn-restart-result" class="btn-primary">대기실로 복귀</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Platform SDK -->
+  <script type="module" src="/platform/client/HostSDK.js"></script>
+  <!-- Game logic Entry -->
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
