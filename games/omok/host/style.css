@@ -94,8 +94,8 @@
   display: grid;
   grid-template-columns: repeat(13, 1fr);
   grid-template-rows: repeat(13, 1fr);
-  width: min(500px, 85vw);
-  height: min(500px, 85vw);
+  width: min(500px, 80vw, 80vh);
+  height: min(500px, 80vw, 80vh);
   background-color: var(--board-color);
   position: relative;
 }
