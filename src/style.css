@@ -730,7 +730,25 @@ body[class*="-host"] {
 .omok-host-container,
 .rd-overlay,
 .view,
-#game-board {
+#game-board,
+.dp-game-board,
+.dw-host-container,
+.gyf-overlay,
+.hl-host-container,
+.agent-host-container,
+.pc-host-container,
+.pp-overlay,
+.tv-host-container,
+.dw-mobile-container,
+.hl-mobile-container,
+.agent-mobile-container,
+.omok-mobile-container,
+.pc-mobile-container,
+.pp-mobile-container,
+.rj-mobile-container,
+.sm-mobile-container,
+.tv-mobile-container,
+.wb-mobile-container {
   height: 100% !important;
   box-sizing: border-box !important;
 }
