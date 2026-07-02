@@ -225,5 +225,10 @@ node server/index.js
 4.  **릴리즈 자동 문서 동기화 단계 (Auto-Docs Generation)**
     *   `npm run review:write` 명령을 실행하여 릴리즈 전 변경 사안들을 `walkthrough.md`나 아키텍처 기록부에 자동으로 기재 및 동기화합니다.
 
+# 에이전트 협업 및 역할 준수 규칙
+
+*   **역할 정의서 준수**: 모든 에이전트(메인, 서브, 가상 페르소나 및 CLI 도구)는 [docs/agents/roles.md](file:///Users/soul/Source/connect_dise/docs/agents/roles.md)에 기술된 역할 정의와 가이드라인을 엄격히 준수하여 동작해야 합니다.
+*   **브라우저 서브에이전트 활용 규칙**: 코드를 구현하거나 수정한 후, 시각적인 UI 검증, 반응성, 마이크로 연출 확인이 필요할 때는 반드시 `browser_subagent` 도구를 실행해 Chrome 상에서의 동작 상태를 입증하고 기록을 아티팩트에 저장해야 합니다.
+
 
 
