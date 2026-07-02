@@ -1,81 +1,93 @@
-import { test } from '@playwright/test';
-import * as path from 'path';
+import { test, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
 
-const BASE = 'https://localhost:5173';
-const SCREENSHOT_DIR = '/Users/soul/.gemini/antigravity/brain/0ef4c056-cfcf-43e9-9550-f3e89a6917ec/screenshots';
+const screenshotsDir = '/Users/soul/.gemini/antigravity/brain/0ef4c056-cfcf-43e9-9550-f3e89a6917ec/screenshots';
+if (!fs.existsSync(screenshotsDir)) {
+  fs.mkdirSync(screenshotsDir, { recursive: true });
+}
 
-const MOBILE_VIEWPORTS = [
-  { name: 'iPhone_SE_Small', width: 320, height: 568 },
-  { name: 'iPhone_12_Standard', width: 390, height: 844 },
-  { name: 'iPad_Mini_Tablet', width: 768, height: 1024 }
-];
-
-const HOST_VIEWPORTS = [
+const VIEWPORTS = [
+  { name: 'FHD_TV_1080p', width: 1920, height: 1080 },
   { name: 'Tablet_Landscape', width: 1024, height: 768 },
-  { name: 'FHD_TV_1080p', width: 1920, height: 1080 }
+  { name: 'Tablet_Square_Ratio', width: 800, height: 800 },
+  { name: 'Short_Wide_Window', width: 1280, height: 500 }
 ];
 
-test.describe('다차원 해상도 레이아웃 검수 및 스크린샷 캡처', () => {
+test.describe('전체 게임 뷰포트 레이아웃 및 스크롤 감지 검증', () => {
 
-  // 그림 릴레이 모바일 셋업 화면 검수
-  for (const vp of MOBILE_VIEWPORTS) {
-    test(`Relay Drawing Mobile Setup - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+  // 1. 왁자지껄 거래소 (Pit Trade)
+  for (const vp of VIEWPORTS) {
+    test(`Pit Trade - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      
-      // 모바일 셋업 페이지 로드 (가상의 세션 ID 쿼리 파라미터 부여)
-      await page.goto(`${BASE}/games/relay-drawing/mobile/?session=TEST`);
-      await page.locator('#nickname').waitFor({ timeout: 10_000 });
-      
-      // 1초 안정화 대기
-      await page.waitForTimeout(1000);
-      
-      const file = path.join(SCREENSHOT_DIR, `relay_drawing_mobile_setup_${vp.name}.png`);
-      await page.screenshot({ path: file });
-      console.log(`Saved screenshot: ${file}`);
+      await page.goto('https://localhost:5173/games/pit-trade/host/');
+
+      // 로비 화면 렌더링 검증
+      const title = page.locator('.title');
+      await expect(title).toBeVisible();
+
+      // QR 코드 박스 존재 검증
+      const qrBox = page.locator('#qr-box');
+      await expect(qrBox).toBeVisible();
+
+      // 스크린샷 캡처
+      const screenshotPath = path.join(screenshotsDir, `pit_trade_${vp.name}.png`);
+      await page.screenshot({ path: screenshotPath });
+      console.log(`[Screenshot Saved] Pit Trade ${vp.name} -> ${screenshotPath}`);
+
+      // 데모 버튼 클릭 가능 여부 확인
+      const demoPlayBtn = page.locator('#demoPlayBtn');
+      await expect(demoPlayBtn).toBeEnabled();
     });
   }
 
-  // 그림 릴레이 호스트 로비 화면 검수
-  for (const vp of HOST_VIEWPORTS) {
-    test(`Relay Drawing Host Lobby - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+  // 2. 눈치 10단 (Nunchi-ten)
+  for (const vp of VIEWPORTS) {
+    test(`Nunchi-ten - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto(`${BASE}/games/relay-drawing/host/`);
-      
-      // 로비 웹 컴포넌트 렌더링 완료 대기
-      await page.locator('game-lobby').waitFor({ timeout: 10_000 });
-      await page.waitForTimeout(1500);
-      
-      const file = path.join(SCREENSHOT_DIR, `relay_drawing_host_lobby_${vp.name}.png`);
-      await page.screenshot({ path: file });
-      console.log(`Saved screenshot: ${file}`);
+      await page.goto('https://localhost:5173/games/nunchi-ten/host/');
+
+      // 로비 검증
+      const lobby = page.locator('game-lobby');
+      await expect(lobby).toBeVisible();
+
+      // 스크린샷
+      const screenshotPath = path.join(screenshotsDir, `nunchi_ten_${vp.name}.png`);
+      await page.screenshot({ path: screenshotPath });
+      console.log(`[Screenshot Saved] Nunchi-ten ${vp.name} -> ${screenshotPath}`);
     });
   }
 
-  // 해적의 전리품 모바일 셋업 화면 검수
-  for (const vp of MOBILE_VIEWPORTS) {
-    test(`Pirate Plunder Mobile Setup - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+  // 3. 오목 (Omok)
+  for (const vp of VIEWPORTS) {
+    test(`Omok - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto(`${BASE}/games/pirate-plunder/mobile/?session=TEST`);
-      await page.locator('#input-nickname').waitFor({ timeout: 10_000 });
-      await page.waitForTimeout(1000);
-      
-      const file = path.join(SCREENSHOT_DIR, `pirate_plunder_mobile_setup_${vp.name}.png`);
-      await page.screenshot({ path: file });
-      console.log(`Saved screenshot: ${file}`);
-    });
-  }
+      await page.goto('https://localhost:5173/games/omok/host/');
 
-  // 해적의 전리품 호스트 로비 화면 검수
-  for (const vp of HOST_VIEWPORTS) {
-    test(`Pirate Plunder Host Lobby - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
-      await page.setViewportSize({ width: vp.width, height: vp.height });
-      await page.goto(`${BASE}/games/pirate-plunder/host/`);
-      await page.locator('game-lobby').waitFor({ timeout: 10_000 });
-      await page.waitForTimeout(1500);
+      // 데모 플레이 실행하여 게임 화면 전환
+      const demoPlayBtn = page.locator('#demoPlayBtn');
+      await expect(demoPlayBtn).toBeVisible();
+      await demoPlayBtn.click();
+
+      // 게임 판이 노출되는playing 페이즈 대기
+      const boardWrap = page.locator('.omok-main-wrap');
+      await expect(boardWrap).not.toHaveClass(/hidden/, { timeout: 10000 });
+
+      // 오목판이 화면 높이/너비를 초과하지 않고 들어오는지 검증
+      const board = page.locator('#board');
+      await expect(board).toBeVisible();
+
+      const boundingBox = await board.boundingBox();
+      expect(boundingBox).not.toBeNull();
       
-      const file = path.join(SCREENSHOT_DIR, `pirate_plunder_host_lobby_${vp.name}.png`);
-      await page.screenshot({ path: file });
-      console.log(`Saved screenshot: ${file}`);
+      // 오목판이 세로 길이를 넘치지 않는지 단정
+      console.log(`[Omok Board ${vp.name}] Box Height: ${boundingBox.height}px, Viewport Height: ${vp.height}px`);
+      expect(boundingBox.height).toBeLessThanOrEqual(vp.height * 0.9);
+
+      // 스크린샷
+      const screenshotPath = path.join(screenshotsDir, `omok_${vp.name}.png`);
+      await page.screenshot({ path: screenshotPath });
+      console.log(`[Screenshot Saved] Omok ${vp.name} -> ${screenshotPath}`);
     });
   }
 
