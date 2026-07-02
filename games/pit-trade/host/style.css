@@ -20,7 +20,7 @@ body.host-board {
   position: relative;
   z-index: 10;
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -65,7 +65,7 @@ body.host-board {
   align-items: center;
   justify-content: center;
   padding: 40px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Lobby Phase */
