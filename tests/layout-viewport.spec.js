@@ -58,6 +58,32 @@ test.describe('전체 게임 뷰포트 레이아웃 및 스크롤 감지 검증'
     });
   }
 
+  // 2.5. 그림 릴레이 (Relay Drawing)
+  for (const vp of VIEWPORTS) {
+    test(`Relay Drawing - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await page.goto('https://localhost:5173/games/relay-drawing/host/');
+
+      // 데모 플레이 버튼 클릭
+      const demoPlayBtn = page.locator('#demoPlayBtn');
+      await expect(demoPlayBtn).toBeVisible();
+      await demoPlayBtn.click();
+
+      // 실시간 그리기 화면 (phase = game) 대기
+      const gameOverlay = page.locator('.rd-overlay[data-phase="game"]');
+      await expect(gameOverlay).not.toHaveClass(/hidden/, { timeout: 10000 });
+
+      // 스케치 상태 그리드 확인
+      const statusGrid = page.locator('#statusGrid');
+      await expect(statusGrid).toBeVisible();
+
+      // 모든 실시간 캔버스가 잘리지 않고 들어왔는지 스크린샷 저장
+      const screenshotPath = path.join(screenshotsDir, `relay_drawing_${vp.name}.png`);
+      await page.screenshot({ path: screenshotPath });
+      console.log(`[Screenshot Saved] Relay Drawing ${vp.name} -> ${screenshotPath}`);
+    });
+  }
+
   // 3. 오목 (Omok)
   for (const vp of VIEWPORTS) {
     test(`Omok - ${vp.name} (${vp.width}x${vp.height})`, async ({ page }) => {

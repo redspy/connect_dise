@@ -287,6 +287,67 @@ h2 {
   width: 100%;
   max-width: 1200px;
 }
+
+/* 인원수에 따른 동적 그리드 열 정의 */
+.status-grid[data-players="1"],
+.status-grid[data-players="2"] {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+.status-grid[data-players="3"],
+.status-grid[data-players="4"] {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+.status-grid[data-players="5"],
+.status-grid[data-players="6"] {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 1rem !important;
+}
+.status-grid[data-players="7"],
+.status-grid[data-players="8"] {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 0.75rem !important;
+  max-width: 1400px !important;
+}
+
+/* 5인 이상 다인원일 때 카드를 소형화하여 스크롤 유발 억제 및 실시간 도화지 전체 노출 보장 */
+.status-grid[data-players="5"] .status-card,
+.status-grid[data-players="6"] .status-card,
+.status-grid[data-players="7"] .status-card,
+.status-grid[data-players="8"] .status-card {
+  padding: 0.6rem !important;
+  border-radius: 8px !important;
+}
+
+.status-grid[data-players="5"] .status-card .status-icon,
+.status-grid[data-players="6"] .status-card .status-icon,
+.status-grid[data-players="7"] .status-card .status-icon,
+.status-grid[data-players="8"] .status-card .status-icon {
+  font-size: 1.4rem !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.status-grid[data-players="5"] .status-card .name,
+.status-grid[data-players="6"] .status-card .name,
+.status-grid[data-players="7"] .status-card .name,
+.status-grid[data-players="8"] .status-card .name {
+  font-size: 0.9rem !important;
+}
+
+.status-grid[data-players="5"] .status-card .action-text,
+.status-grid[data-players="6"] .status-card .action-text,
+.status-grid[data-players="7"] .status-card .action-text,
+.status-grid[data-players="8"] .status-card .action-text {
+  font-size: 0.75rem !important;
+  margin-top: 0.1rem !important;
+}
+
+.status-grid[data-players="5"] .player-canvas-container,
+.status-grid[data-players="6"] .player-canvas-container,
+.status-grid[data-players="7"] .player-canvas-container,
+.status-grid[data-players="8"] .player-canvas-container {
+  margin-top: 0.4rem !important;
+  border-radius: 6px !important;
+}
 .status-card {
   background-color: var(--rd-bg2);
   border-radius: 12px;

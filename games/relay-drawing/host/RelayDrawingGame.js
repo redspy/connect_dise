@@ -460,6 +460,7 @@ export class RelayDrawingGame extends HostBaseGame {
     const grid = document.getElementById('statusGrid');
     if (!grid) return;
     grid.innerHTML = '';
+    grid.setAttribute('data-players', this.players.size);
     const icon       = isDrawTurn ? '🎨' : '✍️';
     const actionText = isDrawTurn ? '그림 그리는 중...' : '단어 작성 중...';
 
@@ -724,8 +725,11 @@ export class RelayDrawingGame extends HostBaseGame {
     const container = document.getElementById('storySteps');
     if (container) {
       container.appendChild(el);
-      // 부드러운 스크롤 추적
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      // 부드러운 스크롤 추적 (실제 스크롤 가능 부모 컨테이너인 .presentation-stage를 스크롤)
+      const stageEl = container.closest('.presentation-stage');
+      if (stageEl) {
+        stageEl.scrollTo({ top: stageEl.scrollHeight, behavior: 'smooth' });
+      }
     }
     
     setTimeout(() => {
