@@ -711,13 +711,28 @@ body.mobile-controller {
 /* ==========================================================================
    전역 스크롤 잠금 강제 완화 규칙 (Global Viewport & Scroll Recovery)
    ========================================================================== */
-body {
+body.host-board,
+body.host-body,
+body.spin-board,
+body[class*="host"],
+body[class*="-host"] {
+  min-height: 100dvh !important;
+  height: 100dvh !important;
   overflow: auto !important;
 }
 
-body.host-board {
-  min-height: 100vh !important;
-  height: auto !important;
+/* 뷰포트 높이(vh) 리매핑: dynamic viewport height (dvh) 상속 유도 */
+.pp-host-container,
+.lobby-container,
+.game-container,
+.result-container,
+.game-screen,
+.omok-host-container,
+.rd-overlay,
+.view,
+#game-board {
+  height: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* 모든 오버레이 및 결과 패널의 수직 스크롤 영역 강제 확보 */
@@ -734,6 +749,6 @@ body.host-board {
 .result-container,
 .lobby-container {
   overflow-y: auto !important;
-  max-height: 95vh !important;
+  max-height: 95dvh !important;
   box-sizing: border-box !important;
 }
