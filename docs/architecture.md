@@ -22,7 +22,7 @@ Connect Dise는 **플랫폼 레이어**와 **게임 레이어**를 분리한 멀
 
 1. 플랫폼 이벤트: `platform:*`
 - 세션 생성/입장/준비/리셋/퇴장
-- 재연결 유예(30초) 및 재접속 처리
+- 재연결 유예(5분) 및 재접속 처리
 
 2. 게임 이벤트: `game:*`
 - `game:toHost`, `game:toPlayer`, `game:broadcast`

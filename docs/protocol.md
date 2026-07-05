@@ -51,7 +51,7 @@
 
 6. 연결 해제
    ├─▶ (호스트 disconnect) → hostDisconnected → 전체 세션, 세션 즉시 삭제
-   └─▶ (모바일 disconnect) → 30초 유예 기간
+   └─▶ (모바일 disconnect) → 5분 유예 기간
        ├─ (유예 내 재연결) → platform:joined { reconnected: true }
        └─ (유예 만료)     → platform:playerLeft + platform:readyUpdate → 호스트
 ```
@@ -188,7 +188,7 @@ platform:playerDisconnected
 
 ### 플레이어 최종 퇴장
 
-Grace period (30초) 만료 후 재연결하지 않은 경우:
+Grace period (5분) 만료 후 재연결하지 않은 경우:
 
 ```
 서버 → 호스트
@@ -351,7 +351,7 @@ p2p:ice
 
 | 항목 | 값 |
 |------|---|
-| 유예 시간 | 30초 (`RECONNECT_GRACE_MS`) |
+| 유예 시간 | 5분 (300초) (`RECONNECT_GRACE_MS`) |
 | 대상 | 모바일 플레이어만 (호스트 disconnect 시 세션 즉시 삭제) |
 
 ### 재연결 흐름

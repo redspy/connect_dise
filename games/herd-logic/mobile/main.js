@@ -174,7 +174,7 @@ mobile.onMessage('resolveAnswer', ({ match, pinkCow, rawAnswer }) => {
 });
 
 mobile.onMessage('gameFinished', ({ ranking, winner }) => {
-  const myRankIdx = ranking.findIndex(r => r.id === mobile.socket.id);
+  const myRankIdx = ranking.findIndex(r => r.id === mobile.getMyPlayer()?.id);
   const myRank = myRankIdx !== -1 ? myRankIdx + 1 : null;
   const isWinner = myRank === 1;
 

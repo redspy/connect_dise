@@ -25,6 +25,7 @@ export class MobileSDK extends EventTarget {
     const socket = this._socket;
 
     socket.on('connect', () => {
+      this._emit('connect', {});
       if (this._sessionId) {
         // 이전 세션의 stable player ID가 있으면 재연결 시도
         const reconnectId = sessionStorage.getItem(RECONNECT_KEY(this._sessionId)) || null;
@@ -74,6 +75,7 @@ export class MobileSDK extends EventTarget {
     });
 
     socket.on('disconnect', () => {
+      this._emit('disconnect', {});
       this._showReconnectUI();
     });
 
@@ -172,6 +174,10 @@ export class MobileSDK extends EventTarget {
 
   vibrate(pattern) {
     if (navigator.vibrate) navigator.vibrate(pattern);
+  }
+
+  get socketId() {
+    return this._socket?.id || null;
   }
 
   getMyPlayer() {
@@ -382,13 +388,13 @@ export class MobileSDK extends EventTarget {
     ui.appendChild(modal);
     document.body.appendChild(ui);
 
-    // 30초 유예 만료 시 재연결 정보를 파괴하고 풀 재연결 창으로 유도
+    // 5분 유예 만료 시 재연결 정보를 파괴하고 풀 재연결 창으로 유도
     this._passiveTimeout = setTimeout(() => {
       this._hideReconnectUI();
       sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
       this._player = null;
       this._showFullReconnectUI();
-    }, 30000);
+    }, 300000);
   }
 
   _showFullReconnectUI() {

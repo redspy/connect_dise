@@ -166,6 +166,10 @@ export class HostSDK extends EventTarget {
     return this._qrUrl;
   }
 
+  get socketId() {
+    return this._socket?.id || null;
+  }
+
   getRawSocket() {
     return this._socket;
   }
