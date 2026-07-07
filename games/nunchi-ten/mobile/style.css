@@ -540,3 +540,89 @@ body.nunchi-mobile {
 
 .gr-name { flex: 1; font-size: 0.9rem; font-weight: 600; }
 .gr-score { font-size: 0.95rem; font-weight: 700; color: var(--nm-gold); }
+
+/* 공통 hidden 클래스 */
+.hidden {
+  display: none !important;
+}
+
+/* 관전자 대기 화면 */
+.spectator-wrap {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+}
+.spectator-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  animation: spectator-bounce 2s infinite alternate;
+}
+@keyframes spectator-bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-12px); }
+}
+.spectator-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--nm-gold);
+  margin-bottom: 8px;
+}
+.spectator-desc {
+  font-size: 0.95rem;
+  color: var(--nm-sub);
+  line-height: 1.5;
+}
+
+/* 선택된 카드 미리보기 토큰 */
+.submit-preview-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 10px;
+  background: rgba(20, 28, 46, 0.6);
+  border: 1px dashed var(--nm-border);
+  border-radius: 12px;
+  min-height: 52px;
+  box-sizing: border-box;
+}
+.submit-preview-card {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #000000;
+  background: var(--nm-gold);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+  animation: preview-card-pop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes preview-card-pop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+.submit-preview-text {
+  font-size: 0.85rem;
+  color: var(--nm-sub);
+}
+
+/* 더블 버튼 펄스 효과 */
+.btn-double.active {
+  border-color: var(--nm-gold);
+  background: var(--nm-gold-bg);
+  color: var(--nm-gold);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  animation: btn-double-pulse 1.5s infinite alternate;
+}
+@keyframes btn-double-pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.03); }
+}

@@ -13,6 +13,12 @@
   <div id="game-board">
     <game-appbar title="눈치 10단"></game-appbar>
 
+    <!-- 데모 진행 상태 및 중단 배너 -->
+    <div id="demo-banner" class="hidden">
+      <span>🤖 데모 플레이 진행 중...</span>
+      <button id="demo-stop-btn" class="demo-stop-btn">데모 중단</button>
+    </div>
+
     <!-- 게임 메시지 영역 -->
     <div id="game-message" class="game-message"></div>
 
@@ -24,14 +30,16 @@
   <div class="n-overlay" data-phase="lobby">
     <game-lobby title="눈치 10단" min-players="2" banner="/games/nunchi-ten/assets/main.png">
       <div class="lobby-desc-title">게임 방법</div>
+      <div class="lobby-desc-tip" style="margin-bottom: 1.2rem; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #93c5fd; font-weight: bold; text-align: center; font-size: 0.85rem;">
+        👥 3인 이상 플레이 강력 권장 (최대 6인)
+      </div>
       <ul class="lobby-desc-list">
-        <li>라운드마다 <b>1~10 숫자 카드</b> 중 하나를 비공개로 선택</li>
-        <li>내 카드보다 <b>낮은 카드</b>를 낸 사람 수만큼 점수 획득</li>
-        <li>각 카드는 게임 당 <b>1회만</b> 사용 가능</li>
-        <li><b>더블 아이템 3개</b> — 해당 라운드 점수를 2배로!</li>
-        <li><b>10라운드</b> 후 가장 높은 점수가 승리</li>
+        <li>비밀리에 <b>1~10 숫자 카드</b> 중 한 장을 제출합니다.</li>
+        <li><b>나보다 낮은 숫자를 낸 사람 수</b>만큼 점수를 획득합니다!</li>
+        <li><b>예시</b>: <span style="color:#ffd700;">10</span> / 8 / 8 / <span style="color:#ef4444;">5</span> 제출 시 점수는 <b>3점</b> / 0점(동률탈락) / 0점 / <b>0점</b></li>
+        <li>한 번 쓴 카드는 버려지며, <b>더블 아이템(3회)</b>으로 2배 점수가 가능합니다.</li>
       </ul>
-      <div class="lobby-desc-tip">💡 높은 숫자가 항상 유리하지 않아요. 심리전이 핵심!</div>
+      <div class="lobby-desc-tip">💡 상대방보다 딱 한 단계 높은 숫자를 골라내는 눈치가 필요합니다!</div>
       <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🤖 데모 플레이 실행</button>
     </game-lobby>
   </div>

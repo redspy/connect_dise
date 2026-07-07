@@ -269,3 +269,98 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ── Hidden utility (Rule) ─────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Movable tile highlight ─────────────────────────── */
+.dp-tile.movable {
+  border-color: #bb86fc;
+  box-shadow: 0 0 8px rgba(187, 134, 252, 0.4);
+  background: #3e2d54; /* 보랏빛 도는 색상으로 하이라이트 */
+}
+
+/* ── Invalid Input Shake Animation ─────────────────── */
+.dp-tile.shake {
+  animation: dp-shake-anim 0.2s ease-in-out;
+}
+
+@keyframes dp-shake-anim {
+  0%, 100% { transform: translate(var(--tx, 0), var(--ty, 0)); }
+  20%, 60% { transform: translate(calc(var(--tx, 0) - 6px), var(--ty, 0)); }
+  40%, 80% { transform: translate(calc(var(--tx, 0) + 6px), var(--ty, 0)); }
+}
+
+/* ── Mobile Result Rankings ───────────────────────── */
+.dp-mobile-rankings {
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.dp-mobile-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.dp-mobile-rank-item.my-row {
+  border-color: #bb86fc;
+  background: rgba(187, 134, 252, 0.1);
+}
+
+.dp-mr-medal {
+  font-weight: bold;
+  font-size: 14px;
+  width: 24px;
+}
+
+.dp-mr-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.dp-mr-name {
+  font-weight: 600;
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dp-mr-stats {
+  color: #aaa;
+  font-size: 11px;
+}
+
+.dp-mr-diff {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ef4444;
+}
+
+.dp-mr-diff.winner {
+  color: #ffd700;
+}

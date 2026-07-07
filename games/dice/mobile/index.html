@@ -6,20 +6,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dice Controller</title>
   <link rel="stylesheet" href="/src/style.css">
+  <style>
+    /* Mobile specific style enhancement */
+    body.mobile-controller {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .dice-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 20px;
+      text-align: center;
+    }
+    /* Input design */
+    .nickname-input {
+      width: 80%;
+      max-width: 280px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 20px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .nickname-input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    }
+    /* Buttons */
+    .btn-mobile {
+      width: 80%;
+      max-width: 280px;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+    }
+    .btn-mobile-primary {
+      background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%);
+      color: #000;
+    }
+    .btn-mobile-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+    }
+    .btn-mobile:active {
+      transform: scale(0.97);
+    }
+    .btn-mobile:disabled {
+      background: #444 !important;
+      color: #888 !important;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    /* Lobby layout */
+    .lobby-header {
+      margin-bottom: 30px;
+    }
+    .lobby-header h2 {
+      font-size: 2rem;
+      color: var(--gold);
+      margin: 0 0 10px 0;
+    }
+    /* 3D Dice styling tweaks */
+    .dice-cube {
+      transition: transform 0.05s ease;
+    }
+  </style>
 </head>
 
 <body class="mobile-controller">
-  <!-- 가로 모드 차단 안내 오버레이 -->
+  <!-- Orientation Guard for Portrait Mode -->
   <div class="orientation-guard">
     <div class="orientation-guard-icon">🔄</div>
     <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
     <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
   </div>
+
+  <!-- Permission Grant Modal -->
   <div id="permission-modal" class="modal">
     <div class="modal-content">
-      <h2>Welcome to Dice Game!</h2>
-      <p>This game requires access to your device's motion sensors to roll the dice.</p>
-      <button id="btn-grant-permission">Grant Permission & Play</button>
+      <h2>Dice Party 🎲</h2>
+      <p>이 게임은 주사위를 굴리기 위해 기기의 흔들기 감지 센서 권한이 필요합니다.</p>
+      <button id="btn-grant-permission" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-weight: bold; padding: 14px 28px; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">권한 허용 및 시작하기</button>
     </div>
   </div>
 
@@ -29,35 +110,85 @@
       <span id="session-display">Session: ---</span>
     </div>
 
-    <div class="dice-area" id="dice-area">
-      <div class="dice-cube" id="visual-dice">
-        <div class="dice-face front"><div class="dot"></div></div>
-        <div class="dice-face back"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <div class="dice-face right"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <div class="dice-face left"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-        <div class="dice-face top"><div class="dot"></div><div class="dot"></div></div>
-        <div class="dice-face bottom"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <!-- Screen 1: Lobby & Nickname Setup / Ready -->
+    <div class="dice-screen" data-screen="lobby">
+      <div class="lobby-header">
+        <h2>Dice Party 🎲</h2>
+        <p style="color: rgba(255,255,255,0.6); margin: 0;">로비 대기 중</p>
       </div>
-      <p class="instruction" id="instruction-main">Shake to Roll!</p>
-      <p class="instruction sub" id="instruction-sub">Swing or Double-Tap to Throw!</p>
-      <div id="manual-controls" style="margin-top: 20px; display: flex; gap: 12px; justify-content: center; width: 100%; max-width: 280px; margin-left: auto; margin-right: auto;">
+      <input type="text" id="input-nickname" class="nickname-input" placeholder="닉네임 입력 (최대 6자)" maxlength="6">
+      <button id="btn-ready" class="btn-mobile btn-mobile-gold">준비 완료</button>
+    </div>
+
+    <!-- Screen 2: Waiting for game / other turns -->
+    <div class="dice-screen hidden" data-screen="waiting">
+      <h2 id="waiting-screen-title" style="color: var(--gold); font-size: 1.6rem; margin-bottom: 15px;">준비 완료!</h2>
+      <p id="waiting-screen-desc" style="font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.8);">다른 플레이어들이 준비되기를 기다리는 중입니다...</p>
+      <div style="margin-top: 40px; font-size: 3rem; animation: guard-rotate 2s linear infinite;">⏳</div>
+    </div>
+
+    <!-- Screen 3: Active Turn (Shaking & Throwing) -->
+    <div class="dice-screen hidden" data-screen="myTurn">
+      <h2 style="color: var(--gold); font-size: 1.8rem; margin: 0 0 10px 0;">내 차례입니다!</h2>
+      <p style="margin: 0; color: rgba(255,255,255,0.8);">스마트폰을 세게 휘두르거나 던지기 버튼을 누르세요!</p>
+      
+      <div class="dice-area" id="dice-area" style="width: 100%;">
+        <div class="dice-cube" id="visual-dice">
+          <div class="dice-face front"><div class="dot"></div></div>
+          <div class="dice-face back"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <div class="dice-face right"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <div class="dice-face left"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+          <div class="dice-face top"><div class="dot"></div><div class="dot"></div></div>
+          <div class="dice-face bottom"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+        </div>
+      </div>
+
+      <div id="manual-controls" style="display: flex; gap: 12px; justify-content: center; width: 100%; max-width: 280px; margin: 20px auto 0 auto;">
         <button id="btn-manual-shake" style="flex: 1; padding: 14px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 12px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s;">📳 흔들기</button>
         <button id="btn-manual-throw" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%); border: none; border-radius: 12px; color: #000; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">🎲 던지기</button>
       </div>
-      <button id="btn-retry" class="hidden">Retry (Get Dice Back)</button>
+
+      <!-- Gyroscope spirit level indicator (Only active in my turn for feedback) -->
+      <div class="level-container" style="margin-top: 30px;">
+        <div class="level-bowl">
+          <div class="level-crosshair-h"></div>
+          <div class="level-crosshair-v"></div>
+          <div class="level-center-ring"></div>
+          <div class="level-bubble" id="level-bubble"></div>
+        </div>
+        <div class="level-values">
+          <span id="level-beta">β: 0°</span>
+          <span id="level-gamma">γ: 0°</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Gyroscope spirit level indicator -->
-    <div class="level-container">
-      <div class="level-bowl">
-        <div class="level-crosshair-h"></div>
-        <div class="level-crosshair-v"></div>
-        <div class="level-center-ring"></div>
-        <div class="level-bubble" id="level-bubble"></div>
+    <!-- Screen 4: Thrown (Waiting for physics resolution) -->
+    <div class="dice-screen hidden" data-screen="thrown">
+      <h2 style="color: #00C851; font-size: 1.8rem; margin-bottom: 20px;">투척 완료! 🎲</h2>
+      <p style="font-size: 1.1rem; line-height: 1.6; color: rgba(255,255,255,0.8);">주사위가 굴러가고 있습니다.<br>TV 화면을 확인하세요!</p>
+      <div style="margin-top: 40px; font-size: 3.5rem;">🍀</div>
+    </div>
+
+    <!-- Screen 5: Round Result -->
+    <div class="dice-screen hidden" data-screen="roundResult">
+      <h2 style="color: var(--gold); font-size: 1.8rem; margin-bottom: 20px;">라운드 종료</h2>
+      <div id="round-result-feedback" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; width: 100%; max-width: 280px; box-sizing: border-box;">
+        <p style="margin: 0 0 10px 0; font-size: 1rem; color: rgba(255,255,255,0.6);">내 주사위 눈</p>
+        <h3 id="my-dice-value" style="font-size: 3rem; margin: 0; color: #fff;">-</h3>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+        <p id="round-winner-p" style="margin: 0; font-size: 1.1rem; color: #00C851; font-weight: bold;">라운드 우승: -</p>
       </div>
-      <div class="level-values">
-        <span id="level-beta">β: 0°</span>
-        <span id="level-gamma">γ: 0°</span>
+    </div>
+
+    <!-- Screen 6: Match Result -->
+    <div class="dice-screen hidden" data-screen="matchResult">
+      <h2 style="color: var(--gold); font-size: 2rem; margin-bottom: 25px;">게임 종료 🏆</h2>
+      <div id="match-result-feedback" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; width: 100%; max-width: 280px; box-sizing: border-box; margin-bottom: 30px;">
+        <p style="margin: 0 0 10px 0; font-size: 1rem; color: rgba(255,255,255,0.6);">최종 획득 승점</p>
+        <h3 id="my-final-score" style="font-size: 3rem; margin: 0; color: var(--gold);">- 점</h3>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+        <p id="match-winner-p" style="margin: 0; font-size: 1.1rem; color: #00eeff; font-weight: bold;">최종 우승자: -</p>
       </div>
     </div>
   </div>

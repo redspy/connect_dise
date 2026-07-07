@@ -260,6 +260,18 @@ export class SpinPhysics {
     };
   }
 
+  eliminateSpinner(playerId, reason = 'leave') {
+    const s = this.spinners.get(playerId);
+    if (s && !s.eliminated) {
+      s.eliminated = true;
+      s.rpm = 0;
+      s.x = BOARD_RADIUS * 3;
+      s.z = BOARD_RADIUS * 3;
+      return { id: playerId, reason, x: s.x, z: s.z };
+    }
+    return null;
+  }
+
   getState() {
     return [...this.spinners.values()];
   }

@@ -57,6 +57,7 @@ export class TetrisMobile extends MobileBaseGame {
     this._lastBoardSend = 0;
 
     this._nickname = '';
+    this._playersList = [];
 
     this._wireUI();
     this._wireMessages();
@@ -84,18 +85,21 @@ export class TetrisMobile extends MobileBaseGame {
 
   _wireMessages() {
     this.onMessage('playerListUpdated', ({ players }) => {
+      this._playersList = players || [];
       this._renderWaitingPlayers(players);
     });
 
-    this.onMessage('gameStarted', ({ showNextPiece }) => {
+    this.onMessage('gameStarted', ({ showNextPiece, mode, startLevel, targetLevel }) => {
       this._showNextPiece = showNextPiece;
-      this._startGame();
+      this._gameMode = mode || 'classic';
+      this._targetLevel = targetLevel || 100;
+      this._startGame(startLevel || 1);
     });
 
     this.onMessage('levelUp', ({ newLevel }) => {
       if (!this._gameActive || !this._alive) return;
       const prev  = this._level;
-      this._level = Math.min(100, Math.max(this._level, newLevel));
+      this._level = Math.min(this._targetLevel || 100, Math.max(this._level, newLevel));
       if (this._level > prev) {
         this._updateLevelUI();
         this._restartDropTimer();
@@ -103,17 +107,44 @@ export class TetrisMobile extends MobileBaseGame {
       }
     });
 
+    this.onMessage('playerEliminated', ({ playerId, rank }) => {
+      if (!this._gameActive) return;
+      // 다른 플레이어 닉네임 찾기
+      const targetPlayer = (this._playersList || []).find(p => p.id === playerId);
+      const nickname = targetPlayer ? (targetPlayer.nickname || '상대') : '상대';
+      this._showToast(`💀 ${nickname} 탈락! (${rank}위)`);
+    });
+
     this.onMessage('gameFinished', ({ rankings }) => {
       this._stopAllTimers();
       this._gameActive = false;
-      this._showResult(rankings);
+      // 결과 연출을 위해 2.5초 대기 후 결과 화면 전환
+      this._showToast('🏆 경기 종료! 최종 결과를 정산합니다...');
+      setTimeout(() => {
+        this._showResult(rankings);
+      }, 2500);
     });
 
-    this.onMessage('rejoinState', ({ phase, showNextPiece, level, lines }) => {
+    this.onMessage('rejoinState', ({ phase, showNextPiece, level, lines, engineState, mode }) => {
+      this._gameMode = mode || 'classic';
+      this._targetLevel = mode === 'quick' ? 40 : 100;
+
+      if (phase === 'eliminated') {
+        this._stopAllTimers();
+        this._alive = false;
+        this._gameActive = false;
+        this.showScreen('eliminated');
+        return;
+      }
+
       if (phase !== 'playing') return;
       this._showNextPiece = showNextPiece;
       this._stopAllTimers();
+      
       this._engine     = new TetrisEngine();
+      if (engineState) {
+        this._engine.setState(engineState);
+      }
       this._level      = level;
       this._totalLines = lines;
       this._alive      = true;
@@ -125,7 +156,9 @@ export class TetrisMobile extends MobileBaseGame {
       this.showScreen('game');
       requestAnimationFrame(() => {
         this._resizeCanvas();
-        this._engine.spawn();
+        if (!engineState) {
+          this._engine.spawn();
+        }
         this._render();
         this._updateLevelUI();
         this._startDropTimer();
@@ -154,6 +187,74 @@ export class TetrisMobile extends MobileBaseGame {
 
     document.getElementById('btn-rematch')?.addEventListener('click', () => {
       this.sendToHost('requestRematch', {});
+    });
+
+    // --- 게임 설정 모달 및 보조 조작 버튼 바인딩 ---
+    const btnSettings = document.getElementById('btn-game-settings');
+    const overlaySettings = document.getElementById('game-settings-overlay');
+    const btnCloseSettings = document.getElementById('btn-close-settings');
+    const chkAssist = document.getElementById('chk-assist-buttons');
+    const assistArea = document.getElementById('assist-buttons-area');
+
+    btnSettings?.addEventListener('click', () => {
+      overlaySettings?.classList.remove('hidden');
+    });
+
+    btnCloseSettings?.addEventListener('click', () => {
+      overlaySettings?.classList.add('hidden');
+    });
+
+    chkAssist?.addEventListener('change', () => {
+      if (chkAssist.checked) {
+        assistArea?.classList.remove('hidden');
+        localStorage.setItem('gyf_assist_buttons', 'on');
+      } else {
+        assistArea?.classList.add('hidden');
+        localStorage.setItem('gyf_assist_buttons', 'off');
+      }
+      this._resizeCanvas();
+    });
+
+    // 로컬 스토리지 값 복원
+    if (localStorage.getItem('gyf_assist_buttons') === 'on') {
+      if (chkAssist) chkAssist.checked = true;
+      assistArea?.classList.remove('hidden');
+    }
+
+    // 보조 조작 버튼 클릭/터치 이벤트 바인딩
+    document.getElementById('btn-assist-left')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!this._gameActive || !this._alive || !this._engine) return;
+      this._engine.moveLeft();
+      this._render();
+      this._scheduleBoardSend();
+    });
+
+    document.getElementById('btn-assist-right')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!this._gameActive || !this._alive || !this._engine) return;
+      this._engine.moveRight();
+      this._render();
+      this._scheduleBoardSend();
+    });
+
+    document.getElementById('btn-assist-rotate')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this._doRotate();
+    });
+
+    document.getElementById('btn-assist-soft')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!this._gameActive || !this._alive || !this._engine) return;
+      this._engine.moveDown();
+      this._render();
+      this._scheduleBoardSend();
+      try { navigator.vibrate?.(15); } catch (_) {}
+    });
+
+    document.getElementById('btn-assist-hard')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      this._doHardDrop();
     });
   }
 
@@ -258,6 +359,7 @@ export class TetrisMobile extends MobileBaseGame {
         }
         this._gestCellsDone = targetCells;
         this._render();
+        this._scheduleBoardSend();
       }
     }
 
@@ -348,9 +450,9 @@ export class TetrisMobile extends MobileBaseGame {
 
   // ─── 게임 시작 ───────────────────────────────────────────────────────────
 
-  _startGame() {
+  _startGame(startLevel = 1) {
     this._engine     = new TetrisEngine();
-    this._level      = 1;
+    this._level      = startLevel;
     this._totalLines = 0;
     this._alive      = true;
     this._gameActive = true;
@@ -365,6 +467,7 @@ export class TetrisMobile extends MobileBaseGame {
       this._resizeCanvas();
       this._engine.spawn();
       this._render();
+      this._updateLevelUI(); // 초기 레벨 UI 표시 동기화
       this._startDropTimer();
       this._startLevelTimer();
       this._bindGestureControls();
@@ -399,8 +502,13 @@ export class TetrisMobile extends MobileBaseGame {
     // 레벨 바 높이를 제외한 실제 사용 가능한 화면 크기를 직접 측정
     const levelBar = document.querySelector('.gyf-level-bar-wrap');
     const levelH   = levelBar ? levelBar.offsetHeight : 34;
+
+    // 보조 조작 버튼 영역 높이 추가 공제
+    const assistArea = document.getElementById('assist-buttons-area');
+    const assistH = (assistArea && !assistArea.classList.contains('hidden')) ? assistArea.offsetHeight || 80 : 0;
+
     const screenW  = window.innerWidth;
-    const screenH  = window.innerHeight - levelH;
+    const screenH  = window.innerHeight - levelH - assistH;
 
     // 다음 블록 미리보기가 켜져 있으면 패널 너비(80px + 간격 8px) 만큼 보드 가로 제한
     const nextPanel = document.getElementById('next-panel');
@@ -514,6 +622,7 @@ export class TetrisMobile extends MobileBaseGame {
         this._lockAndNext();
       } else {
         this._render();
+        this._scheduleBoardSend();
       }
     }, SOFT_DROP_MS);
   }
@@ -531,6 +640,7 @@ export class TetrisMobile extends MobileBaseGame {
     if (!this._gameActive || !this._alive || !this._engine) return;
     this._engine.rotate();
     this._render();
+    this._scheduleBoardSend();
     try { navigator.vibrate?.(20); } catch (_) {}
   }
 
@@ -575,6 +685,7 @@ export class TetrisMobile extends MobileBaseGame {
       board: this._engine.getBoardSnapshot(),
       level: this._level,
       lines: this._totalLines,
+      engineState: this._engine.getState()
     });
   }
 
@@ -584,15 +695,45 @@ export class TetrisMobile extends MobileBaseGame {
     const lvlEl = document.getElementById('game-level');
     if (lvlEl) lvlEl.textContent = `Lv.${this._level}`;
     const barEl = document.getElementById('level-bar-fill');
-    if (barEl) barEl.style.width = `${this._level}%`;
+    if (barEl) {
+      const maxLvl = this._targetLevel || 100;
+      const pct = Math.min(100, (this._level / maxLvl) * 100);
+      barEl.style.width = `${pct}%`;
+    }
   }
 
   _flashLevelUp() {
     const barEl = document.getElementById('level-bar-fill');
-    if (!barEl) return;
-    barEl.classList.add('gyf-level-flash');
-    setTimeout(() => barEl.classList.remove('gyf-level-flash'), 600);
-    try { navigator.vibrate?.([80, 40, 80]); } catch (_) {}
+    if (barEl) {
+      barEl.classList.add('gyf-level-flash');
+      setTimeout(() => barEl.classList.remove('gyf-level-flash'), 600);
+    }
+    // 피격 시 테두리에 불꽃 플래시 적용
+    const gameScreen = document.querySelector('.gyf-screen[data-screen="game"]');
+    if (gameScreen) {
+      gameScreen.classList.add('gyf-screen-hit-flash');
+      setTimeout(() => gameScreen.classList.remove('gyf-screen-hit-flash'), 500);
+    }
+    try { navigator.vibrate?.([150, 50, 150]); } catch (_) {}
+  }
+
+  _showToast(msg) {
+    let container = document.getElementById('gyf-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'gyf-toast-container';
+      container.className = 'gyf-toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'gyf-toast';
+    toast.textContent = msg;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('gyf-toast-fadeout');
+      setTimeout(() => toast.remove(), 400);
+    }, 2000);
   }
 
   // ─── 결과 화면 ───────────────────────────────────────────────────────────

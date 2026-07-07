@@ -33,7 +33,7 @@
     </div>
 
     <!-- Lobby phase -->
-    <div id="phase-lobby" class="spin-phase">
+    <div id="phase-lobby" class="spin-screen" data-screen="lobby">
       <div class="spin-waiting-icon">🌀</div>
       <p class="spin-phase-title">대기 중...</p>
       <div id="my-color-dot" class="my-color-display hidden"></div>
@@ -41,10 +41,17 @@
       <p id="ready-status" class="spin-phase-sub hidden">준비 완료! 다른 플레이어를 기다리는 중...</p>
     </div>
 
+    <!-- Reconnecting phase -->
+    <div id="phase-rejoining" class="spin-screen hidden" data-screen="rejoining">
+      <div class="spin-waiting-icon">🔄</div>
+      <p class="spin-phase-title">연결 복구 중...</p>
+      <p class="spin-phase-sub">호스트와 연결을 재설정하고 있습니다.</p>
+    </div>
+
     <!-- Launch phase -->
-    <div id="phase-launch" class="spin-phase hidden">
-      <p class="spin-phase-title">비틀어서 런칭!</p>
-      <p class="spin-phase-sub">폰을 빠르게 비틀어 회전력을 올리세요</p>
+    <div id="phase-launch" class="spin-screen hidden" data-screen="launching">
+      <p class="spin-phase-title">흔들어서 런칭!</p>
+      <p class="spin-phase-sub">폰을 빠르게 흔들어 회전력을 올리세요</p>
       <div id="launch-rpm-display" class="launch-rpm">0 RPM</div>
       <div class="rpm-gauge-wrap">
         <div id="launch-gauge-bar" class="rpm-gauge-bar"></div>
@@ -53,7 +60,7 @@
     </div>
 
     <!-- Battle phase -->
-    <div id="phase-battle" class="spin-phase hidden">
+    <div id="phase-battle" class="spin-screen hidden" data-screen="battle">
       <p class="spin-phase-title">기울여서 조종!</p>
       <div id="battle-rpm-display" class="battle-rpm">2000 RPM</div>
       <div class="rpm-gauge-wrap">
@@ -75,14 +82,14 @@
     </div>
 
     <!-- Eliminated phase -->
-    <div id="phase-eliminated" class="spin-phase hidden">
+    <div id="phase-eliminated" class="spin-screen hidden" data-screen="eliminated">
       <div class="spin-waiting-icon">💥</div>
       <p class="spin-phase-title" id="eliminated-rank"></p>
       <p class="spin-phase-sub">탈락했습니다!</p>
     </div>
 
     <!-- Result phase (game over) -->
-    <div id="phase-result" class="spin-phase hidden">
+    <div id="phase-result" class="spin-screen hidden" data-screen="result">
       <div class="spin-waiting-icon" id="result-icon">🏆</div>
       <p class="spin-phase-title" id="result-title"></p>
       <div class="result-buttons">
@@ -90,6 +97,7 @@
         <button id="btn-quit">그만하기</button>
       </div>
     </div>
+
   </div>
 
   <script type="module" src="./main.js"></script>

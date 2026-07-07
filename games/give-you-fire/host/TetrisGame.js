@@ -12,7 +12,7 @@
 
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { renderBoard } from '../shared/BoardRenderer.js';
-import { FireDemoSimulator } from './FireDemoSimulator.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 /** 색상 표시에 사용할 플레이어 색상 목록 (플랫폼에서 자동 배정되지만 레이블용으로 보유) */
 
@@ -28,6 +28,7 @@ export class TetrisGame extends HostBaseGame {
 
     this._gameStarted  = false;
     this._showNextPiece = false;  // 로비 체크박스 설정
+    this._gameMode      = 'classic'; // 'classic' | 'quick'
     this._readyCount   = 0;
     this._aliveCount   = 0;
     this._rankings     = []; // 탈락/종료 순으로 쌓임
@@ -35,7 +36,7 @@ export class TetrisGame extends HostBaseGame {
     this._elapsed      = 0;
     this._elapsedTimer = null;
 
-    this._demoSimulator = new FireDemoSimulator(this);
+    this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
   }
 
@@ -50,9 +51,17 @@ export class TetrisGame extends HostBaseGame {
       });
     }
 
-    // 로비 시작 버튼
+    // 게임 모드 선택 리스너 추가
+    const modeClassic = document.getElementById('mode-classic');
+    const modeQuick = document.getElementById('mode-quick');
+    if (modeClassic && modeQuick) {
+      modeClassic.addEventListener('change', () => { if (modeClassic.checked) this._gameMode = 'classic'; });
+      modeQuick.addEventListener('change', () => { if (modeQuick.checked) this._gameMode = 'quick'; });
+    }
+
+    // 로비 시작 버튼 (카운트다운으로 시작)
     if (this._lobbyEl) {
-      this._lobbyEl.onStart = () => { if (this._canStart()) this._startGame(); };
+      this._lobbyEl.onStart = () => { if (this._canStart()) this._startCountdown(); };
     }
 
     document.getElementById('btn-restart-result')?.addEventListener('click', () => {
@@ -67,6 +76,8 @@ export class TetrisGame extends HostBaseGame {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
+        } else {
+          this._demoSimulator.stopDemo();
         }
       };
     }
@@ -94,9 +105,13 @@ export class TetrisGame extends HostBaseGame {
     if (!data) return;
 
     if (!data.alive) {
-      // Already eliminated — let them know the game is over if finished
-      const finalRankings = this._buildFinalRankings();
-      this.sendToPlayer(player.id, 'gameFinished', { rankings: finalRankings });
+      // 탈락자 재접속 시: 관전 화면으로 유도
+      this.sendToPlayer(player.id, 'rejoinState', {
+        phase:         'eliminated',
+        nickname:      this._profiles.get(player.id)?.nickname ?? '???',
+        rank:          data.rank ?? 1,
+        mode:          this._gameMode
+      });
       return;
     }
 
@@ -105,13 +120,44 @@ export class TetrisGame extends HostBaseGame {
       showNextPiece: this._showNextPiece,
       level:         data.level,
       lines:         data.lines,
+      engineState:   data.engineState || null,
+      mode:          this._gameMode
     });
   }
 
   onPlayerLeave(playerId) {
-    this._profiles.delete(playerId);
-    this._playerData.delete(playerId);
-    if (!this._gameStarted) {
+    if (this._gameStarted) {
+      const data = this._playerData.get(playerId);
+      if (data && data.alive) {
+        data.alive = false;
+        this._aliveCount--;
+        const rank = this._aliveCount + 1;
+        data.rank = rank;
+        this._rankings.unshift({ id: playerId, rank });
+        this._renderPlayerCard(playerId);
+        this.broadcast('playerEliminated', { playerId, rank });
+
+        // 생존자 체크 및 게임 종료 여부 확인
+        const alivePlayers = [...this.players.values()].filter(p => {
+          const d = this._playerData.get(p.id);
+          return d && d.alive;
+        });
+
+        if (this._aliveCount <= 1) {
+          // 남은 생존자를 1위로 설정
+          for (const [id, d] of this._playerData) {
+            if (d.alive) {
+              d.alive = false;
+              d.rank = 1;
+              this._rankings.unshift({ id, rank: 1 });
+            }
+          }
+          this._endGame();
+        }
+      }
+    } else {
+      this._profiles.delete(playerId);
+      this._playerData.delete(playerId);
       this._renderLobby();
       this._updateReadyStatus();
       this._broadcastPlayerList();
@@ -133,6 +179,7 @@ export class TetrisGame extends HostBaseGame {
     this._profiles.clear();
     this._playerData.clear();
     this._gameStarted   = false;
+    this._gameMode      = 'classic';
     this._readyCount    = 0;
     this._aliveCount    = 0;
     this._rankings      = [];
@@ -163,26 +210,53 @@ export class TetrisGame extends HostBaseGame {
     });
 
     // 모바일에서 보드 상태 업데이트 수신 (100ms 스로틀로 도착)
-    this.onMessage('boardUpdate', (player, { board, level, lines }) => {
+    this.onMessage('boardUpdate', (player, { board, level, lines, engineState }) => {
       const data = this._playerData.get(player.id);
       if (!data || !data.alive) return;
       data.board = board;
       data.level = level;
       data.lines = lines;
+      data.engineState = engineState || null;
       this._renderPlayerCard(player.id);
     });
 
     // 라인 클리어 공격 처리
     this.onMessage('linesCleared', (player, { count }) => {
       if (!this._gameStarted) return;
+
+      // 공격 성공 연출 (호스트 카드 플래시 및 배지)
+      const attackerCard = document.getElementById(`card-${player.id}`);
+      if (attackerCard) {
+        attackerCard.classList.add('gyf-attacker-flash');
+        const badge = document.createElement('div');
+        badge.className = 'gyf-fire-badge';
+        badge.textContent = count === 4 ? '🔥 TETRIS FIRE!' : count >= 2 ? '🔥 DOUBLE FIRE!' : '🔥 FIRE!';
+        attackerCard.appendChild(badge);
+        setTimeout(() => {
+          attackerCard.classList.remove('gyf-attacker-flash');
+          badge.remove();
+        }, 1000);
+      }
+
+      const maxLevel = this._gameMode === 'quick' ? 40 : 100;
+
       // 클리어한 플레이어 외 모든 생존 플레이어에게 levelUp 전송
       for (const [id, data] of this._playerData) {
         if (id === player.id || !data.alive) continue;
-        const newLevel = Math.min(100, data.level + count);
+        const prevLevel = data.level;
+        const newLevel = Math.min(maxLevel, data.level + count);
         data.level = newLevel;
         this.sendToPlayer(id, 'levelUp', { newLevel });
+        
         // 레벨 UI 즉시 갱신
         this._renderPlayerCard(id);
+
+        // 피격 흔들림 연출
+        const victimCard = document.getElementById(`card-${id}`);
+        if (victimCard && newLevel > prevLevel) {
+          victimCard.classList.add('gyf-victim-shake');
+          setTimeout(() => victimCard.classList.remove('gyf-victim-shake'), 600);
+        }
       }
     });
 
@@ -239,15 +313,45 @@ export class TetrisGame extends HostBaseGame {
     return this.playerCount >= 1 && this._readyCount === this.playerCount;
   }
 
+  _startCountdown() {
+    if (this._gameStarted) return;
+    this._gameStarted = true;
+
+    let count = 3;
+    this.broadcast('gameCountdown', { count });
+
+    // 호스트 화면에 카운트다운 엘리먼트 동적 삽입
+    const overlay = document.createElement('div');
+    overlay.id = 'gyf-countdown-overlay';
+    overlay.className = 'gyf-countdown-overlay';
+    overlay.innerHTML = `<div class="gyf-countdown-num">${count}</div>`;
+    document.body.appendChild(overlay);
+
+    const timer = setInterval(() => {
+      count--;
+      if (count <= 0) {
+        clearInterval(timer);
+        overlay.remove();
+        this._startGame();
+      } else {
+        this.broadcast('gameCountdown', { count });
+        const numEl = overlay.querySelector('.gyf-countdown-num');
+        if (numEl) numEl.textContent = count;
+      }
+    }, 1000);
+  }
+
   _startGame() {
     this._gameStarted  = true;
     this._aliveCount   = this.playerCount;
     this._rankings     = [];
     this._gameStartTime = Date.now();
 
+    const startLevel = this._gameMode === 'quick' ? 5 : 1;
+
     // 모든 플레이어 데이터 초기화
     for (const [id] of this.players) {
-      this._playerData.set(id, { level: 1, lines: 0, board: null, alive: true, rank: null });
+      this._playerData.set(id, { level: startLevel, lines: 0, board: null, alive: true, rank: null, engineState: null });
     }
 
     // 대시보드 렌더링
@@ -258,7 +362,12 @@ export class TetrisGame extends HostBaseGame {
     this._startElapsedTimer();
 
     // 게임 시작 메시지 브로드캐스트
-    this.broadcast('gameStarted', { showNextPiece: this._showNextPiece });
+    this.broadcast('gameStarted', {
+      showNextPiece: this._showNextPiece,
+      mode: this._gameMode,
+      startLevel: startLevel,
+      targetLevel: this._gameMode === 'quick' ? 40 : 100
+    });
   }
 
   // ─── 게임 종료 ───────────────────────────────────────────────────────────
@@ -345,6 +454,10 @@ export class TetrisGame extends HostBaseGame {
     if (!grid) return;
     grid.innerHTML = '';
 
+    const startLevel = this._gameMode === 'quick' ? 5 : 1;
+    const maxLevel = this._gameMode === 'quick' ? 40 : 100;
+    const initialPct = (startLevel / maxLevel) * 100;
+
     for (const [id, player] of this.players) {
       const profile = this._profiles.get(id) ?? {};
       const card = document.createElement('div');
@@ -354,10 +467,10 @@ export class TetrisGame extends HostBaseGame {
         <div class="gyf-card-header">
           <span class="gyf-card-dot" style="background:${player.color}"></span>
           <span class="gyf-card-nick">${profile.nickname ?? '???'}</span>
-          <span class="gyf-card-level" id="lvl-${id}">Lv.1</span>
+          <span class="gyf-card-level" id="lvl-${id}">Lv.${startLevel}</span>
         </div>
         <div class="gyf-card-bar-wrap">
-          <div class="gyf-card-bar" id="bar-${id}" style="width:1%;background:${player.color}"></div>
+          <div class="gyf-card-bar" id="bar-${id}" style="width:${initialPct}%;background:${player.color}"></div>
         </div>
         <canvas class="gyf-mini-board" id="canvas-${id}" width="120" height="240"></canvas>
         <div class="gyf-card-status" id="status-${id}">PLAYING</div>
@@ -379,9 +492,13 @@ export class TetrisGame extends HostBaseGame {
     const lvlEl = document.getElementById(`lvl-${playerId}`);
     if (lvlEl) lvlEl.textContent = `Lv.${data.level}`;
 
-    // 레벨 프로그래스 바
+    // 레벨 프로그래스 바 (게임 모드에 맞춰 스케일링)
     const barEl = document.getElementById(`bar-${playerId}`);
-    if (barEl) barEl.style.width = `${data.level}%`;
+    if (barEl) {
+      const maxLvl = this._gameMode === 'quick' ? 40 : 100;
+      const pct = Math.min(100, (data.level / maxLvl) * 100);
+      barEl.style.width = `${pct}%`;
+    }
 
     // 미니 보드 캔버스 렌더링
     const canvas = document.getElementById(`canvas-${playerId}`);

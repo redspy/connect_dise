@@ -1,5 +1,5 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
-import { PuzzleDemoSimulator } from './PuzzleDemoSimulator.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 const SIZE = 4;
 const MIN_PLAYERS = 2;
@@ -17,7 +17,7 @@ export class PuzzleGame extends HostBaseGame {
     this._gameStartTime = null;
     this._timerInterval = null;
 
-    this._demoSimulator = new PuzzleDemoSimulator(this);
+    this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
   }
 
@@ -44,8 +44,10 @@ export class PuzzleGame extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
-        if (!this._isDemo) {
+        if (!this._demoSimulator.isDemo) {
           this._demoSimulator.startDemo();
+        } else {
+          this._demoSimulator.stopDemo();
         }
       };
     }
@@ -57,6 +59,11 @@ export class PuzzleGame extends HostBaseGame {
     if (this._gameStarted) return;
     this._renderLobby();
     this.updateLobbyReady(this._readyCount);
+
+    // 데모 실행 중 실제 플레이어가 난입한 경우 안전하게 데모 중단
+    if (this._isDemo && !player.id.startsWith('bot_')) {
+      this._demoSimulator.stopDemo();
+    }
   }
 
   onPlayerRejoin(player) {
@@ -72,6 +79,14 @@ export class PuzzleGame extends HostBaseGame {
     } else if (this.phase === 'result' && this._winner) {
       const rankings = this._buildRankings();
       this.sendToPlayer(player.id, 'gameFinished', { winner: this._winner, rankings });
+    } else {
+      // 로비 재연결 프리징 가드 및 준비 상태 복구
+      const profile = this._profiles.get(player.id);
+      this.sendToPlayer(player.id, 'lobbyState', {
+        nickname: profile?.nickname ?? '',
+        ready: player.ready ?? false,
+      });
+      this._broadcastPlayerList();
     }
   }
 
@@ -79,6 +94,10 @@ export class PuzzleGame extends HostBaseGame {
     this._profiles.delete(playerId);
     this._progress.delete(playerId);
     this._renderLobby();
+    if (this._gameStarted) {
+      this._renderDashboard();
+    }
+    this._broadcastPlayerList();
   }
 
   onReadyUpdate({ readyCount }) {
@@ -108,12 +127,71 @@ export class PuzzleGame extends HostBaseGame {
     this._renderLobby();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
+
+    const winnerEl = document.getElementById('winner-display');
+    if (winnerEl) {
+      winnerEl.classList.add('hidden');
+    }
   }
 
   onPhaseChange(from, to) {
-    if (this._isDemo) {
+    if (this._demoSimulator.isDemo) {
       this._demoSimulator.onPhaseChange(to);
     }
+  }
+
+  // ─── Demo Mode API ────────────────────────────────────────────────────────
+
+  enterDemoLobby(bots) {
+    this._isDemo = true;
+    bots.forEach(b => {
+      this._profiles.set(b.id, { nickname: b.nickname });
+      this.players.set(b.id, { id: b.id, color: b.color });
+      this.sdk._players.set(b.id, { id: b.id, color: b.color });
+    });
+    this._renderLobby();
+    this.updateLobbyReady(bots.length);
+  }
+
+  applyDemoProgress(botId, snapshot) {
+    const { correctCount, progress, moves, seconds, board } = snapshot;
+    this._progress.set(botId, { correctCount, progress, moves, seconds, board });
+    this._renderDashboard();
+  }
+
+  finishDemoRound(botId, result) {
+    const { moves, seconds } = result;
+    if (this._winner) return;
+
+    const profile = this._profiles.get(botId) || { nickname: '익명' };
+    const p = this.getPlayer(botId);
+    this._winner = {
+      id: botId,
+      nickname: profile.nickname,
+      color: p?.color ?? '#fff',
+      moves,
+      seconds,
+    };
+
+    const solvedBoard = [...Array(15).keys()].map(i => i + 1);
+    solvedBoard.push(0);
+    this._progress.set(botId, { correctCount: 15, progress: 100, moves, seconds, board: solvedBoard });
+
+    const rankings = this._buildRankings();
+    this.broadcast('gameFinished', { winner: this._winner, rankings });
+    this._gameStarted = false;
+    this._renderResult();
+  }
+
+  exitDemoMode() {
+    this._isDemo = false;
+    this._profiles.clear();
+    this._progress.clear();
+    this.players.clear();
+    this.sdk._players.clear();
+    this._renderLobby();
+    this.updateLobbyReady(0);
+    this.setPhase('lobby');
   }
 
   // ─── Game messages ───────────────────────────────────────────────────────
@@ -134,7 +212,7 @@ export class PuzzleGame extends HostBaseGame {
     });
 
     this.onMessage('puzzleComplete', (player, { moves, seconds }) => {
-      if (this._winner) return; // already have a winner
+      if (this._winner) return; 
       const profile = this._profiles.get(player.id) || { nickname: '익명' };
       const p = this.getPlayer(player.id);
       this._winner = {
@@ -144,15 +222,15 @@ export class PuzzleGame extends HostBaseGame {
         moves,
         seconds,
       };
-      // 완료된 보드 상태: 정렬된 상태
+      
       const solvedBoard = [...Array(15).keys()].map(i => i + 1);
       solvedBoard.push(0);
       this._progress.set(player.id, { correctCount: 15, progress: 100, moves, seconds, board: solvedBoard });
 
-      // Build rankings
       const rankings = this._buildRankings();
 
       this.broadcast('gameFinished', { winner: this._winner, rankings });
+      this._gameStarted = false;
       this._renderResult();
     });
 
@@ -188,30 +266,25 @@ export class PuzzleGame extends HostBaseGame {
     this._board = this._generateBoard();
     this._gameStartTime = Date.now();
 
-    // Init progress for all players
     for (const id of this.players.keys()) {
       this._progress.set(id, { correctCount: 0, progress: 0, moves: 0, seconds: 0, board: [...this._board] });
     }
 
     this.broadcast('gameStarted', { board: this._board });
 
-    // Hide overlays, show dashboard
     this.setPhase('playing');
     this._renderDashboard();
 
-    // Start elapsed timer for dashboard
     this._timerInterval = setInterval(() => {
       this._renderDashboardTime();
     }, 1000);
   }
 
   _generateBoard() {
-    // Start from solved state: [1,2,...,15,0]
     const board = [...Array(15).keys()].map(i => i + 1);
     board.push(0);
     let emptyIndex = 15;
 
-    // 300 random valid moves from solved state → always solvable
     let lastEmpty = -1;
     for (let i = 0; i < 300; i++) {
       const neighbors = this._getNeighbors(emptyIndex).filter(n => n !== lastEmpty);
@@ -248,9 +321,9 @@ export class PuzzleGame extends HostBaseGame {
         };
       })
       .sort((a, b) => {
-        // Winner first (100%), then by progress desc, then by moves asc
         if (b.progress !== a.progress) return b.progress - a.progress;
-        return a.moves - b.moves;
+        if (a.moves !== b.moves) return a.moves - b.moves;
+        return a.seconds - b.seconds;
       });
   }
 
@@ -279,17 +352,33 @@ export class PuzzleGame extends HostBaseGame {
     if (!grid) return;
     grid.innerHTML = '';
 
+    const rankings = this._buildRankings();
+    const top1Player = rankings[0];
+    const chasePlayer = rankings[1];
+
     for (const [id, player] of this.players) {
       const profile = this._profiles.get(id);
       const prog = this._progress.get(id) || { correctCount: 0, progress: 0, moves: 0, seconds: 0, board: null };
       const isWinner = this._winner?.id === id;
 
+      let badgeHtml = '';
+      if (this._gameStarted && !this._winner) {
+        if (top1Player && top1Player.id === id && top1Player.progress > 0) {
+          badgeHtml = '<span class="dp-dash-badge top1">TOP 1</span>';
+        } else if (chasePlayer && chasePlayer.id === id && chasePlayer.progress > 0) {
+          badgeHtml = '<span class="dp-dash-badge chase">CHASE</span>';
+        }
+      }
+
+      const isCloseToSolve = prog.correctCount >= 12 && !isWinner;
+
       const card = document.createElement('div');
-      card.className = `dp-dash-card ${isWinner ? 'winner' : ''}`;
+      card.className = `dp-dash-card ${isWinner ? 'winner' : ''} ${isCloseToSolve ? 'pulse-glow' : ''}`;
       card.innerHTML = `
         <div class="dp-dash-header">
           <div class="dp-dash-avatar" style="background:${player.color}">${profile?.nickname?.charAt(0) ?? '?'}</div>
           <div class="dp-dash-name">${profile?.nickname ?? '...'}</div>
+          ${badgeHtml}
           ${isWinner ? '<span class="dp-dash-crown">&#x1F451;</span>' : ''}
         </div>
         <div class="dp-dash-bar-wrap">
@@ -307,16 +396,14 @@ export class PuzzleGame extends HostBaseGame {
   }
 
   _renderDashboardTime() {
-    // Only update time display, not full re-render
     if (!this._gameStarted || this._winner) return;
-    // Elapsed seconds from game start
     const elapsed = Math.floor((Date.now() - this._gameStartTime) / 1000);
     const timerEl = document.getElementById('dashboard-timer');
     if (timerEl) timerEl.textContent = this._formatTime(elapsed);
   }
 
   _renderResult() {
-    this._renderDashboard(); // Update dashboard with winner state
+    this._renderDashboard();
 
     const winnerEl = document.getElementById('winner-display');
     if (winnerEl && this._winner) {
@@ -328,10 +415,51 @@ export class PuzzleGame extends HostBaseGame {
       winnerEl.classList.remove('hidden');
     }
 
+    const rankingsEl = document.getElementById('result-rankings');
+    if (rankingsEl) {
+      const rankings = this._buildRankings();
+      rankingsEl.innerHTML = rankings.map((r, idx) => {
+        let diffText = '';
+        if (idx > 0 && this._winner) {
+          const movesDiff = r.moves - this._winner.moves;
+          const secDiff = r.seconds - this._winner.seconds;
+          const pDiff = this._winner.progress - r.progress;
+          if (r.progress === 100) {
+            diffText = `<span class="dp-rank-diff">+${movesDiff}수 / +${secDiff}초</span>`;
+          } else {
+            diffText = `<span class="dp-rank-diff">${pDiff}% 뒤처짐</span>`;
+          }
+        } else {
+          diffText = `<span class="dp-rank-diff winner">우승!</span>`;
+        }
+
+        const medals = ['🥇', '🥈', '🥉'];
+        const medal = medals[idx] ?? `${idx + 1}등`;
+
+        return `
+          <div class="dp-rank-item ${idx === 0 ? 'winner-row' : ''}">
+            <div class="dp-rank-medal">${medal}</div>
+            <div class="dp-rank-avatar" style="background:${r.color}">${r.nickname.charAt(0)}</div>
+            <div class="dp-rank-name">${r.nickname}</div>
+            <div class="dp-rank-details">
+              <span class="dp-rank-stats">${r.progress}% 완료 (${r.moves}수)</span>
+              ${diffText}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     if (this._timerInterval) {
       clearInterval(this._timerInterval);
       this._timerInterval = null;
     }
+
+    setTimeout(() => {
+      if (this.phase === 'playing') {
+        this.setPhase('result');
+      }
+    }, 3000);
   }
 
   _formatTime(s) {

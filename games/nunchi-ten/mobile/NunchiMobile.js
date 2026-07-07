@@ -80,6 +80,10 @@ export class NunchiMobile extends MobileBaseGame {
       this._applyRejoinState(payload);
     });
 
+    this.onMessage('setProfileResult', ({ success, reason }) => {
+      this._handleProfileResult(success, reason);
+    });
+
     this.onMessage('playerListUpdated', ({ players }) => {
       this._otherPlayers = players.filter(p => p.id !== this.playerId);
       this._renderWaitingPlayers();
@@ -93,7 +97,13 @@ export class NunchiMobile extends MobileBaseGame {
         this._doublesLeft = me.doublesLeft ?? 3;
         this._totalScore = me.totalScore ?? 0;
       }
-      this._showScreen_RoundInput();
+      
+      const isSpectator = !this._remainingCards || this._remainingCards.length === 0;
+      if (isSpectator) {
+        this.showScreen('waiting_next_game');
+      } else {
+        this._showScreen_RoundInput();
+      }
     });
 
     this.onMessage('roundStarted', ({ round, maxRounds, playerData }) => {
@@ -110,8 +120,14 @@ export class NunchiMobile extends MobileBaseGame {
         this._doublesLeft = myData.doublesLeft;
         this._totalScore = myData.totalScore;
       }
-      this.vibrate([200, 150, 200, 150, 600]); // 둥 둥 두우우웅
-      this._showScreen_RoundInput();
+      
+      const isSpectator = myData?.isSpectator || !this._remainingCards || this._remainingCards.length === 0;
+      if (isSpectator) {
+        this.showScreen('waiting_next_game');
+      } else {
+        this.vibrate([200, 150, 200, 150, 600]); // 둥 둥 두우우웅
+        this._showScreen_RoundInput();
+      }
     });
 
     this.onMessage('submissionStatus', ({ submitted, total }) => {
@@ -123,19 +139,20 @@ export class NunchiMobile extends MobileBaseGame {
 
     this.onMessage('roundRevealed', ({ roundResult }) => {
       const myScore = roundResult.scores[this.playerId];
+      if (!myScore) {
+        // 관전자라면 결과 공개 시에도 관전 대기 화면 유지
+        this.showScreen('waiting_next_game');
+        return;
+      }
       this._totalScore = roundResult.totals[this.playerId] ?? this._totalScore;
       this._myRoundResult = myScore;
       this._showScreen_RoundResult(roundResult);
 
-      if (myScore) {
-        if (myScore.final > 0) {
-          this.vibrate('medium');
-        } else {
-          // 충돌 탈락 또는 0점 획득 시 묵직한 진동
-          this.vibrate('heavy');
-        }
+      if (myScore.final > 0) {
+        this.vibrate('medium');
       } else {
-        this.vibrate('light');
+        // 충돌 탈락 또는 0점 획득 시 묵직한 진동
+        this.vibrate('heavy');
       }
     });
 
@@ -145,8 +162,10 @@ export class NunchiMobile extends MobileBaseGame {
       const myIdx = rankings.findIndex(p => p.id === this.playerId);
       if (myIdx === 0) {
         this.vibrate([100, 50, 100, 50, 300]);
-      } else {
+      } else if (myIdx > 0) {
         this.vibrate('medium');
+      } else {
+        this.vibrate('light'); // 관전자는 가벼운 햅틱
       }
     });
   }
@@ -246,7 +265,30 @@ export class NunchiMobile extends MobileBaseGame {
   // ─── Profile ─────────────────────────────────────────────────────────────
 
   _sendProfile() {
+    const btn = document.getElementById('btn-join');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '참여 중...';
+    }
     this.sendToHost('setProfile', { nickname: this._nickname, avatarId: this._avatarId });
+  }
+
+  _handleProfileResult(success, reason) {
+    const btn = document.getElementById('btn-join');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '참여하기 →';
+    }
+
+    if (!success) {
+      if (reason === 'nickname_taken') {
+        alert('⚠️ 이미 사용 중인 닉네임입니다. 다른 닉네임을 입력해주세요.');
+      } else {
+        alert('⚠️ 프로필 설정에 실패했습니다.');
+      }
+      return;
+    }
+
     localStorage.setItem('nunchi_nickname', this._nickname);
     localStorage.setItem('nunchi_avatarId', String(this._avatarId));
     this._renderMyHeader();
@@ -291,6 +333,14 @@ export class NunchiMobile extends MobileBaseGame {
     document.getElementById('round-label').textContent = `Round ${this._currentRound} / ${this._maxRounds}`;
     document.getElementById('doubles-left').textContent = `더블 ${this._doublesLeft}개 남음`;
 
+    // 미리보기 토큰 초기화
+    const previewContainer = document.getElementById('submit-preview-container');
+    const previewEmpty = document.getElementById('submit-preview-empty');
+    if (previewContainer && previewEmpty) {
+      previewContainer.style.display = 'none';
+      previewEmpty.style.display = 'block';
+    }
+
     // Build card grid
     this._renderCardGrid();
     this._renderDoubleBtn();
@@ -317,6 +367,17 @@ export class NunchiMobile extends MobileBaseGame {
           this._selectedCard = n;
           document.querySelectorAll('.card-btn').forEach(b => b.classList.remove('selected'));
           btn.classList.add('selected');
+
+          // 미리보기 갱신
+          const previewContainer = document.getElementById('submit-preview-container');
+          const previewEmpty = document.getElementById('submit-preview-empty');
+          const previewCard = document.getElementById('submit-preview-card');
+          if (previewContainer && previewEmpty && previewCard) {
+            previewCard.textContent = n;
+            previewContainer.style.display = 'flex';
+            previewEmpty.style.display = 'none';
+          }
+
           document.getElementById('btn-submit').disabled = false;
         });
       }
@@ -347,6 +408,12 @@ export class NunchiMobile extends MobileBaseGame {
   }
 
   _applyRejoinState({ phase, players, myData, round, maxRounds, alreadySubmitted, rankings, lastRoundResult, myProfile }) {
+    if (phase === 'waiting_next_game') {
+      this._otherPlayers = players.filter(p => p.id !== this.playerId);
+      this.showScreen('waiting_next_game');
+      return;
+    }
+
     // 로비 상태: 프로필 복구 후 대기 화면으로
     if (phase === 'lobby') {
       this._otherPlayers = players.filter(p => p.id !== this.playerId);
@@ -385,6 +452,12 @@ export class NunchiMobile extends MobileBaseGame {
       this._totalScore = myData.totalScore;
     }
 
+    // 관전자로 참여 중인 경우: 관전자 화면 유지
+    if (myData?.isSpectator) {
+      this.showScreen('waiting_next_game');
+      return;
+    }
+
     if (phase === 'game_result' && rankings) {
       this._showScreen_GameResult(rankings);
       return;
@@ -414,6 +487,8 @@ export class NunchiMobile extends MobileBaseGame {
         return;
       }
       // 내 점수 없으면 (게임 중 신규 합류) 라운드 입력 대기
+      this.showScreen('waiting_next_game');
+      return;
     }
 
     // 기본: 라운드 입력 화면
@@ -475,8 +550,13 @@ export class NunchiMobile extends MobileBaseGame {
     const rankMedals = _calcRankMedals(rankings, medals);
 
     const myIdx = rankings.findIndex(p => p.id === this.playerId);
-    document.getElementById('game-result-my-rank').textContent = rankMedals[myIdx];
-    document.getElementById('game-result-my-score').textContent = `${this._totalScore}점`;
+    if (myIdx === -1) {
+      document.getElementById('game-result-my-rank').textContent = '관전자';
+      document.getElementById('game-result-my-score').textContent = '-점';
+    } else {
+      document.getElementById('game-result-my-rank').textContent = rankMedals[myIdx];
+      document.getElementById('game-result-my-score').textContent = `${this._totalScore}점`;
+    }
 
     const list = document.getElementById('game-result-rankings');
     list.innerHTML = rankings.map((p, i) => `
@@ -499,8 +579,15 @@ function _vibrate(pattern) {
 function _calcRankMedals(rankings, medals) {
   const result = [];
   let displayRank = 1;
+
+  // 타이브레이커 일치 비교 헬퍼
+  const isSameRank = (a, b) => 
+    a.totalScore === b.totalScore && 
+    a.doublesLeft === b.doublesLeft && 
+    a.highestRound === b.highestRound;
+
   for (let i = 0; i < rankings.length; i++) {
-    if (i > 0 && rankings[i].totalScore < rankings[i - 1].totalScore) {
+    if (i > 0 && !isSameRank(rankings[i], rankings[i - 1])) {
       displayRank = i + 1;
     }
     result.push(medals[displayRank - 1] ?? `${displayRank}위`);

@@ -753,6 +753,11 @@ body[class*="-host"] {
   box-sizing: border-box !important;
 }
 
+/* Global utility class for hiding elements */
+.hidden {
+  display: none !important;
+}
+
 /* 모든 오버레이 및 결과 패널의 수직 스크롤 영역 강제 확보 */
 .phase-overlay, 
 .n-overlay, 

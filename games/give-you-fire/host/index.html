@@ -20,7 +20,18 @@
         <li>라인 클리어 시 상대방의 <b>속도가 올라갑니다!</b></li>
         <li>레벨 100 달성 또는 상대 전원 탈락 시 <b>승리!</b></li>
       </ul>
-      <label class="gyf-option-row">
+      <div class="gyf-option-row" style="margin-top: 0.8rem; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;">
+        <span style="font-size: 0.85rem; color: var(--gyf-sub);">게임 모드:</span>
+        <div style="display: flex; gap: 14px;">
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <input type="radio" id="mode-classic" name="game-mode" value="classic" checked> Classic Fire (Lv.100)
+          </label>
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <input type="radio" id="mode-quick" name="game-mode" value="quick"> Quick Fire (Lv.40)
+          </label>
+        </div>
+      </div>
+      <label class="gyf-option-row" style="margin-top: 0.6rem;">
         <input type="checkbox" id="chk-next-piece">
         <span>다음 블록 미리보기 ON</span>
       </label>

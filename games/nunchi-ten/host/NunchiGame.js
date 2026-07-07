@@ -81,9 +81,12 @@ export class NunchiGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+    }
     if (this._gameStarted) {
-      // 게임 중 합류 — 현재 라운드에 맞게 사용 카드 처리
-      this._initPlayerDataForRound(player.id, this._currentRound);
+      // 게임 중 합류 — 관전자로 초기화 (카드 없음)
+      this._initPlayerDataForSpectator(player.id);
       this._renderSubmissionStatus();
     } else {
       this._initPlayerData(player.id);
@@ -118,6 +121,14 @@ export class NunchiGame extends HostBaseGame {
 
   onReset() {
     this._demoSimulator.stopDemo();
+    if (this._revealTimeout) {
+      clearTimeout(this._revealTimeout);
+      this._revealTimeout = null;
+    }
+    if (this._revealTimers) {
+      this._revealTimers.forEach(t => clearTimeout(t));
+      this._revealTimers = [];
+    }
     this._profiles.clear();
     this._data.clear();
     this._submissions.clear();
@@ -138,10 +149,20 @@ export class NunchiGame extends HostBaseGame {
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname, avatarId }) => {
       const name = nickname.trim() || '익명';
+
+      // 중복 닉네임 검사 (자신을 제외한 다른 유저들의 닉네임과 중복 여부 확인)
+      const duplicated = [...this._profiles.entries()].some(([pid, p]) => p.nickname === name && pid !== player.id);
+      if (duplicated) {
+        this.sendToPlayer(player.id, 'setProfileResult', { success: false, reason: 'nickname_taken' });
+        return;
+      }
+
       this._profiles.set(player.id, { nickname: name, avatarId: Number(avatarId) || 1 });
       this.setPlayerName(player.id, name);
       this.renderLobbyPlayers(this._getLobbyProfiles());
       this._broadcastPlayerList();
+      this.sendToPlayer(player.id, 'setProfileResult', { success: true });
+
       // 게임 진행 중에 합류한 경우 → 즉시 게임 상태 전송
       if (this._gameStarted) {
         this._sendRejoinState(player.id);
@@ -166,20 +187,18 @@ export class NunchiGame extends HostBaseGame {
       remainingCards: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       doublesLeft: 3,
       highestRound: 0,
+      isSpectator: false,
     });
   }
 
-  // 게임 중 참가자 — 지나간 라운드만큼 임의 카드를 사용한 것으로 초기화
-  _initPlayerDataForRound(id, round) {
-    const usedCount = Math.min(Math.max(0, round - 1), 10);
-    const allCards = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const shuffled = [...allCards].sort(() => Math.random() - 0.5);
-    const remaining = shuffled.slice(usedCount).sort((a, b) => a - b);
+  // 게임 중 참가자 — 관전자로 초기화 (카드 없음, 제출 대상 제외)
+  _initPlayerDataForSpectator(id) {
     this._data.set(id, {
       totalScore: 0,
-      remainingCards: remaining,
-      doublesLeft: Math.max(0, 3 - Math.floor(usedCount / 3)),
+      remainingCards: [],
+      doublesLeft: 0,
       highestRound: 0,
+      isSpectator: true,
     });
   }
 
@@ -207,6 +226,21 @@ export class NunchiGame extends HostBaseGame {
       return;
     }
 
+    // 관전자로 참여 중인 경우: 관전자 화면 노출
+    if (data.isSpectator) {
+      this.sendToPlayer(playerId, 'rejoinState', {
+        phase: 'waiting_next_game',
+        players,
+        myData: data,
+        round: this._currentRound,
+        maxRounds: MAX_ROUNDS,
+        rankings: null,
+        alreadySubmitted: null,
+        lastRoundResult: null,
+      });
+      return;
+    }
+
     if (this.phase === 'game_result') {
       this.sendToPlayer(playerId, 'rejoinState', {
         phase: 'game_result',
@@ -223,7 +257,7 @@ export class NunchiGame extends HostBaseGame {
 
     const sub = this._submissions.get(playerId);
     const alreadySubmitted = sub
-      ? { ...sub, submittedCount: this._submissions.size, total: this.playerCount }
+      ? { ...sub, submittedCount: this._submissions.size, total: this._getActivePlayerCount() }
       : null;
 
     this.sendToPlayer(playerId, 'rejoinState', {
@@ -282,8 +316,26 @@ export class NunchiGame extends HostBaseGame {
 
   // ─── Game flow ───────────────────────────────────────────────────────────
 
+  _getActivePlayerCount() {
+    let count = 0;
+    for (const [id, data] of this._data) {
+      if (data && !data.isSpectator) {
+        count++;
+      }
+    }
+    return count || this.playerCount;
+  }
+
   _startGame() {
     this._gameStarted = true;
+    if (this._revealTimeout) {
+      clearTimeout(this._revealTimeout);
+      this._revealTimeout = null;
+    }
+    if (this._revealTimers) {
+      this._revealTimers.forEach(t => clearTimeout(t));
+      this._revealTimers = [];
+    }
     // Reset data for all players
     for (const id of this.players.keys()) this._initPlayerData(id);
     const players = this._buildPlayerList();
@@ -331,7 +383,7 @@ export class NunchiGame extends HostBaseGame {
     // Tell all mobiles who has submitted (not what card)
     this.broadcast('submissionStatus', {
       submitted: [...this._submissions.keys()],
-      total: this.playerCount,
+      total: this._getActivePlayerCount(),
     });
 
     this._checkAllSubmitted();
@@ -339,7 +391,7 @@ export class NunchiGame extends HostBaseGame {
 
   _checkAllSubmitted() {
     if (this._revealing) return;
-    if (this._submissions.size >= this.playerCount) {
+    if (this._submissions.size >= this._getActivePlayerCount()) {
       this._revealing = true;
       this._revealRound();
     }
@@ -387,17 +439,22 @@ export class NunchiGame extends HostBaseGame {
     this.setPhase('round_reveal');
 
     const isLastRound = this._currentRound >= MAX_ROUNDS;
-    setTimeout(() => {
+    const revealTime = 8000; // staggered 연출을 위해 8초 대기
+    this._revealTimeout = setTimeout(() => {
       if (isLastRound) {
         this._endGame();
       } else {
         this._startRound(this._currentRound + 1);
       }
-    }, REVEAL_DURATION_MS);
+    }, revealTime);
   }
 
   _endGame() {
     const ranked = [...this.players.values()]
+      .filter(p => {
+        const data = this._data.get(p.id);
+        return data && !data.isSpectator;
+      })
       .map(p => ({
         id: p.id,
         color: p.color,
@@ -434,8 +491,12 @@ export class NunchiGame extends HostBaseGame {
     const grid = document.getElementById('player-status-grid');
     if (!grid) return;
 
-    // 순위 계산 (점수 기준 정렬)
+    // 순위 계산 (관전자 제외한 점수 기준 정렬)
     const ranked = [...this.players.values()]
+      .filter(p => {
+        const data = this._data.get(p.id);
+        return data && !data.isSpectator;
+      })
       .map(p => ({ id: p.id, score: this._data.get(p.id)?.totalScore ?? 0 }))
       .sort((a, b) => b.score - a.score);
     const rankMap = new Map(ranked.map((p, i) => [p.id, i + 1]));
@@ -444,8 +505,10 @@ export class NunchiGame extends HostBaseGame {
 
     grid.innerHTML = '';
     for (const [id, player] of this.players) {
-      const profile = this._profiles.get(id);
       const data = this._data.get(id);
+      if (data && data.isSpectator) continue; // 관전자는 호스트 보드판 상태 카드에서 노출 제외
+
+      const profile = this._profiles.get(id);
       const submitted = this._submissions.has(id);
       const rank = rankMap.get(id) ?? '-';
       const card = document.createElement('div');
@@ -469,15 +532,34 @@ export class NunchiGame extends HostBaseGame {
     document.getElementById('reveal-round-title').textContent = `Round ${roundResult.round} 결과`;
 
     const sorted = [...this.players.values()]
+      .filter(p => {
+        const data = this._data.get(p.id);
+        return data && !data.isSpectator;
+      })
       .map(p => {
         const score = roundResult.scores[p.id] || { card: '?', useDouble: false, base: 0, final: 0 };
         const profile = this._profiles.get(p.id);
         return { ...p, profile, score, total: roundResult.totals[p.id] ?? 0 };
       })
-      .sort((a, b) => b.score.final - a.score.final);
+      .sort((a, b) => b.score.final - a.score.final); // 득점 순으로 노출 정렬
 
+    // 이전 리빌 타이머 소탕
+    if (this._revealTimers) {
+      this._revealTimers.forEach(t => clearTimeout(t));
+    }
+    this._revealTimers = [];
+
+    // 동점 충돌 판정용 카운트
+    const cardCounts = {};
+    Object.values(roundResult.scores).forEach(s => {
+      if (s.card !== '?') {
+        cardCounts[s.card] = (cardCounts[s.card] || 0) + 1;
+      }
+    });
+
+    // 1. 비공개 상태 카드로 초기화 렌더링 (flipped 제거 상태)
     container.innerHTML = sorted.map(p => `
-      <div class="reveal-card">
+      <div class="reveal-card" id="rc-${p.id}">
         <div class="rc-avatar" style="border-color:${p.color}">
           <img src="${avatarUrl(p.profile?.avatarId ?? 1)}" alt="">
         </div>
@@ -488,6 +570,62 @@ export class NunchiGame extends HostBaseGame {
         <div class="rc-total">누적 ${p.total}점</div>
       </div>
     `).join('');
+
+    const maxScore = Math.max(...sorted.map(p => p.score.final));
+
+    // 오디오 정의
+    const playFlipAudio = () => {
+      try {
+        const a = new Audio('/games/nunchi-ten/assets/card_flip.mp3');
+        a.volume = 0.5;
+        a.play().catch(() => {});
+      } catch (_) {}
+    };
+    const playDoubleAudio = () => {
+      try {
+        const a = new Audio('/games/nunchi-ten/assets/double_active.mp3');
+        a.volume = 0.6;
+        a.play().catch(() => {});
+      } catch (_) {}
+    };
+    const playPointAudio = () => {
+      try {
+        const a = new Audio('/games/nunchi-ten/assets/point_gain.mp3');
+        a.volume = 0.4;
+        a.play().catch(() => {});
+      } catch (_) {}
+    };
+
+    // 2. 0.8초 후부터 staggered flip 순차 뒤집기 진행
+    sorted.forEach((p, idx) => {
+      const t = setTimeout(() => {
+        const el = document.getElementById(`rc-${p.id}`);
+        if (!el) return;
+
+        el.classList.add('flipped');
+        playFlipAudio();
+
+        const tSub = setTimeout(() => {
+          const isCrashed = cardCounts[p.score.card] > 1 || p.score.final === 0;
+          if (isCrashed) {
+            el.classList.add('crashed');
+          } else {
+            playPointAudio();
+            if (p.score.final === maxScore && maxScore > 0) {
+              el.classList.add('winner-card');
+            }
+          }
+
+          if (p.score.useDouble) {
+            el.classList.add('double-active');
+            playDoubleAudio();
+          }
+        }, 300);
+        this._revealTimers.push(tSub);
+
+      }, 800 + idx * 180);
+      this._revealTimers.push(t);
+    });
   }
 
   _renderGameResult(ranked) {
@@ -495,8 +633,15 @@ export class NunchiGame extends HostBaseGame {
     if (!container) return;
     const medals = ['🥇', '🥈', '🥉'];
     let displayRank = 1;
+
+    // 타이브레이커 일치 비교 헬퍼
+    const isSameRank = (a, b) => 
+      a.totalScore === b.totalScore && 
+      a.doublesLeft === b.doublesLeft && 
+      a.highestRound === b.highestRound;
+
     container.innerHTML = ranked.map((p, i) => {
-      if (i > 0 && p.totalScore < ranked[i - 1].totalScore) displayRank = i + 1;
+      if (i > 0 && !isSameRank(p, ranked[i - 1])) displayRank = i + 1;
       const medal = medals[displayRank - 1] ?? `${displayRank}위`;
       return `
       <div class="final-rank-row ${displayRank === 1 ? 'winner' : ''}">
@@ -508,5 +653,12 @@ export class NunchiGame extends HostBaseGame {
         <span class="fr-score">${p.totalScore}점</span>
       </div>
     `}).join('');
+
+    // 우승자 축하 사운드 재생
+    try {
+      const winAudio = new Audio('/games/nunchi-ten/assets/winner.mp3');
+      winAudio.volume = 0.7;
+      winAudio.play().catch(() => {});
+    } catch (_) {}
   }
 }

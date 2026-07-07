@@ -79,6 +79,29 @@ export class TetrisEngine {
     this.nextType = this._draw();
   }
 
+  /**
+   * 엔진의 현재 모든 핵심 상태를 스냅샷으로 내보냅니다.
+   */
+  getState() {
+    return {
+      board: this.board.map(row => [...row]),
+      current: this.current ? { ...this.current } : null,
+      nextType: this.nextType,
+      bag: [...this._bag],
+    };
+  }
+
+  /**
+   * 스냅샷으로부터 엔진 상태를 완벽 복구합니다.
+   */
+  setState(state) {
+    if (!state) return;
+    this.board = state.board.map(row => [...row]);
+    this.current = state.current ? { ...state.current } : null;
+    this.nextType = state.nextType;
+    this._bag = [...(state.bag || [])];
+  }
+
   // ─── Bag 관리 ──────────────────────────────────────────────────────────────
 
   /**

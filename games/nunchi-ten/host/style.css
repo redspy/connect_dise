@@ -110,6 +110,7 @@ body.nunchi-host {
   height: 100vh;
   padding: 20px 28px 0;
   box-sizing: border-box;
+  z-index: 10;
 }
 
 .round-display {
@@ -119,7 +120,66 @@ body.nunchi-host {
   letter-spacing: 1px;
 }
 
-/* ── 플레이어 상태 그리드 ──────────────────────────────────────────────────── */
+/* 공통 hidden 클래스 */
+.hidden {
+  display: none !important;
+}
+
+/* ── 데모 배너 ─────────────────────────────────────────────────────────────── */
+
+#demo-banner {
+  position: fixed;
+  top: 72px; /* AppBar 바로 아래 */
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000000;
+  padding: 10px 24px;
+  border-radius: 0 0 16px 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 1000;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  font-size: 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: none;
+  animation: banner-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes banner-slide-down {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.demo-stop-btn {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 800;
+  transition: background 0.2s, transform 0.1s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.demo-stop-btn:hover {
+  background: #1f2937;
+  transform: scale(1.05);
+}
+
+.demo-stop-btn:active {
+  transform: scale(0.95);
+}
 
 /* ── 게임 메시지 영역 ──────────────────────────────────────────────────────── */
 
@@ -137,6 +197,7 @@ body.nunchi-host {
   font-size: 4.5rem;
   font-weight: 900;
   color: #ffffff;
+  text-shadow: 0 0 20px rgba(0,0,0,0.8);
   letter-spacing: 3px;
 }
 
@@ -347,37 +408,60 @@ body.nunchi-host {
   padding: 20px 24px;
   text-align: center;
   min-width: 140px;
-  animation: reveal-in 0.5s ease both;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s, box-shadow 0.6s, border-color 0.6s;
+  opacity: 0;
+  transform: rotateY(-180deg) translateY(20px) scale(0.85);
 }
 
-@keyframes reveal-in {
+.reveal-card.flipped {
+  opacity: 1;
+  transform: rotateY(0deg) translateY(0) scale(1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* 더블 사용 시 연출 효과 */
+.reveal-card.double-active {
+  border-color: var(--nunchi-gold);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+  animation: card-glow-double 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes card-glow-double {
   from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.9);
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
   }
   to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1.03);
+    box-shadow: 0 0 35px rgba(245, 158, 11, 0.8);
   }
 }
 
-.reveal-card:nth-child(1) {
-  animation-delay: 0.1s;
+/* 라운드 최고 득점자 연출 효과 */
+.reveal-card.winner-card {
+  border-color: var(--nunchi-green);
+  box-shadow: 0 0 35px rgba(34, 197, 94, 0.7);
+  animation: card-glow-winner 1.2s ease-in-out infinite alternate;
 }
-.reveal-card:nth-child(2) {
-  animation-delay: 0.2s;
+
+@keyframes card-glow-winner {
+  from {
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+  }
+  to {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.9);
+  }
 }
-.reveal-card:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.reveal-card:nth-child(4) {
-  animation-delay: 0.4s;
-}
-.reveal-card:nth-child(5) {
-  animation-delay: 0.5s;
-}
-.reveal-card:nth-child(6) {
-  animation-delay: 0.6s;
+
+/* 충돌하여 탈락(0점 획득 혹은 동점 탈락)한 카드 어둡게 처리 */
+.reveal-card.crashed {
+  opacity: 0.5;
+  filter: grayscale(80%);
+  border-color: var(--nunchi-red);
 }
 
 .rc-avatar {

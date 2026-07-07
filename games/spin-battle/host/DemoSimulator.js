@@ -1,4 +1,4 @@
-export class SpinDemoSimulator {
+export class DemoSimulator {
   constructor(game) {
     this.game = game;
     this.isDemo = false;
@@ -10,65 +10,28 @@ export class SpinDemoSimulator {
     if (this.isDemo) return;
     this.isDemo = true;
 
-    // 1. 가상 봇 3명 등록
+    // 1. 가상 봇 3명 정의
     const bots = [
       { id: 'bot_amy', nickname: '🤖 에이미', color: '#EF4444' },
       { id: 'bot_bob', nickname: '🤖 밥', color: '#10B981' },
       { id: 'bot_charles', nickname: '🤖 찰리', color: '#3B82F6' }
     ];
 
+    // 호스트 게임의 데모 세션 시작 API 호출
+    this.game.beginDemoSession(bots);
+
+    // 봇들의 런칭 충전 시뮬레이션
     bots.forEach(b => {
-      const pObj = { id: b.id, color: b.color };
-      this.game._players.set(b.id, pObj);
-      this.game.sdk._players.set(b.id, pObj);
-      this.game._playerNicknames.set(b.id, b.nickname);
+      this.game.injectDemoLaunch(b.id, 2200 + Math.random() * 800);
     });
 
-    this.game.renderLobbyPlayers();
-    this.game.updateLobbyReady(3);
-
-    // QR 블러 가드
-    const qrContainers = document.querySelectorAll('.qr-container');
-    qrContainers.forEach(container => {
-      container.style.filter = 'blur(8px)';
-      container.style.pointerEvents = 'none';
-
-      // 오버레이 텍스트 추가
-      if (!container.querySelector('.demo-qr-overlay')) {
-        const overlay = document.createElement('div');
-        overlay.className = 'demo-qr-overlay';
-        overlay.style.position = 'absolute';
-        overlay.style.inset = '0';
-        overlay.style.background = 'rgba(0,0,0,0.7)';
-        overlay.style.color = '#F59E0B';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.fontSize = '0.8rem';
-        overlay.style.fontWeight = 'bold';
-        overlay.style.borderRadius = '8px';
-        overlay.style.zIndex = '10';
-        overlay.textContent = '🤖 데모 중';
-        container.style.position = 'relative';
-        container.appendChild(overlay);
+    // 1초 후 게임 강제 시작
+    const startTimeout = setTimeout(() => {
+      if (this.isDemo && this.game._lobbyEl?.onStart) {
+        this.game._lobbyEl.onStart();
       }
-    });
-
-    // 2. 가상 런칭 충전 시뮬레이션
-    const launchHandler = this.game.sdk._messageHandlers.get('launchSpin');
-    if (launchHandler) {
-      bots.forEach(b => {
-        launchHandler({ id: b.id }, { rpm: 2200 + Math.random() * 800 });
-      });
-    }
-
-    // 3. 게임 시작
-    this.game._launchRpms.clear();
-    bots.forEach(b => {
-      this.game._launchRpms.set(b.id, 2000 + Math.random() * 1000);
-    });
-    this.game.setPhase('launching');
-    this.game._startLaunchCountdown();
+    }, 1000);
+    this.demoTimeouts.push(startTimeout);
   }
 
   stopDemo() {
@@ -83,28 +46,8 @@ export class SpinDemoSimulator {
     this.demoTimeouts.forEach(t => clearTimeout(t));
     this.demoTimeouts = [];
 
-    // QR 복구
-    const qrContainers = document.querySelectorAll('.qr-container');
-    qrContainers.forEach(container => {
-      container.style.filter = '';
-      container.style.pointerEvents = '';
-      const overlay = container.querySelector('.demo-qr-overlay');
-      if (overlay) {
-        overlay.parentNode.removeChild(overlay);
-      }
-    });
-
-    this.game._players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
-  }
-
-  mockMessageFromPlayer(playerId, type, payload) {
-    const handler = this.game.sdk._messageHandlers.get(type);
-    if (handler) {
-      const player = this.game.getPlayer(playerId) || { id: playerId };
-      handler(player, payload);
-    }
+    // 호스트 게임의 데모 세션 종료 API 호출
+    this.game.endDemoSession();
   }
 
   onPhaseChange(phase) {
@@ -175,7 +118,7 @@ export class SpinDemoSimulator {
           tiltX = Math.max(-1, Math.min(1, tiltX));
           tiltZ = Math.max(-1, Math.min(1, tiltZ));
 
-          this.mockMessageFromPlayer(botId, 'tiltInput', { tiltX, tiltZ });
+          this.game.injectDemoTilt(botId, tiltX, tiltZ);
         });
       }, 100);
     } else {

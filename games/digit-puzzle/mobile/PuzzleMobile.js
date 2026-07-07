@@ -26,6 +26,9 @@ export class PuzzleMobile extends MobileBaseGame {
     this._wireUI();
     this._wireMessages();
     this._prefillNickname();
+
+    // 1회성 이벤트 바인딩 (누적 방지)
+    this._bindBoardEvents();
   }
 
   // ─── MobileBaseGame hooks ────────────────────────────────────────────────
@@ -41,7 +44,6 @@ export class PuzzleMobile extends MobileBaseGame {
   }
 
   onAllReady() {
-    // Game start is controlled by host
   }
 
   onReset() {
@@ -71,11 +73,9 @@ export class PuzzleMobile extends MobileBaseGame {
     this.onMessage('gameStarted', ({ board }) => {
       this._initBoard(board);
       this.showScreen('game');
-      // Board needs to render after screen is visible
       requestAnimationFrame(() => {
         this._createTileElements();
         this._renderBoard(false);
-        this._bindBoardEvents();
       });
     });
 
@@ -88,20 +88,44 @@ export class PuzzleMobile extends MobileBaseGame {
     this.onMessage('rejoinState', ({ phase, board, currentBoard, moves, seconds }) => {
       if (phase !== 'playing') return;
       this._initBoard(board);
-      // Restore player's actual progress
       this._board = [...currentBoard];
       this._emptyIndex = this._board.indexOf(0);
       this._moves   = moves;
       this._seconds = seconds;
       document.getElementById('game-moves').textContent = moves;
       document.getElementById('game-timer').textContent = this._formatTime(seconds);
-      this._gameActive = moves > 0; // timer resumes on next move
+      
+      this._gameActive = moves > 0;
+      if (this._gameActive) {
+        this._startTimer();
+      }
+      
       this.showScreen('game');
       requestAnimationFrame(() => {
         this._createTileElements();
         this._renderBoard(false);
-        this._bindBoardEvents();
       });
+    });
+
+    // 로비 재연결 시 프리징 방지 및 상태 복구
+    this.onMessage('lobbyState', ({ nickname, ready }) => {
+      if (nickname) {
+        this._nickname = nickname;
+        document.getElementById('nickname-input').value = nickname;
+        document.getElementById('waiting-nickname').textContent = nickname;
+      }
+      this.showScreen('waiting');
+      
+      const btnReady = document.getElementById('btn-ready');
+      if (btnReady) {
+        if (ready) {
+          btnReady.disabled = true;
+          btnReady.textContent = '준비완료 ✓';
+        } else {
+          btnReady.disabled = false;
+          btnReady.textContent = '준비하기';
+        }
+      }
     });
   }
 
@@ -149,7 +173,6 @@ export class PuzzleMobile extends MobileBaseGame {
     document.getElementById('waiting-nickname').textContent = this._nickname;
     this.showScreen('waiting');
 
-    // Reset ready button
     const btnReady = document.getElementById('btn-ready');
     if (btnReady) {
       btnReady.disabled = false;
@@ -169,7 +192,7 @@ export class PuzzleMobile extends MobileBaseGame {
     `).join('');
   }
 
-  // ─── Puzzle logic (ported from puzzle.js) ────────────────────────────────
+  // ─── Puzzle logic ────────────────────────────────────────────────────────
 
   _initBoard(boardArray) {
     this._board = [...boardArray];
@@ -239,6 +262,9 @@ export class PuzzleMobile extends MobileBaseGame {
       Object.values(this._tileElements).forEach(el => { el.style.transition = 'none'; });
     }
 
+    const eRow = Math.floor(this._emptyIndex / SIZE);
+    const eCol = this._emptyIndex % SIZE;
+
     for (let i = 0; i < this._board.length; i++) {
       const v = this._board[i];
       if (v === 0) continue;
@@ -249,6 +275,15 @@ export class PuzzleMobile extends MobileBaseGame {
       el.style.height = size + 'px';
       el.style.transform = `translate(${x}px, ${y}px)`;
       el.style.fontSize = Math.floor(size * 0.38) + 'px';
+
+      // 이동 가능 타일 하이라이트
+      const tRow = Math.floor(i / SIZE);
+      const tCol = i % SIZE;
+      if (tRow === eRow || tCol === eCol) {
+        el.classList.add('movable');
+      } else {
+        el.classList.remove('movable');
+      }
     }
 
     if (!animated) {
@@ -284,7 +319,6 @@ export class PuzzleMobile extends MobileBaseGame {
       const threshold = 30;
 
       if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
-        // Tap
         const el = document.elementFromPoint(
           e.changedTouches[0].clientX,
           e.changedTouches[0].clientY
@@ -298,7 +332,6 @@ export class PuzzleMobile extends MobileBaseGame {
         return;
       }
 
-      // Swipe
       if (Math.abs(dx) > Math.abs(dy)) {
         this._moveDirKey(dx > 0 ? 'right' : 'left');
       } else {
@@ -306,7 +339,6 @@ export class PuzzleMobile extends MobileBaseGame {
       }
     }, { passive: true });
 
-    // Resize
     window.addEventListener('resize', () => this._renderBoard(false));
   }
 
@@ -332,10 +364,15 @@ export class PuzzleMobile extends MobileBaseGame {
         sequence.push(r * SIZE + tCol);
       }
     } else {
+      // 무효 조작 피드백 (진동 및 쉐이크 애니메이션)
+      this._triggerInvalidFeedback(tileIndex);
       return;
     }
 
     if (sequence.length === 0) return;
+
+    // 유효 조작 햅틱 피드백
+    try { navigator.vibrate?.(15); } catch (_) {}
 
     if (!this._gameActive) {
       this._gameActive = true;
@@ -356,6 +393,21 @@ export class PuzzleMobile extends MobileBaseGame {
     document.getElementById('game-moves').textContent = this._moves;
 
     this._animateTiles(sequence, destinations);
+  }
+
+  _triggerInvalidFeedback(tileIndex) {
+    try { navigator.vibrate?.(40); } catch (_) {}
+    const val = this._board[tileIndex];
+    const el = this._tileElements[val];
+    if (el) {
+      const { x, y } = this._getTilePosition(tileIndex);
+      el.style.setProperty('--tx', `${x}px`);
+      el.style.setProperty('--ty', `${y}px`);
+      el.classList.add('shake');
+      el.addEventListener('animationend', () => {
+        el.classList.remove('shake');
+      }, { once: true });
+    }
   }
 
   _moveDirKey(dir) {
@@ -394,6 +446,7 @@ export class PuzzleMobile extends MobileBaseGame {
         if (pending === 0) {
           this._isAnimating = false;
           this._sendProgress();
+          this._renderBoard(true); // 하이라이트 클래스 갱신을 위해 재렌더링
           if (this._isSolved()) {
             this._onPuzzleSolved();
           }
@@ -436,8 +489,6 @@ export class PuzzleMobile extends MobileBaseGame {
     });
   }
 
-  // ─── Progress reporting (500ms throttle) ─────────────────────────────────
-
   _sendProgress() {
     const now = Date.now();
     if (now - this._lastProgressSend < PROGRESS_THROTTLE_MS) return;
@@ -450,8 +501,6 @@ export class PuzzleMobile extends MobileBaseGame {
       board: [...this._board],
     });
   }
-
-  // ─── Timer ───────────────────────────────────────────────────────────────
 
   _startTimer() {
     this._timerInterval = setInterval(() => {
@@ -473,8 +522,6 @@ export class PuzzleMobile extends MobileBaseGame {
     return `${m}:${sec}`;
   }
 
-  // ─── Result screen ──────────────────────────────────────────────────────
-
   _showResult(winner, rankings) {
     const isMe = winner.id === this.playerId;
 
@@ -482,6 +529,38 @@ export class PuzzleMobile extends MobileBaseGame {
     document.getElementById('result-status').style.color = isMe ? '#ffd700' : '#bb86fc';
     document.getElementById('result-moves').textContent = `${this._moves}수`;
     document.getElementById('result-time').textContent = this._formatTime(this._seconds);
+
+    const listEl = document.getElementById('result-rankings-list');
+    if (listEl && rankings) {
+      listEl.innerHTML = rankings.map((r, idx) => {
+        const isCurrent = r.id === this.playerId;
+        const medals = ['🥇', '🥈', '🥉'];
+        const medal = medals[idx] ?? `${idx + 1}등`;
+        
+        let diffText = '';
+        if (idx > 0 && winner) {
+          const movesDiff = r.moves - winner.moves;
+          const secDiff = r.seconds - winner.seconds;
+          if (r.progress === 100) {
+            diffText = `+${movesDiff}수 / +${secDiff}초`;
+          } else {
+            diffText = `${winner.progress - r.progress}% 뒤처짐`;
+          }
+        } else {
+          diffText = '우승!';
+        }
+
+        return `
+          <div class="dp-mobile-rank-item ${isCurrent ? 'my-row' : ''}">
+            <span class="dp-mr-medal">${medal}</span>
+            <span class="dp-mr-avatar" style="background:${r.color}">${r.nickname.charAt(0)}</span>
+            <span class="dp-mr-name">${r.nickname} ${isCurrent ? '(나)' : ''}</span>
+            <span class="dp-mr-stats">${r.progress}% (${r.moves}수)</span>
+            <span class="dp-mr-diff ${idx === 0 ? 'winner' : ''}">${diffText}</span>
+          </div>
+        `;
+      }).join('');
+    }
 
     this.showScreen('result');
   }

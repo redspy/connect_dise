@@ -1,7 +1,7 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { SpinPhysics, MAX_RPM, ITEM_TYPES } from './SpinPhysics.js';
 import { SpinRenderer } from './SpinRenderer.js';
-import { SpinDemoSimulator } from './SpinDemoSimulator.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 const LAUNCH_DURATION_MS = 5000;
 const BATTLE_COUNTDOWN_MS = 3000;
@@ -20,6 +20,14 @@ export class SpinGame extends HostBaseGame {
     this._itemSpawnIntervalMs = 5000;
     this.physics = null;
 
+    // 타이머 핸들들 관리
+    this._launchInterval = null;
+    this._launchTimeout = null;
+    this._battleCountdownInterval = null;
+    this._battleCountdownTimeout = null;
+    this._stateSyncInterval = null;
+    this._bannerTimeout = null;
+
     // 게임 고유 메시지 등록
     this.onMessage('tiltInput', (player, { tiltX, tiltZ }) => {
       this.physics?.setTilt(player.id, tiltX, tiltZ);
@@ -32,7 +40,7 @@ export class SpinGame extends HostBaseGame {
       this.resetSession();
     });
 
-    this._demoSimulator = new SpinDemoSimulator(this);
+    this._demoSimulator = new DemoSimulator(this);
     this._loop();
   }
 
@@ -57,6 +65,8 @@ export class SpinGame extends HostBaseGame {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
+        } else {
+          this._demoSimulator.stopDemo();
         }
       };
     }
@@ -64,23 +74,79 @@ export class SpinGame extends HostBaseGame {
     this.setPhase('lobby');
   }
 
-  onPlayerJoin(_player) {
+  onPlayerJoin(player) {
+    if (!player.id.startsWith('bot_')) {
+      if (this._isDemo) {
+        this._demoSimulator.stopDemo();
+        const demoBanner = document.getElementById('demo-banner');
+        if (demoBanner) {
+          demoBanner.textContent = '🔌 실제 플레이어 입장으로 데모 중단됨';
+          demoBanner.classList.remove('hidden');
+          if (this._bannerTimeout) clearTimeout(this._bannerTimeout);
+          this._bannerTimeout = setTimeout(() => {
+            demoBanner.classList.add('hidden');
+          }, 3000);
+        }
+      }
+    }
     this.renderLobbyPlayers();
     this.updateLobbyReady(this._readyCount);
   }
 
   onPlayerRejoin(player) {
-    if (this.phase === 'battle' || this.phase === 'countdown') {
-      const players = [...this.players.values()].map(p => ({
-        id:    p.id,
-        color: p.color,
-        rpm:   this._launchRpms.get(p.id) || 1000,
-      }));
-      this.sendToPlayer(player.id, 'battleStart', { players });
+    if (this.phase === 'lobby') {
+      this.sendToPlayer(player.id, 'lobbyState', {
+        players: [...this.players.values()].map(p => ({ id: p.id, color: p.color }))
+      });
+      this.renderLobbyPlayers();
+      this.updateLobbyReady(this._readyCount);
+    } else if (this.phase === 'launching') {
+      const remainingMs = Math.max(0, (this._launchStartTime + LAUNCH_DURATION_MS) - Date.now());
+      this.sendToPlayer(player.id, 'launchState', {
+        remainingMs,
+        rpm: this._launchRpms.get(player.id) || 0
+      });
+    } else if (this.phase === 'countdown' || this.phase === 'battle') {
+      const players = [...this.players.values()].map(p => {
+        const spinner = this.physics?.spinners.get(p.id);
+        const buffs = this.physics?.getBuffs(p.id) || { shield: 0, cogs: 0 };
+        return {
+          id: p.id,
+          color: p.color,
+          rpm: spinner ? spinner.rpm : (this._launchRpms.get(p.id) || 1000),
+          eliminated: spinner ? spinner.eliminated : false,
+          shield: buffs.shield > 0,
+          cogs: buffs.cogs > 0
+        };
+      });
+      const spinner = this.physics?.spinners.get(player.id);
+      const isEliminated = spinner ? spinner.eliminated : false;
+      const countdownRemainingMs = this.phase === 'countdown' ? Math.max(0, (this._battleCountdownStartTime + BATTLE_COUNTDOWN_MS) - Date.now()) : 0;
+      this.sendToPlayer(player.id, 'battleState', {
+        players,
+        phase: this.phase,
+        isEliminated,
+        countdownRemainingMs
+      });
+    } else if (this.phase === 'result') {
+      this.sendToPlayer(player.id, 'resultState', {
+        rankings: this._finalRankings || []
+      });
     }
   }
 
-  onPlayerLeave(_playerId) {
+  onPlayerLeave(playerId) {
+    if (this.phase === 'battle' || this.phase === 'countdown') {
+      const elResult = this.physics?.eliminateSpinner(playerId, 'leave');
+      if (elResult) {
+        this.renderer.removeSpinner(playerId);
+        this._rankings.push({ id: playerId, color: this.getPlayer(playerId)?.color });
+        const row = document.getElementById(`rpm-row-${playerId}`);
+        if (row) row.classList.add('eliminated');
+        this.sendToPlayer(playerId, 'eliminated', { rank: this._rankings.length, reason: 'leave' });
+        this._checkBattleOver();
+      }
+    }
     this.renderLobbyPlayers();
     this.updateLobbyReady(this._readyCount);
   }
@@ -94,9 +160,19 @@ export class SpinGame extends HostBaseGame {
     this.updateLobbyReady(this.playerCount);
   }
 
+  _clearAllTimers() {
+    if (this._launchInterval) { clearInterval(this._launchInterval); this._launchInterval = null; }
+    if (this._launchTimeout) { clearTimeout(this._launchTimeout); this._launchTimeout = null; }
+    if (this._battleCountdownInterval) { clearInterval(this._battleCountdownInterval); this._battleCountdownInterval = null; }
+    if (this._battleCountdownTimeout) { clearTimeout(this._battleCountdownTimeout); this._battleCountdownTimeout = null; }
+    if (this._stateSyncInterval) { clearInterval(this._stateSyncInterval); this._stateSyncInterval = null; }
+    if (this._bannerTimeout) { clearTimeout(this._bannerTimeout); this._bannerTimeout = null; }
+    this._stopItemSpawner();
+  }
+
   onReset() {
     this._demoSimulator.stopDemo();
-    this._stopItemSpawner();
+    this._clearAllTimers();
     this.renderer.clearItems();
 
     this._readyCount = 0;
@@ -156,16 +232,25 @@ export class SpinGame extends HostBaseGame {
   // ─── 게임 흐름 ───────────────────────────────────────────────────────────
 
   _startLaunchCountdown() {
+    this._launchStartTime = Date.now();
+    this.broadcast('launchStart', { durationMs: LAUNCH_DURATION_MS });
+
     const el = document.getElementById('launch-countdown');
     let sec = Math.ceil(LAUNCH_DURATION_MS / 1000);
     el.textContent = sec;
-    const iv = setInterval(() => {
+    this._launchInterval = setInterval(() => {
       sec--;
       el.textContent = sec;
-      if (sec <= 0) clearInterval(iv);
+      if (sec <= 0) {
+        clearInterval(this._launchInterval);
+        this._launchInterval = null;
+      }
     }, 1000);
 
-    setTimeout(() => this._startBattle(), LAUNCH_DURATION_MS + 800);
+    this._launchTimeout = setTimeout(() => {
+      this._launchTimeout = null;
+      this._startBattle();
+    }, LAUNCH_DURATION_MS + 800);
   }
 
   _startBattle() {
@@ -190,26 +275,58 @@ export class SpinGame extends HostBaseGame {
     });
 
     this._buildRpmBars(players);
-    this.broadcast('battleStart', { players });
     this._startBattleCountdown();
   }
 
   _startBattleCountdown() {
     this.setPhase('countdown');
+    this._battleCountdownStartTime = Date.now();
+
+    const allPlayers = this.sdk.getPlayers();
+    const players = allPlayers.map(p => ({
+      id: p.id,
+      color: p.color,
+      rpm: this._launchRpms.get(p.id) || 1000,
+    }));
+
+    this.broadcast('battleCountdown', { durationMs: BATTLE_COUNTDOWN_MS, players });
+
     const el = document.getElementById('battle-countdown');
     let sec = Math.ceil(BATTLE_COUNTDOWN_MS / 1000);
     el.textContent = sec;
-    const iv = setInterval(() => {
+    this._battleCountdownInterval = setInterval(() => {
       sec--;
       el.textContent = sec > 0 ? sec : 'GO!';
       if (sec <= 0) {
-        clearInterval(iv);
-        setTimeout(() => {
+        clearInterval(this._battleCountdownInterval);
+        this._battleCountdownInterval = null;
+        this._battleCountdownTimeout = setTimeout(() => {
+          this._battleCountdownTimeout = null;
           this.setPhase('battle');
+          
+          this._stateSyncInterval = setInterval(() => this._syncBattleState(), 200);
           this._startItemSpawner();
+          this.broadcast('battleLive', { players });
         }, 600);
       }
     }, 1000);
+  }
+
+  _syncBattleState() {
+    if (this.phase !== 'battle' || !this.physics) return;
+    const players = [...this.players.values()].map(p => {
+      const spinner = this.physics.spinners.get(p.id);
+      const buffs = this.physics.getBuffs(p.id) || { shield: 0, cogs: 0 };
+      return {
+        id: p.id,
+        color: p.color,
+        rpm: spinner ? spinner.rpm : 0,
+        eliminated: spinner ? spinner.eliminated : false,
+        shield: buffs.shield > 0,
+        cogs: buffs.cogs > 0
+      };
+    });
+    this.broadcast('battleState', { players });
   }
 
   _buildRpmBars(players) {
@@ -244,23 +361,48 @@ export class SpinGame extends HostBaseGame {
   }
 
   _showResult(rankings) {
+    this._finalRankings = rankings;
     this._stopItemSpawner();
+    if (this._stateSyncInterval) {
+      clearInterval(this._stateSyncInterval);
+      this._stateSyncInterval = null;
+    }
     this.renderer.clearItems();
     const display = document.getElementById('rankings-display');
     display.innerHTML = '';
     const medals = ['🥇', '🥈', '🥉'];
     rankings.forEach((entry, i) => {
       const p = this.getPlayer(entry.id) || { color: '#fff' };
+      const nickname = this._playerNicknames.get(entry.id) || p.nickname || entry.id.slice(0, 6);
       const div = document.createElement('div');
       div.className = 'rank-row';
       div.innerHTML = `
         <span class="rank-medal">${medals[i] || `${i + 1}위`}</span>
         <span class="rank-dot" style="background:${p.color}"></span>
-        <span class="rank-name">${entry.id.slice(0, 6)}</span>
+        <span class="rank-name">${nickname}</span>
       `;
       display.appendChild(div);
     });
     this.setPhase('result');
+  }
+
+  _checkBattleOver() {
+    if (!this.physics) return;
+    const active = [...this.physics.spinners.values()].filter(s => !s.eliminated);
+    if (active.length === 0 || (active.length === 1 && this.playerCount > 1)) {
+      const winner = active[0];
+      const finalRankings = [];
+      if (winner) finalRankings.push({ id: winner.id, color: winner.color });
+      for (let i = this._rankings.length - 1; i >= 0; i--) {
+        // 이미 랭킹에 들어간 중복 플레이어 스냅 방지
+        if (winner && this._rankings[i].id === winner.id) continue;
+        finalRankings.push(this._rankings[i]);
+      }
+      this._rankings = [];
+      this._finalRankings = finalRankings;
+      this.broadcast('gameOver', { rankings: finalRankings });
+      this._showResult(finalRankings);
+    }
   }
 
   // ─── 게임 루프 ───────────────────────────────────────────────────────────
@@ -319,18 +461,7 @@ export class SpinGame extends HostBaseGame {
     }
 
     if (eliminated.length > 0) {
-      const active = [...this.physics.spinners.values()].filter(s => !s.eliminated);
-      if (active.length === 0 || (active.length === 1 && this.playerCount > 1)) {
-        const winner = active[0];
-        const finalRankings = [];
-        if (winner) finalRankings.push({ id: winner.id, color: winner.color });
-        for (let i = this._rankings.length - 1; i >= 0; i--) {
-          finalRankings.push(this._rankings[i]);
-        }
-        this._rankings = [];
-        this.broadcast('gameOver', { rankings: finalRankings });
-        this._showResult(finalRankings);
-      }
+      this._checkBattleOver();
     }
   }
 

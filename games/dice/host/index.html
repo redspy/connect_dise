@@ -6,28 +6,198 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dice Board (Host)</title>
   <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="/platform/client/shared/appbar.css">
+  <style>
+    /* Dice Game Host Specific Layout Constraints */
+    body.dice-host-body {
+      overflow: hidden;
+    }
+    .dice-host-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+    }
+    /* Override center-status default sizing for dynamic layouts */
+    .dice-overlay.center-status {
+      width: 480px;
+      height: 480px;
+      border-radius: 24px;
+      font-family: 'Cinzel', serif;
+      box-shadow: inset 0 0 40px rgba(0,0,0,0.8), 0 10px 40px rgba(0,0,0,0.6);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border: 3px solid var(--gold-dark);
+      background: radial-gradient(ellipse at 40% 35%, rgba(15, 60, 35, 0.96) 0%, rgba(5, 30, 15, 0.98) 100%);
+    }
+    .players-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      width: 90%;
+      margin: 15px 0;
+      max-height: 200px;
+      overflow-y: auto;
+      pointer-events: auto;
+    }
+    .lobby-player-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-family: 'Roboto', sans-serif;
+      transition: all 0.3s;
+    }
+    .lobby-player-card.ready {
+      border-color: #00C851;
+      background: rgba(0, 200, 81, 0.1);
+    }
+    .lobby-player-card .p-name {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .lobby-player-card .p-status {
+      font-size: 0.75rem;
+      margin-top: 4px;
+      color: rgba(255,255,255,0.4);
+    }
+    .lobby-player-card.ready .p-status {
+      color: #00C851;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+    }
+    /* Results rendering */
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-family: 'Roboto', sans-serif;
+    }
+    .result-row .player-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .player-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .result-row .score-val {
+      font-weight: bold;
+      color: var(--gold);
+      font-size: 1.1rem;
+    }
+    /* Screen shake for high strength rolls */
+    @keyframes shake-screen {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      10% { transform: translate(-5px, -5px) rotate(-1deg); }
+      30% { transform: translate(5px, 3px) rotate(1deg); }
+      50% { transform: translate(-3px, 5px) rotate(-0.5deg); }
+      70% { transform: translate(4px, -3px) rotate(0.8deg); }
+      90% { transform: translate(-2px, -2px) rotate(-0.3deg); }
+    }
+    .shake {
+      animation: shake-screen 0.5s ease-in-out;
+    }
+  </style>
 </head>
 
-<body class="host-board">
-  <!-- QR codes will be generated dynamically -->
+<body class="host-board dice-host-body">
+  <!-- Common App Bar -->
+  <header id="game-appbar"></header>
+
+  <!-- QR codes dynamically managed -->
   <div id="qr-top-left" class="qr-container"></div>
   <div id="qr-top-right" class="qr-container"></div>
   <div id="qr-bottom-left" class="qr-container"></div>
   <div id="qr-bottom-right" class="qr-container"></div>
 
-  <div class="center-status">
-    <button class="btn-back-lobby" onclick="location.href='/'">&larr; 게임 선택</button>
-    <h1>Dice Game Board</h1>
-    <p id="session-info">Session ID: Loading...</p>
-    <p id="player-status">Waiting for players...</p>
-    <button id="test-roll-btn"
-      style="margin-top:20px; padding:12px 24px; cursor:pointer; background: var(--gold); color: #333; border:none; border-radius:5px; font-weight:bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index:100; pointer-events:auto;">Test
-      3D Engine (Manually)</button>
-    <button id="demoPlayBtn"
-      style="margin-top:20px; margin-left:10px; padding:12px 24px; cursor:pointer; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border:none; border-radius:5px; font-weight:bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5); z-index:100; pointer-events:auto;">🤖 데모 플레이 실행</button>
+  <!-- Main Game Container -->
+  <div class="dice-host-container" id="host-main-container">
+    
+    <!-- 1. Lobby Phase Overlay -->
+    <div class="dice-overlay center-status" data-phase="lobby">
+      <button class="btn-back-lobby" onclick="location.href='/'">&larr; 게임 선택</button>
+      <h1>Dice Party</h1>
+      <p id="session-info">Session ID: Loading...</p>
+      <div id="lobby-players" class="players-grid"></div>
+      <p id="player-status">Waiting for players...</p>
+      <div style="margin-top: 15px; display: flex; gap: 10px; pointer-events: auto;">
+        <button id="demoPlayBtn" class="btn-primary">🤖 데모 플레이 실행</button>
+      </div>
+    </div>
+
+    <!-- 2. Round Intro Phase Overlay -->
+    <div class="dice-overlay center-status hidden" data-phase="roundIntro">
+      <h2 id="round-intro-title" style="font-size: 3.5rem; margin: 0 0 10px 0; color: var(--gold); letter-spacing: 3px;">ROUND 1</h2>
+      <p style="font-size: 1.4rem; color: #fff; margin: 0;">주사위를 흔들 준비를 하세요!</p>
+    </div>
+
+    <!-- 3. Waiting for Throws Phase Overlay -->
+    <div class="dice-overlay center-status hidden" data-phase="waitingThrow">
+      <h2 style="font-size: 1.4rem; margin: 0 0 10px 0; color: var(--gold); letter-spacing: 1px;">주사위 투척 차례</h2>
+      <div id="current-turn-card" style="width: 85%; padding: 20px; border-radius: 12px; background: rgba(0,0,0,0.4); border: 2px solid transparent; transition: all 0.3s; margin: 15px 0; text-align: center;">
+        <h3 id="current-turn-player-name" style="font-size: 2.2rem; margin: 0 0 10px 0; color: #fff;">-</h3>
+        <p id="turn-action-hint" style="margin: 0; font-size: 1rem; color: rgba(255,255,255,0.7); font-family: 'Roboto', sans-serif;">기기를 세게 휘둘러 던지세요!</p>
+      </div>
+      <div id="turn-progress-text" style="font-size: 0.95rem; color: rgba(240,240,240,0.6); font-family: 'Roboto', sans-serif;"></div>
+    </div>
+
+    <!-- 4. Round Result Phase Overlay -->
+    <div class="dice-overlay center-status hidden" data-phase="roundResult">
+      <h2 style="font-size: 1.8rem; margin: 0 0 15px 0; color: var(--gold); letter-spacing: 2px;">라운드 결과</h2>
+      <div id="round-results-list" style="width: 85%; max-height: 220px; overflow-y: auto; pointer-events: auto; margin-bottom: 15px;">
+        <!-- Filled dynamically -->
+      </div>
+      <h3 id="round-winner-announce" style="font-size: 1.4rem; color: #00C851; margin: 0; text-align: center;">-</h3>
+    </div>
+
+    <!-- 5. Match Result (Final Scoreboard) Overlay -->
+    <div class="dice-overlay center-status hidden" data-phase="matchResult">
+      <h2 style="font-size: 2.2rem; margin: 0 0 15px 0; background: linear-gradient(180deg, #ffe566 0%, #b8960c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px;">🏆 최종 순위 🏆</h2>
+      <div id="final-scoreboard-list" style="width: 85%; max-height: 220px; overflow-y: auto; pointer-events: auto; margin-bottom: 15px;">
+        <!-- Filled dynamically -->
+      </div>
+      <div style="pointer-events: auto; display: flex; gap: 10px;">
+        <button id="btn-restart-game" class="btn-primary">다시 시작하기</button>
+      </div>
+    </div>
+
   </div>
 
+  <!-- 3D Physics Dice Container -->
   <div id="dice-box"></div>
+
+  <!-- Tiny hidden debug trigger -->
+  <button id="test-roll-btn" style="position: absolute; bottom: 10px; left: 10px; z-index: 100; opacity: 0.01; background: transparent; border: none;"></button>
 
   <script type="module" src="./main.js"></script>
 </body>

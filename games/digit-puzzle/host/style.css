@@ -430,3 +430,165 @@
     width: 100% !important;
   }
 }
+
+/* ── Hidden utility (Rule) ─────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Top 1 / Chase Badge on Host ────────────────────── */
+.dp-dash-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 4px;
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.dp-dash-badge.top1 {
+  background: linear-gradient(135deg, #ffd700, #b8860b);
+  color: #000;
+  animation: dp-badge-pulse 1.5s infinite alternate;
+}
+
+.dp-dash-badge.chase {
+  background: linear-gradient(135deg, #e0e0e0, #8a8a8a);
+  color: #000;
+}
+
+@keyframes dp-badge-pulse {
+  0% { transform: scale(0.95); filter: brightness(0.9); }
+  100% { transform: scale(1.05); filter: brightness(1.2); }
+}
+
+/* ── Pulse Glow for close-to-solve players ────────── */
+.dp-dash-card.pulse-glow {
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  animation: dp-card-pulse 2s infinite alternate;
+}
+
+@keyframes dp-card-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+  100% { transform: scale(1.01); box-shadow: 0 0 25px rgba(239, 68, 68, 0.7); }
+}
+
+/* ── Result ranking items on Host ──────────────────── */
+.dp-result-rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 24px auto;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 215, 0, 0.1);
+}
+
+.dp-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(20, 20, 20, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s;
+}
+
+.dp-rank-item.winner-row {
+  background: rgba(255, 215, 0, 0.12);
+  border-color: rgba(255, 215, 0, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.15);
+}
+
+.dp-rank-medal {
+  font-size: 20px;
+  font-weight: 800;
+  width: 32px;
+  text-align: center;
+}
+
+.dp-rank-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #fff;
+}
+
+.dp-rank-name {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+  text-align: left;
+}
+
+.dp-rank-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.dp-rank-stats {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.dp-rank-diff {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.dp-rank-diff.winner {
+  color: #ffd700;
+}
+
+/* ── Demo Mode Banner & UI ────────────────────────── */
+.dp-demo-active-banner {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.95);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 13px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  pointer-events: auto;
+}
+
+.dp-btn-stop-demo {
+  background: #fff;
+  color: #ef4444;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.dp-btn-stop-demo:hover {
+  opacity: 0.9;
+}

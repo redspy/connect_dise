@@ -34,8 +34,9 @@ body.host-board {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  z-index: 10; /* Felt 배경 위에 노출되도록 z-index 방어 */
 }
-.gyf-overlay.hidden { display: none; }
+.gyf-overlay.hidden, .hidden { display: none !important; }
 
 /* ─── 로비 QR ───────────────────────────────────────────────────── */
 .gyf-qr-center {
@@ -375,3 +376,108 @@ body.host-board {
 .gyf-rank-dot    { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .gyf-rank-nick   { flex: 1; font-weight: 700; }
 .gyf-rank-detail { font-size: 0.8rem; color: var(--gyf-sub); }
+
+/* ─── 대중성 보강 및 공격/피격 화염 연출 ─────────────────────────── */
+.gyf-player-card {
+  position: relative; /* 배지 노출용 */
+}
+
+/* 공격 성공 플래시 */
+.gyf-attacker-flash {
+  animation: gyf-fire-glow 0.8s ease-out;
+}
+
+@keyframes gyf-fire-glow {
+  0% {
+    box-shadow: 0 0 0 0px var(--gyf-fire);
+    border-color: var(--gyf-fire);
+  }
+  50% {
+    box-shadow: 0 0 25px 4px var(--gyf-fire);
+    border-color: #ffaa00;
+  }
+  100% {
+    box-shadow: 0 0 0 0px var(--gyf-fire);
+    border-color: var(--gyf-border);
+  }
+}
+
+/* 피격 흔들림 */
+.gyf-victim-shake {
+  animation: gyf-shake-card 0.5s ease-in-out;
+}
+
+@keyframes gyf-shake-card {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-4px, -2px) rotate(-1deg); }
+  20% { transform: translate(3px, 2px) rotate(1deg); }
+  30% { transform: translate(-3px, 3px) rotate(-1deg); }
+  40% { transform: translate(2px, -3px) rotate(1deg); }
+  50% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+  60% { transform: translate(3px, 1px) rotate(0.5deg); }
+  70% { transform: translate(-2px, -1px) rotate(-0.5deg); }
+  80% { transform: translate(1px, 2px) rotate(0.5deg); }
+  90% { transform: translate(-1px, -2px) rotate(0deg); }
+}
+
+/* 공격 성공 배지 */
+.gyf-fire-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: linear-gradient(135deg, #ff4d00, #ff8800);
+  color: #fff;
+  font-weight: 900;
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 20px rgba(255, 77, 0, 0.6);
+  z-index: 50;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  animation: gyf-badge-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes gyf-badge-pop {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-10deg); opacity: 0; }
+  20% { transform: translate(-50%, -50%) scale(1.1) rotate(5deg); opacity: 1; }
+  35% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+  75% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(-50%, -65%) scale(0.8) rotate(-5deg); opacity: 0; }
+}
+
+/* 3초 카운트다운 오버레이 */
+.gyf-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: gyf-fade-in 0.2s ease-out;
+}
+
+.gyf-countdown-num {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #ff6a00;
+  text-shadow: 0 0 40px rgba(255, 106, 0, 0.6);
+  animation: gyf-countdown-beat 1s ease-in-out infinite;
+}
+
+@keyframes gyf-countdown-beat {
+  0% { transform: scale(0.6); opacity: 0; }
+  20% { transform: scale(1.1); opacity: 1; }
+  35% { transform: scale(1); }
+  90% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes gyf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

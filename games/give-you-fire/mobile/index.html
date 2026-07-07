@@ -59,6 +59,8 @@
     <div class="gyf-level-bar-wrap">
       <div class="gyf-level-bar-fill" id="level-bar-fill"></div>
       <span class="gyf-level-label" id="game-level">Lv.1</span>
+      <!-- 설정 버튼 -->
+      <button class="gyf-settings-btn" id="btn-game-settings">⚙️</button>
     </div>
 
     <!-- 보드 + 미리보기: 전체 제스처 영역 -->
@@ -82,6 +84,28 @@
       </div>
 
     </div>
+
+    <!-- 보조 조작 버튼 영역 -->
+    <div class="gyf-assist-buttons hidden" id="assist-buttons-area">
+      <button class="gyf-assist-btn" id="btn-assist-left">◀</button>
+      <button class="gyf-assist-btn" id="btn-assist-rotate">↻</button>
+      <button class="gyf-assist-btn" id="btn-assist-right">▶</button>
+      <button class="gyf-assist-btn" id="btn-assist-soft">▼</button>
+      <button class="gyf-assist-btn" id="btn-assist-hard">▼▼</button>
+    </div>
+
+    <!-- 설정 팝업 오버레이 -->
+    <div class="gyf-settings-overlay hidden" id="game-settings-overlay">
+      <div class="gyf-settings-panel">
+        <h3 class="gyf-settings-title">⚙️ 게임 설정</h3>
+        <label class="gyf-settings-row">
+          <input type="checkbox" id="chk-assist-buttons">
+          <span>화면 보조 버튼 표시</span>
+        </label>
+        <button class="gyf-btn gyf-btn-primary" id="btn-close-settings" style="margin-top:12px; padding:8px 0; width: 100%;">닫기</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ══════════════════════════════════════════
