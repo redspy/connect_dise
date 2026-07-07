@@ -50,13 +50,13 @@
 - **플랫폼**: 세션 생성, 플레이어 입장/퇴장, 준비 상태, 메시지 라우팅, P2P 시그널링
 - **게임**: 플랫폼 SDK를 통해 통신하고, 게임 로직만 구현
 
-상세 아키텍처는 `ARCHITECTURE.md`를 참조하세요.
+상세 아키텍처는 `docs/architecture.md`를 참조하세요.
 
 # 문서 안내
 
 | 문서                             | 내용                                            |
 | -------------------------------- | ----------------------------------------------- |
-| `ARCHITECTURE.md`                | 전체 구조, 디렉토리, 세션 라이프사이클          |
+| `docs/architecture.md`           | 전체 구조, 디렉토리, 세션 라이프사이클          |
 | `SDK.md`                         | HostSDK, MobileSDK, BaseGame, 공유 컴포넌트 API |
 | `PROTOCOL.md`                    | Socket.IO 이벤트 프로토콜 (platform/game/p2p)   |
 | `DESIGN.md`                      | 화면 UI 개발 시 지켜야할 가이드                 |
@@ -164,7 +164,15 @@ Socket.IO 요청은 Vite proxy를 통해 `:3000`으로 전달됩니다.
 
 # 테스트
 
-자동화된 테스트 스크립트는 없습니다. 수동 검증 절차:
+자동화된 E2E 테스트 및 단위 테스트가 구성되어 있습니다.
+
+자동화 테스트 실행:
+```bash
+npm run test         # 전체 Playwright E2E 테스트 실행
+npm run test:unit    # 단위 테스트 실행
+```
+
+수동 검증 절차:
 
 1. 로비에서 멀티/솔로 탭과 게임 카드 표시 확인
 2. 게임 진입 후 세션 생성/QR 표시 확인
@@ -196,7 +204,7 @@ node server/index.js
 ### 2. Codex CLI를 통한 문서 정합성 싱크 검사 (Headless)
 *   **실행 명령어**:
     ```bash
-    codex exec "설계 문서(AGENTS.md, ARCHITECTURE.md)와 이번 소스 코드 변경점 간의 구현 명세 정합성 감사 및 요약"
+    codex exec "설계 문서(AGENTS.md, docs/architecture.md)와 이번 소스 코드 변경점 간의 구현 명세 정합성 감사 및 요약"
     ```
 *   **수정 권한 부여 시**:
     ```bash

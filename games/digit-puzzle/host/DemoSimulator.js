@@ -143,9 +143,9 @@ export class DemoSimulator {
 
     if (phase === 'playing') {
       const bots = [
-        { id: 'bot_amy', speed: 1.2, errorRate: 0.15 },
-        { id: 'bot_bob', speed: 0.7, errorRate: 0.02 },
-        { id: 'bot_charles', speed: 0.5, errorRate: 0.1 }
+        { id: 'bot_amy', speed: 1.3, errorRate: 0.1 },
+        { id: 'bot_bob', speed: 0.8, errorRate: 0.02 },
+        { id: 'bot_charles', speed: 0.6, errorRate: 0.08 }
       ];
 
       bots.forEach(b => {
@@ -170,16 +170,16 @@ export class DemoSimulator {
 
           let currentSpeed = bot.speed;
           if (bot.id === 'bot_charles' && bot.correctCount >= 6) {
-            currentSpeed = 1.6;
+            currentSpeed = 2.2; // 초고속 후반 가속
           }
 
-          if (Math.random() > 0.3 * currentSpeed) return;
+          if (Math.random() > 0.4 * currentSpeed) return;
 
           const newMoves = bot.moves + Math.floor(Math.random() * 2) + 1;
           
           let newCorrect = bot.correctCount;
           if (Math.random() > bot.errorRate) {
-            newCorrect = Math.min(15, bot.correctCount + (Math.random() < 0.25 ? 2 : 1));
+            newCorrect = Math.min(15, bot.correctCount + (Math.random() < 0.3 ? 2 : 1));
           } else {
             newCorrect = Math.max(0, bot.correctCount - (Math.random() < 0.3 ? 1 : 0));
           }
@@ -195,7 +195,7 @@ export class DemoSimulator {
             this.game.applyDemoProgress(bot.id, { correctCount: newCorrect, progress: Math.round((newCorrect / 15) * 100), moves: newMoves, seconds, board: bot.board });
           }
         });
-      }, 1000);
+      }, 500); // 500ms 간격으로 빠르게 시뮬레이션
     }
 
     if (phase === 'result') {

@@ -38,7 +38,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           if [ -n "$OPENAI_API_KEY" ]; then
-            npx @openai/codex exec "설계 문서(AGENTS.md, ARCHITECTURE.md)와 소스 코드 간 정합성 감사"
+            npx @openai/codex exec "설계 문서(AGENTS.md, docs/architecture.md)와 소스 코드 간 정합성 감사"
           else
             echo "Skipping Codex: OPENAI_API_KEY secret is not set."
           fi

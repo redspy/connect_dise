@@ -21,9 +21,25 @@ test.describe('Digit Puzzle — 데모 플레이 E2E 테스트', () => {
     await expect(demoPlayBtn).toBeVisible();
     await demoPlayBtn.click();
 
+    // 데모 진행 배너 렌더링 확인
+    const demoBanner = host.locator('#demoActiveBanner');
+    await expect(demoBanner).toBeVisible({ timeout: 5000 });
+
     // 대시보드 진행 카드 렌더링 확인
     const firstCard = host.locator('.dp-dash-card').first();
     await expect(firstCard).toBeVisible({ timeout: 15_000 });
+
+    // 데모가 진행되어 봇 중 누군가 완성하고 결과 오버레이가 보일 때까지 대기
+    const resultOverlay = host.locator('.dp-overlay[data-phase="result"]');
+    await expect(resultOverlay).toBeVisible({ timeout: 35_000 });
+
+    // 결과 랭킹 아이템들이 그려졌는지 확인
+    const rankings = host.locator('#result-rankings .dp-rank-item');
+    await expect(rankings).toHaveCount(3, { timeout: 5000 });
+
+    // 자동 리셋되어 로비 오버레이가 다시 보이는지 검증
+    const lobbyOverlay = host.locator('.dp-overlay[data-phase="lobby"]');
+    await expect(lobbyOverlay).toBeVisible({ timeout: 15_000 });
 
     await hostCtx.close();
   });

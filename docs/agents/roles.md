@@ -87,7 +87,7 @@
 ### 📖 Codex CLI
 - **주요 역할**: 설계 명세의 스펙과 구현 코드 사이의 파라미터 불일치를 감사하는 **Specification Sync Reviewer**입니다.
 - **업무 범위**:
-  - `AGENTS.md`, `ARCHITECTURE.md`에 명시된 프로토콜 규칙과 실제 코드 대조.
+  - `AGENTS.md`, `docs/architecture.md`에 명시된 프로토콜 규칙과 실제 코드 대조.
   - 변경 내역에 맞춰 설계 문서를 자동 갱신 및 보강.
 
 ---
