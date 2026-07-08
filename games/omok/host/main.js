@@ -13,6 +13,12 @@ export class OmokGame extends HostBaseGame {
     this._blackPlayer = null;
     this._whitePlayer = null;
     this._gameActive = false;
+    this._isDemo = false;
+
+    // 템포 설정 (0: 무제한, 15: 15초 제한)
+    this._timeLimit = 0;
+    this._turnTimeLeft = 0;
+    this._turnTimerInterval = null;
 
     this._ai = new OmokAI(BOARD_SIZE);
     this._demoSimulator = new OmokDemoSimulator(this);
@@ -28,10 +34,8 @@ export class OmokGame extends HostBaseGame {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
-          demoPlayBtn.textContent = '⏹️ 데모 중지';
         } else {
           this._demoSimulator.stopDemo();
-          demoPlayBtn.textContent = '🤖 데모 플레이 실행';
         }
       };
     }
@@ -41,16 +45,50 @@ export class OmokGame extends HostBaseGame {
       restartBtn.onclick = () => this.resetSession();
     }
 
+    // 프리셋 버튼 바인딩
+    const modeClassic = document.getElementById('btn-mode-classic');
+    const modeQuick = document.getElementById('btn-mode-quick');
+    if (modeClassic && modeQuick) {
+      modeClassic.onclick = () => {
+        if (this._isDemo) return; // 데모 진행 중에는 변경 불가
+        this._timeLimit = 0;
+        modeClassic.classList.add('active');
+        modeClassic.style.borderColor = '#00eeff';
+        modeClassic.style.background = 'rgba(255,255,255,0.1)';
+        modeClassic.style.color = '#fff';
+        
+        modeQuick.classList.remove('active');
+        modeQuick.style.borderColor = 'transparent';
+        modeQuick.style.background = 'rgba(255,255,255,0.05)';
+        modeQuick.style.color = '#888';
+      };
+
+      modeQuick.onclick = () => {
+        if (this._isDemo) return;
+        this._timeLimit = 15;
+        modeQuick.classList.add('active');
+        modeQuick.style.borderColor = '#00eeff';
+        modeQuick.style.background = 'rgba(255,255,255,0.1)';
+        modeQuick.style.color = '#fff';
+        
+        modeClassic.classList.remove('active');
+        modeClassic.style.borderColor = 'transparent';
+        modeClassic.style.background = 'rgba(255,255,255,0.05)';
+        modeClassic.style.color = '#888';
+      };
+    }
+
     this.setPhase('lobby');
+    this.renderLobbyPlayers();
   }
 
   onPlayerJoin(player) {
-    // 2인 이상 시 로비 시작 버튼 클릭 대기
-    if (this._lobbyEl) {
-      this._lobbyEl.onStart = () => {
-        if (this.players.size >= 2) this._startGame();
-      };
+    // 실플레이어 입장 시 데모 자동 중단
+    if (this._isDemo) {
+      console.log('[Omok] Real player joined during demo. Stopping demo match.');
+      this._demoSimulator.stopDemo();
     }
+    this.renderLobbyPlayers();
   }
 
   onPlayerLeave(playerId) {
@@ -60,30 +98,45 @@ export class OmokGame extends HostBaseGame {
         console.log('[Omok] Active player left, resetting session.');
         this.resetSession();
       }
+    } else {
+      this.renderLobbyPlayers();
     }
   }
 
   onPlayerRejoin(player) {
     console.log(`[Omok] Player ${player.id} rejoined.`);
-    if (!this._gameActive) return;
+    
+    // 게임이 진행 중일 때
+    if (this._gameActive) {
+      let color = null;
+      let opponentNickname = '';
+      if (this._blackPlayer?.id === player.id) {
+        color = 'black';
+        opponentNickname = this._whitePlayer?.nickname || '백돌 플레이어';
+      } else if (this._whitePlayer?.id === player.id) {
+        color = 'white';
+        opponentNickname = this._blackPlayer?.nickname || '흑돌 플레이어';
+      }
 
-    let color = null;
-    let opponentNickname = '';
-    if (this._blackPlayer?.id === player.id) {
-      color = 'black';
-      opponentNickname = this._whitePlayer?.nickname || '백돌 플레이어';
-    } else if (this._whitePlayer?.id === player.id) {
-      color = 'white';
-      opponentNickname = this._blackPlayer?.nickname || '흑돌 플레이어';
-    }
-
-    if (color) {
-      this.sendToPlayer(player.id, 'rejoinState', {
-        phase: this.phase,
-        color,
-        opponentNickname,
-        board: this._board,
-        currentTurn: this._currentPlayerColor
+      if (color) {
+        this.sendToPlayer(player.id, 'rejoinState', {
+          phase: this.phase,
+          color,
+          opponentNickname,
+          board: this._board,
+          currentTurn: this._currentPlayerColor,
+          timeLimit: this._timeLimit,
+          turnTimeLeft: this._turnTimeLeft
+        });
+      }
+    } else {
+      // 로비 재연결 프리징 가드
+      this.renderLobbyPlayers();
+      
+      this.sendToPlayer(player.id, 'lobbyState', {
+        phase: 'lobby',
+        readyCount: [...this.players.values()].filter(p => p.ready).length,
+        total: this.players.size
       });
     }
   }
@@ -96,10 +149,12 @@ export class OmokGame extends HostBaseGame {
 
   onReadyUpdate({ readyCount, total }) {
     this.updateLobbyReady(readyCount);
+    this.renderLobbyPlayers();
   }
 
   onReset() {
-    this._demoSimulator.stopDemo();
+    this._stopTurnTimer();
+    this._demoSimulator.clearDemoTimeouts();
     this._gameActive = false;
     this._board = null;
     this._blackPlayer = null;
@@ -111,7 +166,14 @@ export class OmokGame extends HostBaseGame {
     const boardEl = document.getElementById('board');
     if (boardEl) boardEl.innerHTML = '';
 
+    const timerText = document.getElementById('vs-or-timer');
+    if (timerText) {
+      timerText.textContent = 'VS';
+      timerText.style.color = '';
+    }
+
     this.setPhase('lobby');
+    this.renderLobbyPlayers();
   }
 
   // ─── Game Flow ───────────────────────────────────────────────────────────
@@ -122,8 +184,7 @@ export class OmokGame extends HostBaseGame {
 
     // 플레이어 색상 지정
     if (this._isDemo) {
-      // 데모 모드에서는 가상 봇을 지정
-      // DemoSimulator.startDemo가 이미 지정해 둠
+      // 데모 모드에서는 데모 시뮬레이터가 이미 플레이어를 할당해둠
     } else {
       const plist = [...this.players.values()];
       this._blackPlayer = plist[0];
@@ -138,8 +199,8 @@ export class OmokGame extends HostBaseGame {
 
     // 롤 전송
     if (!this._isDemo) {
-      this.sendToPlayer(this._blackPlayer.id, 'roleAssign', { color: 'black', opponentNickname: this._whitePlayer.nickname });
-      this.sendToPlayer(this._whitePlayer.id, 'roleAssign', { color: 'white', opponentNickname: this._blackPlayer.nickname });
+      this.sendToPlayer(this._blackPlayer.id, 'roleAssign', { color: 'black', opponentNickname: this._whitePlayer.nickname || '백돌 플레이어' });
+      this.sendToPlayer(this._whitePlayer.id, 'roleAssign', { color: 'white', opponentNickname: this._blackPlayer.nickname || '흑돌 플레이어' });
     }
 
     this.setPhase('playing');
@@ -178,14 +239,22 @@ export class OmokGame extends HostBaseGame {
     document.getElementById('player-black').classList.toggle('current', this._currentPlayerColor === 'black');
     document.getElementById('player-white').classList.toggle('current', this._currentPlayerColor === 'white');
 
+    this._playAudio('turn');
+
     const currentPlayer = this._currentPlayerColor === 'black' ? this._blackPlayer : this._whitePlayer;
+
+    // 타이머 갱신
+    this._stopTurnTimer();
+    this._startTurnTimer();
 
     // 모바일에 턴 업데이트 전송
     if (!this._isDemo) {
       this.broadcast('turnUpdate', {
         currentPlayerId: currentPlayer.id,
         currentPlayerColor: this._currentPlayerColor,
-        board: this._board
+        board: this._board,
+        timeLimit: this._timeLimit,
+        turnTimeLeft: this._timeLimit
       });
     } else {
       // 데모 모드에서는 봇의 연산 착수
@@ -193,8 +262,68 @@ export class OmokGame extends HostBaseGame {
     }
   }
 
+  _startTurnTimer() {
+    if (this._timeLimit <= 0) return;
+
+    this._turnTimeLeft = this._timeLimit;
+    const timerText = document.getElementById('vs-or-timer');
+    if (timerText) {
+      timerText.textContent = this._turnTimeLeft;
+      timerText.style.color = '';
+    }
+
+    this._turnTimerInterval = setInterval(() => {
+      this._turnTimeLeft--;
+      if (timerText) {
+        timerText.textContent = this._turnTimeLeft;
+      }
+
+      if (this._turnTimeLeft <= 3 && this._turnTimeLeft > 0) {
+        this._playAudio('warning');
+        if (timerText) {
+          timerText.style.color = '#ff4444';
+          // 미세하게 깜빡이는 애니메이션
+          timerText.style.opacity = timerText.style.opacity === '0.5' ? '1' : '0.5';
+        }
+        if (!this._isDemo) {
+          this.broadcast('timerWarning', {});
+        }
+      } else if (timerText) {
+        timerText.style.opacity = '1';
+      }
+
+      if (this._turnTimeLeft <= 0) {
+        this._stopTurnTimer();
+        this._handleTimeOut();
+      }
+    }, 1000);
+  }
+
+  _stopTurnTimer() {
+    if (this._turnTimerInterval) {
+      clearInterval(this._turnTimerInterval);
+      this._turnTimerInterval = null;
+    }
+    const timerText = document.getElementById('vs-or-timer');
+    if (timerText) {
+      timerText.textContent = 'VS';
+      timerText.style.color = '';
+      timerText.style.opacity = '1';
+    }
+  }
+
+  _handleTimeOut() {
+    if (!this._gameActive) return;
+    // 기권패 처리
+    const loserColor = this._currentPlayerColor === 'black' ? '흑돌(검은색)' : '백돌(흰색)';
+    const winnerColor = this._currentPlayerColor === 'black' ? '백돌(흰색) 승리!' : '흑돌(검은색) 승리!';
+    this._endGame(`시간 초과! ${winnerColor} (기권패)`);
+  }
+
   _placeStone(r, c) {
     this._board[r][c] = this._currentPlayerColor;
+
+    this._playAudio('stone');
 
     const cell = document.querySelector(`.cell[data-row='${r}'][data-col='${c}']`);
     if (cell) {
@@ -215,7 +344,21 @@ export class OmokGame extends HostBaseGame {
 
   _endGame(message) {
     this._gameActive = false;
+    this._stopTurnTimer();
+
+    this._playAudio('win');
+
     document.getElementById('modal-message').textContent = message;
+
+    // 결과 창 승자 맞춤 글로우 효과 추가
+    const resultPanel = document.querySelector('.omok-result-panel');
+    if (resultPanel) {
+      if (this._currentPlayerColor === 'black') {
+        resultPanel.style.boxShadow = '0 0 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 255, 255, 0.2)';
+      } else {
+        resultPanel.style.boxShadow = '0 0 60px rgba(255, 255, 255, 0.8), 0 0 30px rgba(0, 0, 0, 0.2)';
+      }
+    }
 
     if (!this._isDemo) {
       const winnerId = this._currentPlayerColor === 'black' ? this._blackPlayer.id : this._whitePlayer.id;
@@ -245,6 +388,123 @@ export class OmokGame extends HostBaseGame {
 
       this._placeStone(r, c);
     });
+
+    this.onMessage('requestLobbyOrGameState', (player) => {
+      this.onPlayerRejoin(player);
+    });
+  }
+
+  // ─── Demo Mode Implementation ─────────────────────────────────────────────
+
+  setDemoMode(enabled) {
+    this._isDemo = enabled;
+
+    // 배너 토글
+    const banner = document.getElementById('demo-banner');
+    if (banner) {
+      banner.classList.toggle('hidden', !enabled);
+    }
+
+    // 로비 버튼 라벨 토글
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.textContent = enabled ? '⏹️ 데모 중지' : '🤖 데모 플레이 실행';
+    }
+
+    // QR 블러 가드
+    const qrWrap = this._lobbyEl?.qrContainer;
+    if (qrWrap) {
+      qrWrap.style.filter = enabled ? 'blur(8px)' : '';
+      qrWrap.style.pointerEvents = enabled ? 'none' : '';
+    }
+  }
+
+  beginDemoMatch(bots) {
+    // 봇 등록
+    this.players.clear();
+    bots.forEach(b => {
+      this._playerNicknames.set(b.id, b.nickname);
+      this.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
+    });
+
+    this._blackPlayer = bots[0];
+    this._whitePlayer = bots[1];
+
+    this._startGame();
+  }
+
+  endDemoMatch({ resetToLobby }) {
+    this._demoSimulator.clearDemoTimeouts();
+    this.players.delete('bot_black');
+    this.players.delete('bot_white');
+    this._gameActive = false;
+
+    if (resetToLobby) {
+      this.resetSession();
+    }
+  }
+
+  forceDemoMove(r, c) {
+    if (this._isDemo && this._gameActive) {
+      this._placeStone(r, c);
+    }
+  }
+
+  // ─── Sound Synthesizer (Web Audio API) ───────────────────────────────────
+
+  _playAudio(type) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      if (type === 'stone') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(90, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.8, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      } else if (type === 'turn') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.07); // E5
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } else if (type === 'warning') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.1);
+      } else if (type === 'win') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // G5
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.24); // C6
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+      }
+    } catch (e) {
+      console.warn('Audio play failed:', e);
+    }
   }
 }
 

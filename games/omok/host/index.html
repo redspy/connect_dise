@@ -18,7 +18,7 @@
           <div class="stone black"></div>
           <span id="name-black">흑돌 (대기)</span>
         </div>
-        <div class="vs">VS</div>
+        <div class="vs" id="vs-or-timer">VS</div>
         <div class="player-indicator" id="player-white">
           <div class="stone white"></div>
           <span id="name-white">백돌 (대기)</span>
@@ -33,6 +33,11 @@
     </div>
   </div>
 
+  <!-- 데모 안내 배너 -->
+  <div id="demo-banner" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(90deg, #ff9900, #ff5500); color: #000; text-align: center; font-weight: bold; padding: 8px; z-index: 9999; box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-size: 0.95rem;">
+    🤖 데모 플레이 진행 중입니다. 모바일 기기가 연결되면 데모가 자동으로 종료되고 로비로 복귀합니다.
+  </div>
+
   <!-- 1. 로비 -->
   <div class="omok-overlay" data-phase="lobby">
     <game-lobby title="⚫ 오목 (Omok)" min-players="2">
@@ -41,8 +46,15 @@
         <li>모바일 화면으로 돌을 놓을 위치를 선택하세요.</li>
         <li>13×13 바둑판에서 가로, 세로, 대각선 중 <b>5개</b>를 먼저 연결하면 승리합니다.</li>
         <li>흑돌이 먼저 시작하며, 교대로 착수합니다.</li>
+        <li style="color: #ffb703; font-weight: bold;">💡 캐주얼 오목 룰: 장목(6목 이상) 허용 / 금수(3-3 등) 제한 없음</li>
       </ul>
-      <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🤖 데모 플레이 실행</button>
+      
+      <div class="match-mode-selector" style="margin-top: 1.2rem; display: flex; gap: 10px; width: 100%;">
+        <button id="btn-mode-classic" class="mode-btn active" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.1); border: 2px solid #00eeff; border-radius: 8px; color: #fff; font-weight: bold; cursor: pointer; transition: all 0.2s;">🕒 클래식 (여유 턴)</button>
+        <button id="btn-mode-quick" class="mode-btn" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.05); border: 2px solid transparent; border-radius: 8px; color: #888; font-weight: bold; cursor: pointer; transition: all 0.2s;">⚡ 퀵 매치 (15초 턴)</button>
+      </div>
+
+      <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); transition: all 0.2s;">🤖 데모 플레이 실행</button>
     </game-lobby>
   </div>
 

@@ -22,6 +22,19 @@
         <p class="status-msg">다른 플레이어가 접속하고 준비 완료할 때까지 대기해주세요.</p>
         <button id="btn-ready" style="margin-top: 20px; padding: 14px 24px; background: linear-gradient(135deg, #00eeff 0%, #0099ff 100%); border: none; border-radius: 12px; color: #000; font-weight: bold; font-size: 1rem; cursor: pointer; width: 100%; max-width: 200px;">준비하기</button>
         <div id="ready-status-text" class="ready-info">상대방을 기다리는 중...</div>
+        
+        <!-- 온보딩 안내 카드 추가 -->
+        <div class="onboarding-guide" style="margin-top: 20px; text-align: left; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); width: 100%; box-sizing: border-box;">
+          <h3 style="margin-top: 0; color: #00eeff; font-size: 0.95rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">🎮 게임 방법</h3>
+          <ul style="margin: 0; padding-left: 20px; font-size: 0.85rem; color: #cbd5e0; line-height: 1.6;">
+            <li><strong>1. 좌표 선택</strong>: 모바일 바둑판에서 돌을 놓을 위치를 터치합니다.</li>
+            <li><strong>2. 착수 확정</strong>: <code>착수하기</code> 버튼을 눌러 돌을 놓습니다.</li>
+            <li><strong>3. 승리 조건</strong>: 가로, 세로, 대각선 중 먼저 <strong>5개</strong>를 연결하면 승리합니다!</li>
+          </ul>
+          <div style="margin-top: 10px; font-size: 0.8rem; color: #a0aec0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+            💡 <em>캐주얼 오목 룰: 장목(6목 이상) 허용 / 금수(3-3 등) 제한 없음</em>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -67,7 +80,7 @@
     <div class="omok-screen hidden" data-screen="result">
       <div class="screen-content result-screen">
         <div id="result-icon" class="result-icon">🏆</div>
-        <h2 id="result-text" class="result-title">게임 종료</h2>
+        <h2 id="result-title" class="result-title">게임 종료</h2>
         <p id="result-desc" class="result-desc"></p>
         <div class="ready-info">호스트에서 다시 시작을 누르면 대기실로 이동합니다.</div>
       </div>

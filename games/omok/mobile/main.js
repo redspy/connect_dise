@@ -1,215 +1,299 @@
 import { MobileSDK } from '../../../platform/client/MobileSDK.js';
+import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 
-const mobile = new MobileSDK();
 const BOARD_SIZE = 13;
 
-const connectionStatus = document.getElementById('connection-status');
-const roleDisplay = document.getElementById('role-display');
-const readyStatusText = document.getElementById('ready-status-text');
+class OmokMobileGame extends MobileBaseGame {
+  constructor(sdk) {
+    super(sdk, { screenClass: 'omok-screen' });
 
-// Screens
-const screens = {
-  waiting: document.getElementById('phase-lobby'), // fallback to data-screen
-  myTurn: document.querySelector('[data-screen="my-turn"]'),
-  opponentTurn: document.querySelector('[data-screen="opponent-turn"]'),
-  result: document.querySelector('[data-screen="result"]'),
-};
+    this.connectionStatus = document.getElementById('connection-status');
+    this.roleDisplay = document.getElementById('role-display');
+    this.readyStatusText = document.getElementById('ready-status-text');
+    this.selectionInfo = document.getElementById('selection-info');
+    this.btnPlayStone = document.getElementById('btn-play-stone');
+    this.btnReady = document.getElementById('btn-ready');
 
-const selectionInfo = document.getElementById('selection-info');
-const btnPlayStone = document.getElementById('btn-play-stone');
-const btnReady = document.getElementById('btn-ready');
+    this.myColor = null; // 'black' or 'white'
+    this.localBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+    this.selectedCell = null; // { r, c }
+    this.timerInterval = null;
 
-if (btnReady) {
-  btnReady.addEventListener('click', () => {
-    btnReady.disabled = true;
-    btnReady.textContent = '준비완료 ✓';
-    mobile.ready();
-  });
-}
-
-let myColor = null; // 'black' or 'white'
-let localBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-let selectedCell = null; // { r, c }
-
-// ─── Screen Transition Helper ──────────────────────────────────────────────
-
-function showScreen(name) {
-  document.querySelectorAll('.omok-screen').forEach(el => {
-    el.classList.toggle('hidden', el.dataset.screen !== name);
-  });
-}
-
-// ─── SDK Handlers ──────────────────────────────────────────────────────────
-
-mobile.on('join', () => {
-  connectionStatus.classList.add('connected');
-  showScreen('waiting');
-  readyStatusText.textContent = '방에 입장했습니다. 대기 중...';
-});
-
-mobile.on('rejoin', () => {
-  connectionStatus.classList.add('connected');
-});
-
-mobile.on('reset', () => {
-  myColor = null;
-  selectedCell = null;
-  roleDisplay.classList.add('hidden');
-  roleDisplay.className = 'role-badge hidden';
-  roleDisplay.textContent = '';
-  localBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-  
-  if (btnReady) {
-    btnReady.disabled = false;
-    btnReady.textContent = '준비하기';
+    this._initElements();
+    this._bindEvents();
+    this._registerMessageHandlers();
   }
 
-  showScreen('waiting');
-  readyStatusText.textContent = '세션이 리셋되었습니다. 대기 중...';
-});
+  _initElements() {
+    if (this.btnReady) {
+      this.btnReady.addEventListener('click', () => {
+        this.btnReady.disabled = true;
+        this.btnReady.textContent = '준비완료 ✓';
+        this.ready();
+      });
+    }
 
-mobile.on('hostDisconnect', () => {
-  connectionStatus.classList.remove('connected');
-  alert('호스트와 연결이 끊어졌습니다.');
-});
+    if (this.btnPlayStone) {
+      this.btnPlayStone.addEventListener('click', () => {
+        if (!this.selectedCell || !this.myColor) return;
+        this.vibrate('heavy');
+        this.sendToHost('makeMove', { r: this.selectedCell.r, c: this.selectedCell.c });
+        this.btnPlayStone.disabled = true;
+      });
+    }
+  }
 
-// ─── Game Message Listeners ────────────────────────────────────────────────
+  _bindEvents() {
+    // MobileBaseGame hooks are registered automatically via _wireSDK
+  }
 
-mobile.onMessage('roleAssign', ({ color, opponentNickname }) => {
-  myColor = color;
-  roleDisplay.classList.remove('hidden');
-  roleDisplay.className = `role-badge ${color === 'black' ? 'black-role' : 'white-role'}`;
-  roleDisplay.textContent = color === 'black' ? '흑돌 (선공)' : '백돌 (후공)';
-  readyStatusText.textContent = `대전 상대: ${opponentNickname || '익명'}`;
-});
+  _registerMessageHandlers() {
+    this.onMessage('roleAssign', ({ color, opponentNickname }) => {
+      this.myColor = color;
+      this.roleDisplay.classList.remove('hidden');
+      this.roleDisplay.className = `role-badge ${color === 'black' ? 'black-role' : 'white-role'}`;
+      this.roleDisplay.textContent = color === 'black' ? '흑돌 (선공)' : '백돌 (후공)';
+      this.readyStatusText.textContent = `대전 상대: ${opponentNickname || '익명'}`;
+    });
 
-mobile.onMessage('turnUpdate', ({ currentPlayerId, currentPlayerColor, board }) => {
-  localBoard = board;
-  const isMyTurn = currentPlayerId === mobile.getMyPlayer()?.id;
+    this.onMessage('turnUpdate', ({ currentPlayerId, currentPlayerColor, board, timeLimit, turnTimeLeft }) => {
+      this.localBoard = board;
+      const isMyTurn = currentPlayerId === this.playerId;
 
-  if (isMyTurn) {
-    selectedCell = null;
-    btnPlayStone.disabled = true;
-    selectionInfo.textContent = '선택된 좌표: 없음';
+      this.stopTimer();
+
+      if (isMyTurn) {
+        this.selectedCell = null;
+        this.btnPlayStone.disabled = true;
+        this.selectionInfo.textContent = '선택된 좌표: 없음';
+        
+        this._renderMobileBoard('mobile-board', true);
+        this.showScreen('my-turn');
+
+        if (timeLimit && timeLimit > 0) {
+          const limit = turnTimeLeft !== undefined ? turnTimeLeft : timeLimit;
+          this.startTimer(limit);
+        }
+      } else {
+        this._renderMobileBoard('mobile-board-disabled', false);
+        this.showScreen('opponent-turn');
+      }
+    });
+
+    this.onMessage('rejoinState', ({ phase, color, opponentNickname, board, currentTurn, timeLimit, turnTimeLeft }) => {
+      this.myColor = color;
+      this.localBoard = board;
+
+      this.roleDisplay.classList.remove('hidden');
+      this.roleDisplay.className = `role-badge ${color === 'black' ? 'black-role' : 'white-role'}`;
+      this.roleDisplay.textContent = color === 'black' ? '흑돌 (선공)' : '백돌 (후공)';
+      this.readyStatusText.textContent = `대전 상대: ${opponentNickname || '익명'}`;
+
+      const isMyTurn = currentTurn === this.myColor;
+      this.stopTimer();
+
+      if (isMyTurn) {
+        this.selectedCell = null;
+        this.btnPlayStone.disabled = true;
+        this.selectionInfo.textContent = '선택된 좌표: 없음';
+
+        this._renderMobileBoard('mobile-board', true);
+        this.showScreen('my-turn');
+
+        if (timeLimit && timeLimit > 0 && turnTimeLeft > 0) {
+          this.startTimer(turnTimeLeft);
+        }
+      } else {
+        this._renderMobileBoard('mobile-board-disabled', false);
+        this.showScreen('opponent-turn');
+      }
+    });
+
+    this.onMessage('lobbyState', ({ phase, isReady, readyCount, total }) => {
+      this.myColor = null;
+      this.selectedCell = null;
+      this.roleDisplay.classList.add('hidden');
+      this.roleDisplay.className = 'role-badge hidden';
+      this.roleDisplay.textContent = '';
+      this.localBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+
+      if (this.btnReady) {
+        if (isReady) {
+          this.btnReady.disabled = true;
+          this.btnReady.textContent = '준비완료 ✓';
+        } else {
+          this.btnReady.disabled = false;
+          this.btnReady.textContent = '준비하기';
+        }
+      }
+
+      this.showScreen('waiting');
+      this.readyStatusText.textContent = `준비 상태: ${readyCount} / ${total}명 준비 완료`;
+    });
+
+    this.onMessage('gameFinished', ({ winnerId, winnerColor, message }) => {
+      this.stopTimer();
+      const isWinner = winnerId === this.playerId;
+
+      const iconEl = document.getElementById('result-icon');
+      if (iconEl) iconEl.textContent = isWinner ? '🏆' : '💀';
+
+      const titleEl = document.getElementById('result-title');
+      if (titleEl) titleEl.textContent = isWinner ? '승리!' : '패배...';
+
+      const descEl = document.getElementById('result-desc');
+      if (descEl) descEl.textContent = message;
+
+      this.showScreen('result');
+      this.vibrate(isWinner ? 'double' : 'heavy');
+    });
+
+    // 시간 부족 경고
+    this.onMessage('timerWarning', () => {
+      this.vibrate('light');
+      const turnTitle = document.querySelector('[data-screen="my-turn"] .turn-title');
+      if (turnTitle) {
+        turnTitle.style.color = '#ff4444';
+        turnTitle.style.textShadow = '0 0 10px rgba(255, 0, 0, 0.8)';
+        setTimeout(() => {
+          turnTitle.style.color = '';
+          turnTitle.style.textShadow = '';
+        }, 300);
+      }
+    });
+  }
+
+  startTimer(timeLeft) {
+    let currentLeft = timeLeft;
+    this.updateTimerUI(currentLeft);
+
+    this.timerInterval = setInterval(() => {
+      currentLeft--;
+      if (currentLeft < 0) {
+        this.stopTimer();
+        return;
+      }
+      this.updateTimerUI(currentLeft);
+      if (currentLeft <= 3 && currentLeft > 0) {
+        this.vibrate('light');
+      }
+    }, 1000);
+  }
+
+  stopTimer() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    const title = document.querySelector('[data-screen="my-turn"] .turn-title');
+    if (title) {
+      title.textContent = '내 차례입니다!';
+      title.style.color = '';
+    }
+  }
+
+  updateTimerUI(seconds) {
+    const title = document.querySelector('[data-screen="my-turn"] .turn-title');
+    if (title) {
+      title.innerHTML = `내 차례입니다! <span style="color:#ff4444; font-size:1.4rem; margin-left:10px;">${seconds}초</span>`;
+    }
+  }
+
+  // ─── MobileBaseGame Lifecycle Hooks ────────────────────────────────────────
+
+  onJoin(player) {
+    this.connectionStatus.classList.add('connected');
+    this.showScreen('waiting');
+    this.readyStatusText.textContent = '방에 입장했습니다. 대기 중...';
+  }
+
+  onRejoin(player) {
+    this.connectionStatus.classList.add('connected');
+    this.sendToHost('requestLobbyOrGameState', {});
+  }
+
+  onReset() {
+    this.stopTimer();
+    this.myColor = null;
+    this.selectedCell = null;
+    this.roleDisplay.classList.add('hidden');
+    this.roleDisplay.className = 'role-badge hidden';
+    this.roleDisplay.textContent = '';
+    this.localBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
     
-    _renderMobileBoard('mobile-board', true);
-    showScreen('my-turn');
-  } else {
-    _renderMobileBoard('mobile-board-disabled', false);
-    showScreen('opponent-turn');
+    if (this.btnReady) {
+      this.btnReady.disabled = false;
+      this.btnReady.textContent = '준비하기';
+    }
+
+    this.showScreen('waiting');
+    this.readyStatusText.textContent = '세션이 리셋되었습니다. 대기 중...';
   }
-});
 
-mobile.onMessage('rejoinState', ({ phase, color, opponentNickname, board, currentTurn }) => {
-  myColor = color;
-  localBoard = board;
-
-  roleDisplay.classList.remove('hidden');
-  roleDisplay.className = `role-badge ${color === 'black' ? 'black-role' : 'white-role'}`;
-  roleDisplay.textContent = color === 'black' ? '흑돌 (선공)' : '백돌 (후공)';
-  readyStatusText.textContent = `대전 상대: ${opponentNickname || '익명'}`;
-
-  const isMyTurn = currentTurn === myColor;
-
-  if (isMyTurn) {
-    selectedCell = null;
-    btnPlayStone.disabled = true;
-    selectionInfo.textContent = '선택된 좌표: 없음';
-
-    _renderMobileBoard('mobile-board', true);
-    showScreen('my-turn');
-  } else {
-    _renderMobileBoard('mobile-board-disabled', false);
-    showScreen('opponent-turn');
+  onHostDisconnect() {
+    this.stopTimer();
+    this.connectionStatus.classList.remove('connected');
+    alert('호스트와 연결이 끊어졌습니다.');
   }
-});
 
-mobile.onMessage('gameFinished', ({ winnerId, winnerColor, message }) => {
-  const isWinner = winnerId === mobile.getMyPlayer()?.id;
+  // ─── Board Rendering ───────────────────────────────────────────────────────
 
-  document.getElementById('result-icon').textContent = isWinner ? '🏆' : '💀';
-  document.getElementById('result-title').textContent = isWinner ? '승리!' : '패배...';
-  document.getElementById('result-desc').textContent = message;
+  _renderMobileBoard(containerId, interactive) {
+    const boardEl = document.getElementById(containerId);
+    if (!boardEl) return;
+    boardEl.innerHTML = '';
 
-  showScreen('result');
-  mobile.vibrate(isWinner ? [100, 50, 100, 50, 300] : [200, 100, 200]);
-});
+    for (let r = 0; r < BOARD_SIZE; r++) {
+      for (let c = 0; c < BOARD_SIZE; c++) {
+        const cell = document.createElement('div');
+        cell.classList.add('mobile-cell');
+        cell.dataset.row = r;
+        cell.dataset.col = c;
 
-// ─── Board Rendering ───────────────────────────────────────────────────────
+        if (this._isHoshi(r, c)) {
+          cell.classList.add('hoshi');
+        }
 
-function _renderMobileBoard(containerId, interactive) {
-  const boardEl = document.getElementById(containerId);
-  if (!boardEl) return;
-  boardEl.innerHTML = '';
+        const stoneColor = this.localBoard[r][c];
+        if (stoneColor) {
+          const stone = document.createElement('div');
+          stone.classList.add('stone-piece', stoneColor);
+          cell.appendChild(stone);
+        } else if (interactive) {
+          cell.addEventListener('click', () => {
+            this._selectCell(r, c);
+          });
+        }
 
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const cell = document.createElement('div');
-      cell.classList.add('mobile-cell');
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-
-      if (_isHoshi(r, c)) {
-        cell.classList.add('hoshi');
+        boardEl.appendChild(cell);
       }
+    }
+  }
 
-      // 기존 돌 렌더링
-      const stoneColor = localBoard[r][c];
-      if (stoneColor) {
-        const stone = document.createElement('div');
-        stone.classList.add('stone-piece', stoneColor);
-        cell.appendChild(stone);
-      } else if (interactive) {
-        // 착수 가능한 빈 셀 터치 바인딩
-        cell.addEventListener('click', () => {
-          _selectCell(r, c);
-        });
-      }
+  _isHoshi(r, c) {
+    const points = [3, 9, 6];
+    return points.includes(r) && points.includes(c);
+  }
 
-      boardEl.appendChild(cell);
+  _selectCell(r, c) {
+    document.querySelectorAll('.mobile-cell.selected').forEach(el => {
+      el.classList.remove('selected');
+    });
+
+    const cell = document.querySelector(`.mobile-board .mobile-cell[data-row='${r}'][data-col='${c}']`);
+    if (cell) {
+      cell.classList.add('selected');
+      this.selectedCell = { r, c };
+
+      const colChar = String.fromCharCode(65 + c);
+      const rowNum = r + 1;
+      this.selectionInfo.textContent = `선택된 좌표: ${colChar}${rowNum}`;
+      this.btnPlayStone.disabled = false;
+
+      this.vibrate('light');
     }
   }
 }
 
-function _isHoshi(r, c) {
-  const points = [3, 9, 6];
-  return points.includes(r) && points.includes(c);
-}
-
-function _selectCell(r, c) {
-  // 이전 선택 표시 제거
-  document.querySelectorAll('.mobile-cell.selected').forEach(el => {
-    el.classList.remove('selected');
-  });
-
-  // 새 선택 등록
-  const cell = document.querySelector(`.mobile-board .mobile-cell[data-row='${r}'][data-col='${c}']`);
-  if (cell) {
-    cell.classList.add('selected');
-    selectedCell = { r, c };
-
-    // 좌표 문자로 치환 (예: 1행 2열 -> B3)
-    const colChar = String.fromCharCode(65 + c); // A ~ M
-    const rowNum = r + 1;
-    selectionInfo.textContent = `선택된 좌표: ${colChar}${rowNum}`;
-    btnPlayStone.disabled = false;
-
-    // 미세한 햅틱 진동 제공
-    mobile.vibrate('light');
-  }
-}
-
-// ─── 착수하기 액션 버튼 ──────────────────────────────────────────────────
-
-btnPlayStone.addEventListener('click', () => {
-  if (!selectedCell || !myColor) return;
-
-  // 강력한 충격 진동 피드백
-  mobile.vibrate('heavy');
-
-  // 호스트로 돌 놓기 전송
-  mobile.sendToHost('makeMove', { r: selectedCell.r, c: selectedCell.c });
-
-  // 버튼 비활성화로 연속 클릭 방지
-  btnPlayStone.disabled = true;
-});
+const sdk = new MobileSDK();
+new OmokMobileGame(sdk);

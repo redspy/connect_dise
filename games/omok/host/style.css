@@ -228,3 +228,51 @@
   transform: scale(1.05);
   box-shadow: 0 0 20px var(--accent-color);
 }
+
+/* 추가: 마지막 수 링 펄스 애니메이션 및 템포 설정 버튼 */
+.cell .stone-piece.last-move::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border: 3px solid var(--accent-color);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 0;
+  animation: lastMovePulse 1.2s cubic-bezier(0.12, 0, 0.39, 0) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes lastMovePulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+
+.match-mode-selector {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: #888;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  border-color: #00eeff;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+

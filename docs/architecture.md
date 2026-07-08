@@ -46,7 +46,8 @@ connect_dise/
 │   ├── relay-drawing/
 │   ├── dobble/
 │   ├── dixit/
-│   └── omok/
+│   ├── omok/
+│   └── trading-battle/
 ├── platform/
 │   ├── client/
 │   └── server/
@@ -57,8 +58,7 @@ connect_dise/
 
 ## 수록 게임
 
-- 멀티: `nunchi-ten`, `spin-battle`, `dice`, `digit-puzzle`, `give-you-fire`, `relay-drawing`, `dobble`, `dixit`
-- 솔로: `omok`
+- 멀티: `nunchi-ten`, `spin-battle`, `dice`, `digit-puzzle`, `give-you-fire`, `relay-drawing`, `dobble`, `dixit`, `omok`, `trading-battle`
 
 ## 빌드/런타임
 
