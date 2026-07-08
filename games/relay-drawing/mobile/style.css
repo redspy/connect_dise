@@ -586,3 +586,100 @@ input[type="text"]:focus { border-color: var(--rdm-accent); }
     margin-bottom: 0.5rem;
   }
 }
+
+/* 2단계 초기화 경고 상태 */
+.tool-btn.danger.confirm-warning {
+  background-color: var(--rdm-danger) !important;
+  color: white !important;
+  border-color: var(--rdm-danger) !important;
+  animation: rdmPulseDanger 1s infinite alternate;
+}
+@keyframes rdmPulseDanger {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
+
+/* 지우개 활성화 테두리 및 플래시 애니메이션 */
+.canvas-container.eraser-active {
+  border: 2px dashed var(--rdm-danger);
+}
+.canvas-container.flash-white {
+  animation: rdmFlashWhite 0.2s ease-out;
+}
+@keyframes rdmFlashWhite {
+  0% { filter: brightness(2); }
+  100% { filter: brightness(1); }
+}
+
+/* 제출한 항목 미리보기 썸네일 스타일 */
+.submitted-preview-container {
+  background-color: var(--rdm-bg2);
+  border: 1px solid var(--rdm-border);
+  border-radius: 12px;
+  padding: 0.75rem;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 1rem;
+  box-sizing: border-box;
+}
+.preview-title {
+  font-size: 0.8rem;
+  color: var(--rdm-sub);
+  margin: 0 0 0.5rem 0;
+  font-weight: bold;
+}
+.preview-box {
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.submitted-thumbnail-img {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  display: block;
+}
+.submitted-word-text {
+  color: #111827;
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin: 8px 0;
+  text-align: center;
+  word-break: break-all;
+}
+
+/* 이모지 조합 미리보기 칩 스타일 */
+.emoji-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background-color: var(--rdm-bg3);
+  padding: 6px 10px;
+  border-radius: 20px;
+  margin-bottom: 0.4rem;
+  align-items: center;
+  justify-content: flex-start;
+  border: 1px solid var(--rdm-border);
+}
+.emoji-preview-chip {
+  font-size: 1.3rem;
+  background-color: var(--rdm-bg2);
+  border: 1px solid var(--rdm-border);
+  border-radius: 14px;
+  padding: 2px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  transition: transform 0.1s;
+}
+.emoji-preview-chip:active {
+  transform: scale(0.85);
+  background-color: var(--rdm-danger);
+}

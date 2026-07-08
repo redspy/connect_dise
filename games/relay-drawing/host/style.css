@@ -671,3 +671,119 @@ h2 {
     gap: 8px !important;
   }
 }
+
+/* 로비 인포그래픽 온보딩 스타일 */
+.rd-infographic-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--rd-bg2);
+  border: 1px solid var(--rd-border);
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.rd-info-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.rd-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--rd-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 50%;
+}
+.rd-info-step p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rd-text);
+  text-align: center;
+  word-break: keep-all;
+}
+.rd-info-arrow {
+  font-size: 16px;
+  color: var(--rd-sub);
+  user-select: none;
+}
+.rd-recommend-badge {
+  display: inline-block;
+  background: rgba(129, 140, 248, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  margin: 8px 0;
+  text-align: center;
+}
+.rd-lobby-tip {
+  font-size: 13px;
+  color: var(--rd-warning);
+  margin-top: 4px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 실시간 그리기 상태 카드 강조 펄스 효과 */
+.status-card.drawing-active {
+  border-color: var(--rd-accent) !important;
+  box-shadow: 0 0 15px rgba(129, 140, 248, 0.45);
+  animation: rdPulseBorder 1.5s infinite ease-in-out;
+}
+@keyframes rdPulseBorder {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+.status-card.drawing-active .action-text {
+  color: var(--rd-accent) !important;
+  font-weight: bold;
+  animation: rdTextBlink 1s infinite alternate;
+}
+@keyframes rdTextBlink {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+/* 이탈한 플레이어 카드 스타일 */
+.status-card.left-player {
+  background: var(--rd-bg3) !important;
+  border-color: #374151 !important;
+}
+
+/* 발표 서스펜스 텍스트 효과 */
+.story-owner.suspense {
+  color: var(--rd-warning) !important;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  animation: rdSuspenseText 1s infinite alternate;
+  text-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+@keyframes rdSuspenseText {
+  0% { opacity: 0.7; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.02); }
+}
+
+/* 데모 시뮬레이터 배너 관련 스타일 */
+#demoBanner {
+  animation: bannerSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes bannerSlideIn {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}

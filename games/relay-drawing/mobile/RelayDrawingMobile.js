@@ -26,6 +26,17 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._initHostMessages();
   }
 
+  _triggerHaptic(type = 'light') {
+    if (!navigator.vibrate) return;
+    if (type === 'light') {
+      navigator.vibrate(15);
+    } else if (type === 'medium') {
+      navigator.vibrate(30);
+    } else if (type === 'heavy') {
+      navigator.vibrate(60);
+    }
+  }
+
   // ─── MobileBaseGame 훅 ────────────────────────────────────────────────────
 
   onJoin(player) {
@@ -35,7 +46,7 @@ export class RelayDrawingMobile extends MobileBaseGame {
   onRejoin() {
     const nickname = localStorage.getItem('rd_nickname');
     if (nickname) {
-      const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+      const avatar = localStorage.getItem('rd_avatar') || document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
       this.sendToHost('setProfile', { nickname, avatar });
     }
     this.showScreen('waiting');
@@ -46,11 +57,12 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._hasSubmitted = false;
     document.getElementById('readyBtn')?.classList.remove('hidden');
     document.getElementById('readyStatus')?.classList.add('hidden');
+    document.body.classList.remove('rd-mobile-share-active');
 
     const nickname = localStorage.getItem('rd_nickname');
     if (nickname) {
       document.getElementById('myNameDisplay').textContent = nickname;
-      const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+      const avatar = localStorage.getItem('rd_avatar') || document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
       this.sendToHost('setProfile', { nickname, avatar });
     }
     this.showScreen('waiting');
@@ -72,13 +84,18 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
       // 프로필 이미지 캡처
       const avatar = document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
+      if (avatar) {
+        localStorage.setItem('rd_avatar', avatar);
+      }
 
+      this._triggerHaptic('heavy');
       this.sendToHost('setProfile', { nickname, avatar });
       this.showScreen('waiting');
     });
 
     // 준비 완료 버튼
     document.getElementById('readyBtn')?.addEventListener('click', () => {
+      this._triggerHaptic('medium');
       this.ready();
       this.sendToHost('playerReady', {});
       document.getElementById('readyBtn')?.classList.add('hidden');
@@ -88,35 +105,71 @@ export class RelayDrawingMobile extends MobileBaseGame {
     // 그림 그리기 도구
     document.querySelectorAll('.color-btn').forEach(btn => {
       btn.addEventListener('click', e => {
+        this._triggerHaptic('light');
         document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         this._currentColor = e.currentTarget.dataset.color;
         this._isEraser = false;
         document.getElementById('eraserBtn')?.classList.remove('active');
+        document.querySelector('.canvas-container')?.classList.remove('eraser-active');
       });
     });
 
     document.getElementById('eraserBtn')?.addEventListener('click', () => {
+      this._triggerHaptic('medium');
       this._isEraser = true;
       document.getElementById('eraserBtn')?.classList.add('active');
       document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      
+      const container = document.querySelector('.canvas-container');
+      if (container) {
+        container.classList.add('eraser-active');
+        container.classList.add('flash-white');
+        setTimeout(() => container.classList.remove('flash-white'), 200);
+      }
     });
 
-    document.getElementById('clearBtn')?.addEventListener('click', () => {
-      if (confirm('그림을 모두 지우시겠습니까?')) this._clearCanvas();
+    // 2단계 초기화 버튼
+    const clearBtn = document.getElementById('clearBtn');
+    let clearConfirmStage = false;
+    let clearResetTimeout = null;
+
+    clearBtn?.addEventListener('click', () => {
+      this._triggerHaptic('medium');
+      if (!clearConfirmStage) {
+        clearConfirmStage = true;
+        clearBtn.textContent = '⚠️ 진짜 지울까요?';
+        clearBtn.classList.add('confirm-warning');
+        
+        clearResetTimeout = setTimeout(() => {
+          clearConfirmStage = false;
+          clearBtn.textContent = '🗑️ 모두 지우기';
+          clearBtn.classList.remove('confirm-warning');
+        }, 3000);
+      } else {
+        clearConfirmStage = false;
+        clearBtn.textContent = '🗑️ 모두 지우기';
+        clearBtn.classList.remove('confirm-warning');
+        if (clearResetTimeout) clearTimeout(clearResetTimeout);
+        this._clearCanvas();
+        this._triggerHaptic('heavy');
+      }
     });
 
     document.getElementById('submitDrawBtn')?.addEventListener('click', () => {
+      this._triggerHaptic('heavy');
       this._submitDraw();
     });
 
     document.getElementById('submitWordBtn')?.addEventListener('click', () => {
+      this._triggerHaptic('heavy');
       this._submitWord();
     });
 
     // 리액션 버튼
     document.querySelectorAll('.reaction-btn').forEach(btn => {
       btn.addEventListener('click', e => {
+        this._triggerHaptic('light');
         const emoji = e.currentTarget.dataset.emoji;
         this.sendToHost('sendReaction', { emoji });
       });
@@ -141,14 +194,45 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
     this._initProfileCanvas();
 
-    // 하이브리드 이모지 입력기 바인딩 (아동 배제 극복)
+    // 하이브리드 이모지 입력기 및 실시간 미리보기 칩 연동
+    const wordInput = document.getElementById('wordGuess');
+    const previewContainer = document.getElementById('emojiPreviewContainer');
+
+    const updateEmojiPreview = () => {
+      if (!previewContainer || !wordInput) return;
+      const text = wordInput.value;
+      const emojiRegex = /[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
+      const emojis = text.match(emojiRegex) || [];
+      
+      previewContainer.innerHTML = '';
+      if (emojis.length > 0) {
+        emojis.forEach(emo => {
+          const chip = document.createElement('span');
+          chip.className = 'emoji-preview-chip';
+          chip.textContent = emo;
+          chip.addEventListener('click', () => {
+            wordInput.value = wordInput.value.replace(emo, '');
+            updateEmojiPreview();
+            this._triggerHaptic('light');
+          });
+          previewContainer.appendChild(chip);
+        });
+        previewContainer.classList.remove('hidden');
+      } else {
+        previewContainer.classList.add('hidden');
+      }
+    };
+
+    wordInput?.addEventListener('input', updateEmojiPreview);
+
     document.querySelectorAll('.picker-emoji').forEach(el => {
       el.addEventListener('click', e => {
+        this._triggerHaptic('light');
         const emoji = e.currentTarget.textContent;
-        const input = document.getElementById('wordGuess');
-        if (input) {
-          input.value += emoji;
-          input.focus();
+        if (wordInput) {
+          wordInput.value += emoji;
+          wordInput.focus();
+          updateEmojiPreview();
         }
       });
     });
@@ -182,6 +266,16 @@ export class RelayDrawingMobile extends MobileBaseGame {
 
     this._profileCtx.fillStyle = '#FFFFFF';
     this._profileCtx.fillRect(0, 0, size, size);
+
+    // 로컬 스토리지 아바타 복원
+    const savedAvatar = localStorage.getItem('rd_avatar');
+    if (savedAvatar) {
+      const img = new Image();
+      img.onload = () => {
+        this._profileCtx.drawImage(img, 0, 0, size, size);
+      };
+      img.src = savedAvatar;
+    }
 
     const start = (e) => {
       e.preventDefault();
@@ -413,6 +507,13 @@ export class RelayDrawingMobile extends MobileBaseGame {
     offscreen.getContext('2d').drawImage(canvas, 0, 0, 480, 360);
     const dataUrl = offscreen.toDataURL('image/jpeg', 0.6);
 
+    // 대기 화면 썸네일 노출
+    const thumbImg = document.getElementById('submittedThumbnail');
+    if (thumbImg) {
+      thumbImg.src = dataUrl;
+      document.getElementById('submittedPreviewContainer')?.classList.remove('hidden');
+    }
+
     this.sendToHost('submitTurn', { type: 'draw', content: dataUrl });
     this.showScreen('standby');
   }
@@ -424,6 +525,14 @@ export class RelayDrawingMobile extends MobileBaseGame {
     document.getElementById('submitWordBtn').disabled = true;
 
     const word = document.getElementById('wordGuess')?.value.trim() || '???';
+
+    // 대기 화면 단어 텍스트 노출
+    const thumbText = document.getElementById('submittedWordText');
+    if (thumbText) {
+      thumbText.textContent = `제출한 단어: "${word}"`;
+      document.getElementById('submittedPreviewContainer')?.classList.remove('hidden');
+    }
+
     this.sendToHost('submitTurn', { type: 'word', content: word });
     this.showScreen('standby');
   }
@@ -489,6 +598,15 @@ export class RelayDrawingMobile extends MobileBaseGame {
       this.showScreen('spectate');
     });
 
+    this.onMessage('lobbyState', () => {
+      const nickname = localStorage.getItem('rd_nickname');
+      if (nickname) {
+        this.showScreen('waiting');
+      } else {
+        this.showScreen('setup');
+      }
+    });
+
     this.onMessage('rejoinState', ({ phase, assignment }) => {
       if (phase === 'game' && assignment) {
         this._hasSubmitted = false;
@@ -529,6 +647,7 @@ export class RelayDrawingMobile extends MobileBaseGame {
       if (shareCard && shareImg) {
         shareImg.src = webpDataUrl;
         shareCard.classList.remove('hidden');
+        document.body.classList.add('rd-mobile-share-active'); // 가로 모드 허용
       }
     });
   }
@@ -559,9 +678,12 @@ export class RelayDrawingMobile extends MobileBaseGame {
     this._currentColor = '#000000';
     this._isEraser = false;
     document.getElementById('eraserBtn')?.classList.remove('active');
+    document.querySelector('.canvas-container')?.classList.remove('eraser-active');
 
-    // 결과 공유 카드는 숨김
+    // 프리뷰 숨김 및 결과 공유 카드 숨김
     document.getElementById('mobileShareCard')?.classList.add('hidden');
+    document.body.classList.remove('rd-mobile-share-active');
+    document.getElementById('submittedPreviewContainer')?.classList.add('hidden');
 
     this.showScreen('draw');
     setTimeout(() => this._resizeCanvas(), 50);
@@ -573,6 +695,8 @@ export class RelayDrawingMobile extends MobileBaseGame {
     document.getElementById('previousDrawing').src = imageSrc;
     document.getElementById('wordGuess').value = '';
     document.getElementById('submitWordBtn').disabled = false;
+    document.getElementById('submittedPreviewContainer')?.classList.add('hidden');
+    document.getElementById('emojiPreviewContainer')?.classList.add('hidden');
 
     this.showScreen('word');
     this._startTimer(timeLimit, 'word');

@@ -303,3 +303,31 @@ body.dixit-mobile {
   line-height: 1;
 }
 .dx-waiting-next { opacity: .55; font-size: 14px; }
+
+/* ── Result detail (복기 상세) ── */
+.dx-result-detail {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.dx-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+.dx-detail-label {
+  opacity: 0.7;
+}
+.dx-detail-val {
+  font-weight: 700;
+  color: #ffeaa7;
+}

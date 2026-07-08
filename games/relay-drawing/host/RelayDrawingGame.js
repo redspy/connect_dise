@@ -79,6 +79,7 @@ export class RelayDrawingGame extends HostBaseGame {
     super(sdk, { overlayClass: 'rd-overlay', qrContainerId: null });
 
     this._profiles        = new Map(); // id → { nickname, avatar }
+    this._authorSnapshots = new Map(); // id → { nickname, avatar, color }
     this._storyChains     = [];
     this._currentRound    = 0;
     this._totalRounds     = 0;
@@ -92,6 +93,7 @@ export class RelayDrawingGame extends HostBaseGame {
     this._activeStrokes   = new Map(); // 실시간 WebRTC 획(stroke) 스트리밍 추적용 캐시
     this._demoSimulator   = new RelayDemoSimulator(this);
     this._isDemo          = false;
+    this._lastFinalShareCardUrl = null;
 
     this._wireGameMessages();
   }
@@ -120,6 +122,9 @@ export class RelayDrawingGame extends HostBaseGame {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
+        } else {
+          this._demoSimulator.stopDemo();
+          this.resetSession();
         }
       };
     }
@@ -140,10 +145,20 @@ export class RelayDrawingGame extends HostBaseGame {
       // 데모 실행 도중 난입 가드
       return;
     }
+    // 스냅샷 초기화
+    this._authorSnapshots.set(player.id, {
+      nickname: '익명',
+      avatar: null,
+      color: player.color
+    });
     this._updateLobbyPlayers();
   }
 
   onPlayerRejoin(player) {
+    if (this.phase === 'lobby') {
+      this.sendToPlayer(player.id, 'lobbyState', { phase: 'lobby' });
+      return;
+    }
     if (this.phase === 'game') {
       const p = this.players.get(player.id);
       if (p?._hasSubmitted) {
@@ -164,12 +179,44 @@ export class RelayDrawingGame extends HostBaseGame {
       });
     } else if (this.phase === 'result' || this.phase === 'final') {
       this.sendToPlayer(player.id, 'showResults', {});
+      if (this.phase === 'final' && this._lastFinalShareCardUrl) {
+        this.sendToPlayer(player.id, 'showFinalShareCard', { webpDataUrl: this._lastFinalShareCardUrl });
+      }
     }
   }
 
   onPlayerLeave(playerId) {
     this._profiles.delete(playerId);
+    
+    if (this.phase === 'game') {
+      // 이탈한 플레이어의 체인에 이번 라운드 패스 스텝 추가해 무결성 보존
+      const chain = this._storyChains.find(c => c.currentHolderId === playerId);
+      if (chain) {
+        const hasStepForCurrentRound = chain.steps.some(s => s.roundNumber === this._currentRound);
+        if (!hasStepForCurrentRound) {
+          const isDrawTurn = (this._currentRound % 2 !== 0);
+          chain.steps.push({
+            type: isDrawTurn ? 'draw' : 'word',
+            content: isDrawTurn ? this._createBlankCanvas() : '(플레이어 이탈)',
+            authorId: playerId,
+            roundNumber: this._currentRound,
+          });
+        }
+      }
+      
+      const card = document.getElementById(`status-${playerId}`);
+      if (card) {
+        card.classList.add('left-player');
+        card.style.opacity = '0.4';
+        const actionEl = document.getElementById(`action-${playerId}`);
+        if (actionEl) actionEl.textContent = '이탈함';
+      }
+      
+      this._checkTurnCompletion();
+    }
+    
     this._updateLobbyPlayers();
+    this._broadcastPlayerList();
   }
 
   onReadyUpdate({ readyCount }) {
@@ -183,9 +230,11 @@ export class RelayDrawingGame extends HostBaseGame {
   onReset() {
     this._demoSimulator.stopDemo();
     this._profiles.clear();
+    this._authorSnapshots.clear();
     this._storyChains = [];
     this._currentRound = 0;
     this._readyPlayers.clear();
+    this._lastFinalShareCardUrl = null;
     clearInterval(this._timerInterval);
     clearTimeout(this._forceEndTimeout);
     this._forceEndTimeout = null;
@@ -200,6 +249,14 @@ export class RelayDrawingGame extends HostBaseGame {
     this.onMessage('setProfile', (player, { nickname, avatar }) => {
       const name = nickname.trim() || '익명';
       this._profiles.set(player.id, { nickname: name, avatar: avatar || null });
+      
+      // 스냅샷 복제 보존
+      this._authorSnapshots.set(player.id, {
+        nickname: name,
+        avatar: avatar || null,
+        color: player.color
+      });
+
       this.setPlayerName(player.id, name);
       this._updateLobbyPlayers();
       this._broadcastPlayerList();
@@ -225,6 +282,15 @@ export class RelayDrawingGame extends HostBaseGame {
     // 실시간 WebRTC 획(Stroke) 스트리밍 복원 이벤트 바인딩
     this.onMessage('strokeStart', (player, { strokeId, color, lineWidth, nx, ny }) => {
       if (this.phase !== 'game') return;
+
+      // 상태 카드를 찾아 강조 클래스 추가 및 텍스트 갱신
+      const card = document.getElementById(`status-${player.id}`);
+      if (card) {
+        card.classList.add('drawing-active');
+        const actionEl = document.getElementById(`action-${player.id}`);
+        if (actionEl) actionEl.textContent = `🖌️ 열심히 그리는 중!`;
+      }
+
       const canvas = document.getElementById(`canvas-${player.id}`);
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -288,6 +354,17 @@ export class RelayDrawingGame extends HostBaseGame {
 
     this.onMessage('strokeEnd', (player, { strokeId }) => {
       if (this.phase !== 'game') return;
+
+      // 상태 카드의 강조 클래스 제거 및 텍스트 복구
+      const card = document.getElementById(`status-${player.id}`);
+      if (card) {
+        card.classList.remove('drawing-active');
+        const actionEl = document.getElementById(`action-${player.id}`);
+        if (actionEl && !player._hasSubmitted) {
+          actionEl.textContent = '그림 그리는 중...';
+        }
+      }
+
       const stroke = this._activeStrokes.get(strokeId);
       if (stroke) {
         // 네트워크 지연으로 버퍼에 잔류한 패킷 강제 렌더링 마무리
@@ -332,7 +409,7 @@ export class RelayDrawingGame extends HostBaseGame {
       players.push({
         id:       p.id,
         color:    p.color,
-        nickname: this._profiles.get(p.id)?.nickname ?? '익명',
+        nickname: this._authorSnapshots.get(p.id)?.nickname ?? '익명',
         ready:    this._readyPlayers.has(p.id),
       });
     });
@@ -345,7 +422,7 @@ export class RelayDrawingGame extends HostBaseGame {
       players.push({
         id:        p.id,
         color:     p.color,
-        nickname:  this._profiles.get(p.id)?.nickname ?? '익명',
+        nickname:  this._authorSnapshots.get(p.id)?.nickname ?? '익명',
         submitted: p._hasSubmitted ?? false,
       });
     });
@@ -377,6 +454,12 @@ export class RelayDrawingGame extends HostBaseGame {
   }
 
   _setupRoundParameters() {
+    if (this._isDemo) {
+      this._totalRounds = 3;
+      this._timeLimitDraw = 10;
+      this._timeLimitText = 5;
+      return;
+    }
     const rCountVal = document.getElementById('roundCount')?.value;
     if (rCountVal === 'auto') {
       this._totalRounds = this.playerCount;
@@ -438,21 +521,7 @@ export class RelayDrawingGame extends HostBaseGame {
 
     // 🤖 데모 모드 일 때 가상 봇 시뮬레이션 가동
     if (this._isDemo) {
-      if (isDrawTurn) {
-        // 그림 그리기 시뮬레이션 (각 봇이 5초 동안 실시간으로 수학 드로잉을 슥슥 그림)
-        setTimeout(() => {
-          this._demoSimulator.simulateDrawing('bot_amy', 'heart', 5000);
-          this._demoSimulator.simulateDrawing('bot_bob', 'spiral', 5000);
-          this._demoSimulator.simulateDrawing('bot_charles', 'face', 5000);
-        }, 1000);
-      } else {
-        // 단어 알아맞히기 시뮬레이션 (3.5초 후 위트 넘치는 답변 일제히 제출)
-        setTimeout(() => {
-          this._handlePlayerSubmission('bot_amy', { type: 'word', content: '하트 뿅뿅 ❤️' });
-          this._handlePlayerSubmission('bot_bob', { type: 'word', content: '우주 소용돌이 🌀' });
-          this._handlePlayerSubmission('bot_charles', { type: 'word', content: '귀여운 고양이 🐱' });
-        }, 3500);
-      }
+      this._demoSimulator.onRoundStarted(this._currentRound);
     }
   }
 
@@ -480,7 +549,7 @@ export class RelayDrawingGame extends HostBaseGame {
 
       card.innerHTML = `
         <span class="status-icon" id="icon-${p.id}">${icon}</span>
-        <div class="name">${this._profiles.get(p.id)?.nickname ?? '?'}</div>
+        <div class="name">${this._authorSnapshots.get(p.id)?.nickname ?? '?'}</div>
         <div class="action-text" id="action-${p.id}">${actionText}</div>
         ${canvasHtml}
       `;
@@ -620,12 +689,25 @@ export class RelayDrawingGame extends HostBaseGame {
     }
   }
 
+  _findNextActivePlayer(currentHolderId) {
+    const activePlayerIds = Array.from(this.players.keys());
+    if (activePlayerIds.length === 0) return null;
+
+    const idx = activePlayerIds.indexOf(currentHolderId);
+    if (idx !== -1) {
+      return activePlayerIds[(idx + 1) % activePlayerIds.length];
+    }
+    return activePlayerIds[0];
+  }
+
   _rotateStoryChains() {
-    const playerArray = Array.from(this.players.keys());
-    const holdingMap  = {};
+    const activePlayerIds = Array.from(this.players.keys());
+    if (activePlayerIds.length === 0) return;
+
+    const holdingMap = {};
     for (let i = 0; i < this._storyChains.length; i++) {
-      const pIndex = playerArray.indexOf(this._storyChains[i].currentHolderId);
-      holdingMap[i] = playerArray[(pIndex + 1) % playerArray.length];
+      const chain = this._storyChains[i];
+      holdingMap[i] = this._findNextActivePlayer(chain.currentHolderId);
     }
     for (let i = 0; i < this._storyChains.length; i++) {
       this._storyChains[i].currentHolderId = holdingMap[i];
@@ -652,39 +734,68 @@ export class RelayDrawingGame extends HostBaseGame {
 
     const chain = this._storyChains[this._currentStoryIndex];
     const ownerEl = document.getElementById('storyOwnerName');
+    
+    // 서스펜스 카피 설정
     if (ownerEl) {
-      ownerEl.textContent = `${this._profiles.get(chain.originalAuthorId)?.nickname ?? '?'}의 이야기`;
+      ownerEl.textContent = `이번엔 어디까지 틀어졌을까...?`;
+      ownerEl.classList.add('suspense');
     }
 
     this._clearPresentationTimeouts(); 
     const stepsEl = document.getElementById('storySteps');
     if (stepsEl) stepsEl.innerHTML = '';
 
-    this._addStoryStep({ type: 'word', content: chain.initialPrompt, authorId: 'system' }, '시작 단어');
-
     const nextBtn = document.getElementById('nextStoryBtn');
     if (nextBtn) nextBtn.disabled = true;
 
-    let delay = 1000;
-    chain.steps.forEach(step => {
-      const profile = this._profiles.get(step.authorId);
-      const authorName = profile?.nickname ?? '?';
-      const authorAvatar = profile?.avatar;
-      const t = setTimeout(() => this._addStoryStep(step, authorName, authorAvatar), delay);
-      this._presentationTimeouts.push(t);
-      delay += 2500;
-    });
-
-    const finalT = setTimeout(() => {
-      if (nextBtn) {
-        nextBtn.disabled = false;
-        nextBtn.textContent = this._currentStoryIndex === this._storyChains.length - 1
-          ? '결과 마치기'
-          : '다음 이야기 보기';
+    // 1초 정적 대기 후 공개 시작
+    const suspenseTimeout = setTimeout(() => {
+      if (ownerEl) {
+        const nickname = this._authorSnapshots.get(chain.originalAuthorId)?.nickname ?? '이탈 플레이어';
+        ownerEl.textContent = `${nickname}의 이야기`;
+        ownerEl.classList.remove('suspense');
       }
-      this._currentStoryIndex++;
-    }, delay);
-    this._presentationTimeouts.push(finalT);
+
+      this._addStoryStep({ type: 'word', content: chain.initialPrompt, authorId: 'system' }, '시작 단어');
+
+      let delay = 1000;
+      chain.steps.forEach(step => {
+        const profile = this._authorSnapshots.get(step.authorId);
+        const authorName = profile?.nickname ?? '이탈 플레이어';
+        const authorAvatar = profile?.avatar;
+        const t = setTimeout(() => this._addStoryStep(step, authorName, authorAvatar), delay);
+        this._presentationTimeouts.push(t);
+        delay += this._isDemo ? 1000 : 2500;
+      });
+
+      const finalT = setTimeout(() => {
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.textContent = this._currentStoryIndex === this._storyChains.length - 1
+            ? '결과 마치기'
+            : '다음 이야기 보기';
+        }
+        this._currentStoryIndex++;
+
+        // 🤖 데모 모드인 경우 자동 진행
+        if (this._isDemo) {
+          this._demoSimulator.trackTimeout(() => {
+            if (this._currentStoryIndex >= this._storyChains.length) {
+              this.setPhase('final');
+              this._autoBroadcastShareImage();
+              this._demoSimulator.trackTimeout(() => {
+                this.resetSession();
+              }, 4000);
+            } else {
+              this._presentNextStory();
+            }
+          }, 1500);
+        }
+      }, delay);
+      this._presentationTimeouts.push(finalT);
+    }, 1000);
+
+    this._presentationTimeouts.push(suspenseTimeout);
   }
 
   _clearPresentationTimeouts() {
@@ -725,7 +836,6 @@ export class RelayDrawingGame extends HostBaseGame {
     const container = document.getElementById('storySteps');
     if (container) {
       container.appendChild(el);
-      // 부드러운 스크롤 추적 (실제 스크롤 가능 부모 컨테이너인 .presentation-stage를 스크롤)
       const stageEl = container.closest('.presentation-stage');
       if (stageEl) {
         stageEl.scrollTo({ top: stageEl.scrollHeight, behavior: 'smooth' });
@@ -734,7 +844,13 @@ export class RelayDrawingGame extends HostBaseGame {
     
     setTimeout(() => {
       el.classList.add('visible');
-      audioManager.playSFX('https://actions.google.com/static/audio/test/Slide-In.mp3', 0.3);
+      if (step.authorId === 'system') {
+        audioManager.playSFX('https://actions.google.com/static/audio/test/Slide-In.mp3', 0.4);
+      } else if (step.type === 'draw') {
+        audioManager.playSFX('https://actions.google.com/static/audio/test/Tones_2.mp3', 0.5);
+      } else {
+        audioManager.playSFX('https://actions.google.com/static/audio/test/Pop.mp3', 0.5);
+      }
     }, 50);
   }
 
@@ -779,6 +895,7 @@ export class RelayDrawingGame extends HostBaseGame {
     try {
       const canvas = await this._generateShareImage();
       const webpDataUrl = canvas.toDataURL('image/webp', 0.75); // 0.75 퀄리티로 대폭 압축 (80KB 이하)
+      this._lastFinalShareCardUrl = webpDataUrl; // 캐시 저장
       this.broadcast('showFinalShareCard', { webpDataUrl });
     } catch (e) {
       console.error('모바일 자동 결과 카드 전송 실패:', e);
@@ -845,8 +962,9 @@ export class RelayDrawingGame extends HostBaseGame {
       const chain = chains[ci];
       const cardX = OUTER + ci * (CARD_W + COL_GAP);
       const cardY = TITLE_H + OUTER;
-      const ownerColor = this.players.get(chain.originalAuthorId)?.color ?? '#818CF8';
-      const ownerNick  = this._profiles.get(chain.originalAuthorId)?.nickname ?? '?';
+      const snapshot = this._authorSnapshots.get(chain.originalAuthorId);
+      const ownerColor = snapshot?.color ?? '#818CF8';
+      const ownerNick  = snapshot?.nickname ?? '?';
 
       // 카드 배경
       ctx.fillStyle = '#1F2937';
@@ -887,8 +1005,9 @@ export class RelayDrawingGame extends HostBaseGame {
 
       // 라운드 스텝
       for (const step of chain.steps) {
-        const authorNick  = this._profiles.get(step.authorId)?.nickname ?? '?';
-        const authorColor = this.players.get(step.authorId)?.color ?? '#9CA3AF';
+        const stepSnapshot = this._authorSnapshots.get(step.authorId);
+        const authorNick  = stepSnapshot?.nickname ?? '?';
+        const authorColor = stepSnapshot?.color ?? '#9CA3AF';
         cy += STEP_GAP;
 
         if (step.type === 'draw') {

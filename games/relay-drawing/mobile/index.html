@@ -113,6 +113,9 @@
       </div>
     </div>
 
+    <!-- 이모지 미리보기 칩 컨테이너 -->
+    <div id="emojiPreviewContainer" class="emoji-preview-container hidden"></div>
+
     <div class="word-input-container">
       <input type="text" id="wordGuess" maxlength="30" placeholder="무엇을 그린 걸까요?">
       <button id="submitWordBtn" class="primary-btn submit-btn">제출하기</button>
@@ -124,6 +127,16 @@
     <div class="standby-content">
       <h2>제출 완료! ✅</h2>
       <p>다른 플레이어들을 기다리고 있습니다...</p>
+      
+      <!-- 제출한 항목 미리보기 썸네일 컨테이너 -->
+      <div id="submittedPreviewContainer" class="submitted-preview-container hidden">
+        <p class="preview-title">내가 제출한 내용</p>
+        <div class="preview-box">
+          <img id="submittedThumbnail" src="" class="submitted-thumbnail-img" alt="내 그림">
+          <p id="submittedWordText" class="submitted-word-text"></p>
+        </div>
+      </div>
+
       <div id="submission-list" class="submission-list"></div>
       <div class="spinner"></div>
     </div>

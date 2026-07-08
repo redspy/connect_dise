@@ -18,7 +18,7 @@
   <div class="dx-overlay" data-phase="lobby">
     <game-lobby title="🖼️ Dixit" min-players="3">
       <div class="dx-lobby-settings">
-        <div class="dx-setting-row">
+        <div class="dx-setting-row" style="margin-bottom: 8px;">
           <span class="dx-setting-label">제출 제한 시간</span>
           <select id="sel-time-limit" class="dx-select">
             <option value="60">1분</option>
@@ -26,6 +26,14 @@
             <option value="180">3분</option>
             <option value="240">4분</option>
             <option value="300">5분</option>
+          </select>
+        </div>
+        <div class="dx-setting-row">
+          <span class="dx-setting-label">게임 모드 프리셋</span>
+          <select id="sel-preset" class="dx-select">
+            <option value="party" selected>🎉 파티 모드 (기본)</option>
+            <option value="family">👨‍👩‍👧‍👦 패밀리 모드 (타이머 여유)</option>
+            <option value="free">🃏 자유 모드 (시간 제한 없음)</option>
           </select>
         </div>
       </div>
@@ -43,6 +51,31 @@
       <button id="btn-view-all-cards" class="dx-btn-view-cards">🃏 모든 카드 보기</button>
       <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🤖 데모 플레이 실행</button>
     </game-lobby>
+  </div>
+
+  <!-- 데모 상태 배너 및 QA 로그 오버레이 -->
+  <div id="dx-demo-banner" class="dx-demo-banner hidden">
+    <div class="dx-demo-banner-content">
+      <span class="dx-demo-tag">🤖 DEMO MODE</span>
+      <span id="dx-demo-scenario-name">시나리오 진행 중...</span>
+      <button id="btn-stop-demo" class="dx-btn-demo-stop">데모 중단</button>
+    </div>
+    <div id="dx-demo-qa-logs" class="dx-demo-qa-logs">
+      <!-- QA 로그가 여기에 쌓임 -->
+    </div>
+  </div>
+
+  <!-- 첫 라운드 규칙 오버레이 -->
+  <div id="dx-first-round-guide" class="dx-guide-overlay hidden">
+    <div class="dx-guide-content glass">
+      <h2>🎨 Dixit 퀵 가이드</h2>
+      <ul>
+        <li><b>이야기꾼의 힌트:</b> 전원이 맞히거나 틀리면 0점! 일부만 맞히도록 절묘하게!</li>
+        <li><b>플레이어의 카드:</b> 이야기꾼의 힌트와 가장 잘 매칭되는 카드를 골라 제출!</li>
+        <li><b>플레이어의 투표:</b> 섞여서 공개된 카드 중 이야기꾼의 카드를 맞히면 점수 획득!</li>
+      </ul>
+      <button id="btn-close-guide" class="dx-btn-primary" style="width: auto; margin-top: 10px;">게임 시작!</button>
+    </div>
   </div>
 
   <!-- 공유 타이머 (제출 페이즈에서 표시) -->

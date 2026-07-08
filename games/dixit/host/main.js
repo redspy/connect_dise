@@ -81,29 +81,55 @@ class DixitGame extends HostBaseGame {
   }
 
   onPlayerLeave(playerId) {
-    this._profiles.delete(playerId);
-    this._scores.delete(playerId);
-    this._hands.delete(playerId);
     this._readyPlayers.delete(playerId);
 
     if (!this._gameStarted) {
+      this._profiles.delete(playerId);
+      this._scores.delete(playerId);
+      this._hands.delete(playerId);
       this.renderLobbyPlayers(this._getLobbyProfiles());
       this.updateLobbyReady(this._readyCount);
       return;
     }
 
+    // 게임 진행 중 이탈 시 복구를 위해 상태를 삭제하지 않음
     if (this.phase === 'storytelling' && playerId === this._storytellerId) {
-      this._nextRound();
+      // 이야기꾼 이탈 시 라운드 취소 및 턴 회전
+      this._abortRoundAndRotateStoryteller();
     } else if (this.phase === 'card-selection') {
+      // 나간 사람이 제출했던 카드가 있으면 제거
+      this._submissions = this._submissions.filter(s => s.playerId !== playerId);
       this._renderSubmissionGrid();
       this._broadcastSubmissionStatus();
-      if (this._submissions.length >= this.playerCount) this._startVoting();
+      if (this._submissions.length >= this.playerCount) {
+        this._startVoting();
+      }
     } else if (this.phase === 'voting') {
-      const nonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
+      // 나간 플레이어의 투표 제거
+      this._votes = this._votes.filter(v => v.voterId !== playerId);
       this._renderVoteProgress();
       this._broadcastVoteStatus();
-      if (this._votes.length >= nonStorytellers.length) this._revealResults();
+      
+      const activeNonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
+      if (this._votes.length >= activeNonStorytellers.length) {
+        this._revealResults();
+      }
     }
+  }
+
+  _abortRoundAndRotateStoryteller() {
+    this._clearPhaseTimer();
+    const name = this._profiles.get(this._storytellerId)?.nickname ?? '이야기꾼';
+    this.broadcast('roundAborted', { reason: `이야기꾼(${name})이 게임에서 이탈하여 라운드가 취소되었습니다.` });
+    
+    const playerIds = [...this.players.keys()];
+    if (playerIds.length < MIN_PLAYERS) {
+      this.resetSession();
+      return;
+    }
+    
+    // 다음 이야기꾼으로 회전하되, 사용하지 않은 카드는 그대로 유지
+    this._startRound(this._round + 1);
   }
 
   onReadyUpdate({ readyCount }) {
@@ -136,6 +162,15 @@ class DixitGame extends HostBaseGame {
     this._gameStarted    = false;
     this._readyCount     = 0;
     this._readyPlayers.clear();
+    this._currentPreset   = 'party';
+    
+    if (this._guideTimeout) {
+      clearTimeout(this._guideTimeout);
+      this._guideTimeout = null;
+    }
+    const guide = document.getElementById('dx-first-round-guide');
+    if (guide) guide.classList.add('hidden');
+
     for (const p of this.players.values()) this._scores.set(p.id, 0);
     this.renderLobbyPlayers(this._getLobbyProfiles());
     this.updateLobbyReady(0);
@@ -170,6 +205,13 @@ class DixitGame extends HostBaseGame {
       if (player.id !== this._storytellerId) return;
       if (!clue?.trim() || !cardId) return;
 
+      // 이야기꾼 손패 검증 추가
+      const hand = this._hands.get(player.id);
+      if (!hand || !hand.includes(cardId)) {
+        console.warn(`[Dixit] Storyteller ${player.id} tried to submit clue with card ${cardId} which is not in hand.`);
+        return;
+      }
+
       this._clue = clue.trim();
       this._submissions.push({ playerId: player.id, cardId });
 
@@ -195,6 +237,13 @@ class DixitGame extends HostBaseGame {
       if (this.phase !== 'voting') return;
       if (player.id === this._storytellerId) return;
       if (this._votes.find(v => v.voterId === player.id)) return;
+
+      // 투표 카드 보드 소속 검증 추가
+      if (!this._boardCards.includes(cardId)) {
+        console.warn(`[Dixit] Player ${player.id} voted for card ${cardId} which is not on the board.`);
+        return;
+      }
+
       const myCard = this._submissions.find(s => s.playerId === player.id)?.cardId;
       if (cardId === myCard) return;
 
@@ -214,6 +263,9 @@ class DixitGame extends HostBaseGame {
   _startGame() {
     const timeSel = document.getElementById('sel-time-limit');
     this._phaseTimeLimit = timeSel ? Number(timeSel.value) : 120;
+
+    const presetSel = document.getElementById('sel-preset');
+    this._currentPreset = presetSel ? presetSel.value : 'party';
 
     this._gameStarted = true;
     this._deck = new DeckManager();
@@ -250,6 +302,30 @@ class DixitGame extends HostBaseGame {
 
     const name = this._profiles.get(this._storytellerId)?.nickname ?? '?';
     document.getElementById('storyteller-name').textContent = `${name}의 턴 (이야기꾼)`;
+
+    // 1라운드 한정 규칙 가이드 노출
+    if (round === 1) {
+      const guide = document.getElementById('dx-first-round-guide');
+      if (guide) {
+        guide.classList.remove('hidden');
+        const closeGuide = () => {
+          guide.classList.add('hidden');
+          if (this._guideTimeout) {
+            clearTimeout(this._guideTimeout);
+            this._guideTimeout = null;
+          }
+        };
+        document.getElementById('btn-close-guide').onclick = closeGuide;
+        this._guideTimeout = setTimeout(closeGuide, 8000); // 8초 뒤 자동 닫힘
+      }
+    } else {
+      if (this._guideTimeout) {
+        clearTimeout(this._guideTimeout);
+        this._guideTimeout = null;
+      }
+      const guide = document.getElementById('dx-first-round-guide');
+      if (guide) guide.classList.add('hidden');
+    }
 
     this.setPhase('storytelling');
     this.broadcast('roundStarted', { round, storytellerId: this._storytellerId });
@@ -296,6 +372,8 @@ class DixitGame extends HostBaseGame {
       this._storytellerId, this._submissions, this._votes, allPlayerIds
     );
 
+    this._lastScoringCase = scoringCase; // 복기를 위해 마지막 판정 저장
+
     for (const [id, delta] of Object.entries(deltas)) {
       this._scores.set(id, (this._scores.get(id) ?? 0) + delta);
     }
@@ -319,6 +397,7 @@ class DixitGame extends HostBaseGame {
       deltas,
       totals,
       scoringCase,
+      votesOnCard, // 복기를 위해 득표 현황 동적 동기화
     });
   }
 
@@ -618,14 +697,32 @@ class DixitGame extends HostBaseGame {
 
   // ── Phase Timer ───────────────────────────────────────────────────────────
 
+  _getPhaseDuration(phase) {
+    if (this._currentPreset === 'free') {
+      return 0; // 시간 제한 없음
+    }
+    if (this._currentPreset === 'family') {
+      if (phase === 'storytelling') return 180;
+      if (phase === 'card-selection') return 120;
+      if (phase === 'voting') return 90;
+    }
+    // 기본 party 모드 및 fallback
+    if (phase === 'storytelling') return 90;
+    if (phase === 'card-selection') return 60;
+    if (phase === 'voting') return 45;
+    return 120;
+  }
+
   _startPhaseTimer(phase) {
     this._clearPhaseTimer();
-    if (!this._phaseTimeLimit) return;
+    const duration = this._getPhaseDuration(phase);
+    this._phaseTimeLimit = duration; // rejoinState에 영향 주므로 갱신
+    if (!duration) return; // 0초면 타이머 없음
 
     this._phaseTimerStart = Date.now();
-    this.broadcast('phaseTimer', { duration: this._phaseTimeLimit, phase });
+    this.broadcast('phaseTimer', { duration, phase });
 
-    let remaining = this._phaseTimeLimit;
+    let remaining = duration;
     this._updateHostTimerDisplay(remaining);
 
     this._phaseTimerInterval = setInterval(() => {
@@ -640,7 +737,7 @@ class DixitGame extends HostBaseGame {
     this._phaseTimerTimeout = setTimeout(() => {
       this._phaseTimerTimeout = null;
       this._onPhaseTimeout(phase);
-    }, this._phaseTimeLimit * 1000);
+    }, duration * 1000);
   }
 
   _clearPhaseTimer() {
@@ -711,10 +808,6 @@ class DixitGame extends HostBaseGame {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
-  _broadcastPlayerList() {
-    this.broadcast('playerListUpdated', { players: this._buildPlayerList() });
-  }
-
   _buildPlayerList() {
     // 프로필을 아직 보내지 않은 플레이어는 목록에서 제외 (새로 접속 중인 플레이어의 '익명' 노출 방지)
     return [...this.players.values()]
@@ -724,7 +817,20 @@ class DixitGame extends HostBaseGame {
         color:    p.color,
         nickname: this._profiles.get(p.id).nickname,
         score:    this._scores.get(p.id) ?? 0,
+        ready:    this._readyPlayers.has(p.id),
       }));
+  }
+
+  _broadcastPlayerList() {
+    this.broadcast('playerListUpdated', { players: this._buildPlayerList() });
+  }
+
+  _buildVotesOnCardMap() {
+    const votesOnCard = {};
+    for (const v of this._votes) {
+      votesOnCard[v.cardId] = (votesOnCard[v.cardId] ?? 0) + 1;
+    }
+    return votesOnCard;
   }
 
   _sendRejoinState(playerId) {
@@ -748,11 +854,65 @@ class DixitGame extends HostBaseGame {
       alreadySubmitted:   this._submissions.some(s => s.playerId === playerId),
       alreadyVoted:       this._votes.some(v => v.voterId === playerId),
       mySubmittedCard:    this._submissions.find(s => s.playerId === playerId)?.cardId ?? null,
+      mySelectedVote:     this._votes.find(v => v.voterId === playerId)?.cardId ?? null, // 투표 카드 복구
       myProfile:          this._profiles.get(playerId) ?? null,
       totals:             Object.fromEntries(this._scores),
       storyCardId:        this.phase === 'round-result' ? storyCardId : null,
       phaseTimerRemaining: this._getPhaseTimerRemaining(),
+      roundResultData:    this.phase === 'round-result' ? {
+        deltas:             Object.fromEntries(this._scores),
+        cardOwnerMap:       Object.fromEntries(this._submissions.map(s => [s.cardId, s.playerId])),
+        votesOnCard:        this._buildVotesOnCardMap(),
+        storytellerCardId:  storyCardId,
+        scoringCase:        this._lastScoringCase || 'partial',
+      } : null,
     });
+  }
+
+  // 데모 봇들의 가상 액션 처리용 공개 훅
+  handleDemoAction(playerId, action, payload) {
+    if (!this._isDemo) return;
+
+    const fakePlayer = { id: playerId };
+
+    if (action === 'submitClue') {
+      const { cardId, clue } = payload;
+      if (this.phase !== 'storytelling') return;
+      this._clue = clue.trim();
+      this._submissions.push({ playerId, cardId });
+      this._transitionToCardSelection();
+
+    } else if (action === 'submitCard') {
+      const { cardId } = payload;
+      if (this.phase !== 'card-selection') return;
+      if (this._submissions.find(s => s.playerId === playerId)) return;
+
+      this._submissions.push({ playerId, cardId });
+      this._renderSubmissionGrid();
+      this._broadcastSubmissionStatus();
+
+      if (this._submissions.length === this.playerCount) {
+        this._startVoting();
+      }
+
+    } else if (action === 'submitVote') {
+      const { cardId } = payload;
+      if (this.phase !== 'voting') return;
+      if (playerId === this._storytellerId) return;
+      if (this._votes.find(v => v.voterId === playerId)) return;
+
+      const myCard = this._submissions.find(s => s.playerId === playerId)?.cardId;
+      if (cardId === myCard) return;
+
+      this._votes.push({ voterId: playerId, cardId });
+      this._renderVoteProgress();
+      this._broadcastVoteStatus();
+
+      const nonStorytellers = [...this.players.keys()].filter(id => id !== this._storytellerId);
+      if (this._votes.length === nonStorytellers.length) {
+        this._revealResults();
+      }
+    }
   }
 
   // ── Debug ─────────────────────────────────────────────────────────────────

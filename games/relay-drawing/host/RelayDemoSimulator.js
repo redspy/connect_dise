@@ -2,6 +2,19 @@ export class RelayDemoSimulator {
   constructor(game) {
     this.game = game;
     this.demoTimeouts = [];
+    this.demoIntervals = [];
+  }
+
+  trackTimeout(fn, ms) {
+    const t = setTimeout(fn, ms);
+    this.demoTimeouts.push(t);
+    return t;
+  }
+
+  trackInterval(fn, ms) {
+    const i = setInterval(fn, ms);
+    this.demoIntervals.push(i);
+    return i;
   }
 
   startDemo() {
@@ -16,8 +29,9 @@ export class RelayDemoSimulator {
 
     bots.forEach(b => {
       this.game._profiles.set(b.id, { nickname: b.nickname, avatar: b.avatar });
-      // HostBaseGame의 players Map에 가상 Player 추가
       this.game.players.set(b.id, { id: b.id, color: b.color, _hasSubmitted: false });
+      // 스냅샷에도 보존
+      this.game._authorSnapshots.set(b.id, { nickname: b.nickname, avatar: b.avatar, color: b.color });
     });
 
     this.game._updateLobbyPlayers();
@@ -51,12 +65,78 @@ export class RelayDemoSimulator {
       qrWrap.parentNode.appendChild(overlayText);
     }
 
-    // 2. 3초 카운트다운 없이 데모는 바로 시작
+    // 데모 진행 상단 상시 배너 생성 (어떤 화면에서든 데모 중임을 알리고 수동 중단 가능)
+    const banner = document.createElement('div');
+    banner.id = 'demoBanner';
+    banner.style.position = 'fixed';
+    banner.style.top = '0';
+    banner.style.left = '0';
+    banner.style.width = '100%';
+    banner.style.background = 'linear-gradient(90deg, #d97706, #f59e0b)';
+    banner.style.color = '#000';
+    banner.style.textAlign = 'center';
+    banner.style.padding = '8px 16px';
+    banner.style.fontSize = '14px';
+    banner.style.fontWeight = 'bold';
+    banner.style.zIndex = '9999';
+    banner.style.display = 'flex';
+    banner.style.justifyContent = 'space-between';
+    banner.style.alignItems = 'center';
+    banner.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+
+    const bannerText = document.createElement('span');
+    bannerText.textContent = '🤖 데모 플레이 시뮬레이션 동작 중...';
+    
+    const stopBtn = document.createElement('button');
+    stopBtn.textContent = '데모 중단';
+    stopBtn.style.background = '#000';
+    stopBtn.style.color = '#fff';
+    stopBtn.style.border = 'none';
+    stopBtn.style.padding = '4px 12px';
+    stopBtn.style.borderRadius = '4px';
+    stopBtn.style.cursor = 'pointer';
+    stopBtn.style.fontSize = '12px';
+    stopBtn.onclick = () => {
+      this.stopDemo();
+      this.game.resetSession();
+    };
+
+    banner.appendChild(bannerText);
+    banner.appendChild(stopBtn);
+    document.body.appendChild(banner);
+
+    // 로비의 데모 실행 버튼 텍스트 변경
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.textContent = '🤖 데모 중단';
+      demoPlayBtn.classList.add('demo-running');
+    }
+
+    // 2. 데모 게임 루프 시작
     this.game._startGame();
   }
 
+  onRoundStarted(roundNumber) {
+    const isDrawTurn = (roundNumber % 2 !== 0);
+    if (isDrawTurn) {
+      // 4초 동안 그림 그리기 시뮬레이션
+      this.trackTimeout(() => {
+        this.simulateDrawing('bot_amy', 'heart', 3500);
+        this.simulateDrawing('bot_bob', 'spiral', 3500);
+        this.simulateDrawing('bot_charles', 'face', 3500);
+      }, 500);
+    } else {
+      // 2초 후 단어 알아맞히기 제출 시뮬레이션
+      this.trackTimeout(() => {
+        this.game._handlePlayerSubmission('bot_amy', { type: 'word', content: '하트 뿅뿅 ❤️' });
+        this.game._handlePlayerSubmission('bot_bob', { type: 'word', content: '우주 소용돌이 🌀' });
+        this.game._handlePlayerSubmission('bot_charles', { type: 'word', content: '귀여운 고양이 🐱' });
+      }, 2000);
+    }
+  }
+
   // 봇의 실시간 그리기 시뮬레이션 (16ms 주기로 슥슥 그리는 수학 시뮬레이션)
-  simulateDrawing(botId, patternType, durationMs = 5000) {
+  simulateDrawing(botId, patternType, durationMs = 3500) {
     const canvas = document.getElementById(`canvas-${botId}`);
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -95,10 +175,15 @@ export class RelayDemoSimulator {
     ctx.fill();
 
     const startTime = Date.now();
-    const interval = setInterval(() => {
+    const interval = this.trackInterval(() => {
       const elapsed = Date.now() - startTime;
       if (elapsed >= durationMs) {
         clearInterval(interval);
+        
+        // demoIntervals 배열에서 제거
+        const idx = this.demoIntervals.indexOf(interval);
+        if (idx !== -1) this.demoIntervals.splice(idx, 1);
+
         this.game._activeStrokes.delete(strokeId);
         
         // 최종 캔버스 이미지 DataUrl을 turn 제출 처리
@@ -170,6 +255,8 @@ export class RelayDemoSimulator {
   stopDemo() {
     this.demoTimeouts.forEach(t => clearTimeout(t));
     this.demoTimeouts = [];
+    this.demoIntervals.forEach(i => clearInterval(i));
+    this.demoIntervals = [];
     
     // QR 블러 및 오버레이 격파
     const overlay = document.getElementById('demoQROverlay');
@@ -180,6 +267,29 @@ export class RelayDemoSimulator {
       qrWrap.style.pointerEvents = '';
     }
 
+    // 데모 진행 중 배너 제거
+    const banner = document.getElementById('demoBanner');
+    banner?.parentNode?.removeChild(banner);
+
+    // 가상 봇 제거
+    const bots = ['bot_amy', 'bot_bob', 'bot_charles'];
+    bots.forEach(botId => {
+      this.game._profiles.delete(botId);
+      this.game.players.delete(botId);
+      this.game._authorSnapshots.delete(botId);
+    });
+
+    this.game._activeStrokes.clear();
+    this.game._updateLobbyPlayers();
+    this.game._broadcastPlayerList();
+
     this.game._isDemo = false;
+
+    // 호스트 로비 버튼 복원
+    const demoPlayBtn = document.getElementById('demoPlayBtn');
+    if (demoPlayBtn) {
+      demoPlayBtn.textContent = '🤖 실시간 드로잉 데모 플레이';
+      demoPlayBtn.classList.remove('demo-running');
+    }
   }
 }

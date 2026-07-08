@@ -181,11 +181,16 @@ export class DixitMobile extends MobileBaseGame {
       this._startClientTimer(duration, phase);
     });
 
-    this.onMessage('roundResult', ({ deltas, totals }) => {
+    this.onMessage('roundResult', ({ storytellerCardId, boardCards, cardOwnerMap, clue, deltas, totals, scoringCase, votesOnCard }) => {
       this._clearClientTimer();
       const delta   = deltas[this.playerId] ?? 0;
       this._myScore = totals[this.playerId] ?? this._myScore;
-      this._showRoundResultScreen(delta, false);
+      this._showRoundResultScreen(delta, false, {
+        storytellerCardId,
+        cardOwnerMap,
+        votesOnCard,
+        scoringCase
+      });
     });
 
     this.onMessage('gameFinished', ({ rankings }) => {
@@ -341,7 +346,7 @@ export class DixitMobile extends MobileBaseGame {
     this.showScreen('vote');
   }
 
-  _showRoundResultScreen(delta, isGameEnd) {
+  _showRoundResultScreen(delta, isGameEnd, resultData = null) {
     const titleEl = document.getElementById('result-title');
     if (titleEl) titleEl.textContent = isGameEnd ? '게임 종료! 🎉' : '라운드 종료';
 
@@ -358,6 +363,52 @@ export class DixitMobile extends MobileBaseGame {
     const waitEl = document.getElementById('waiting-next');
     if (waitEl) waitEl.textContent = isGameEnd ? '' : '다음 라운드를 기다리고 있습니다...';
 
+    // 복기 상세 렌더링
+    const detailEl = document.getElementById('dx-result-detail');
+    if (detailEl) {
+      if (!isGameEnd && resultData) {
+        detailEl.classList.remove('hidden');
+
+        // 역할
+        const roleEl = document.getElementById('dx-detail-role');
+        if (roleEl) {
+          roleEl.textContent = this._isStoryteller ? '이야기꾼 👑' : '일반 플레이어 👤';
+        }
+
+        // 내 카드가 얻은 표
+        const myVotesEl = document.getElementById('dx-detail-my-votes');
+        if (myVotesEl) {
+          const myCardId = Object.entries(resultData.cardOwnerMap).find(([cId, pId]) => pId === this.playerId)?.[0];
+          const votes = myCardId ? (resultData.votesOnCard?.[myCardId] ?? 0) : 0;
+          myVotesEl.textContent = `${votes}표`;
+        }
+
+        // 내가 선택한 카드
+        const myChoiceEl = document.getElementById('dx-detail-my-choice');
+        if (myChoiceEl) {
+          if (this._isStoryteller) {
+            myChoiceEl.textContent = '선택하지 않음 (본인 턴)';
+          } else {
+            const isCorrect = this._selectedVote === resultData.storytellerCardId;
+            myChoiceEl.textContent = isCorrect ? '정답 카드 맞힘 🎯' : '오답 카드 ❌';
+          }
+        }
+
+        // 라운드 판정
+        const caseEl = document.getElementById('dx-detail-case');
+        if (caseEl) {
+          const caseText = {
+            'partial':     '일부 정답 (절묘한 힌트!)',
+            'all-correct': '전원 정답 (너무 쉬운 힌트...)',
+            'all-wrong':   '전원 오답 (너무 어려운 힌트...)',
+          };
+          caseEl.textContent = caseText[resultData.scoringCase] ?? '판정 완료';
+        }
+      } else {
+        detailEl.classList.add('hidden');
+      }
+    }
+
     this.showScreen('round-result');
   }
 
@@ -368,7 +419,12 @@ export class DixitMobile extends MobileBaseGame {
     img.alt            = cardId;
     img.dataset.cardId = cardId;
     if (onClick) {
-      img.addEventListener('click', onClick);
+      img.addEventListener('click', (e) => {
+        if (navigator.vibrate) {
+          navigator.vibrate(15);
+        }
+        onClick(e);
+      });
     } else {
       img.style.cursor = 'not-allowed';
     }
@@ -422,7 +478,7 @@ export class DixitMobile extends MobileBaseGame {
   _applyRejoinState({
     phase, players, round, storytellerId, clue, hand,
     boardCards, alreadySubmitted, alreadyVoted, mySubmittedCard,
-    myProfile, totals, phaseTimerRemaining,
+    mySelectedVote, myProfile, totals, phaseTimerRemaining, roundResultData
   }) {
     if (players)          { this._players = players; this._renderWaitingPlayers(); }
     if (round)              this._round           = round;
@@ -435,6 +491,7 @@ export class DixitMobile extends MobileBaseGame {
     if (boardCards?.length) this._boardCards       = boardCards;
     if (totals)             this._myScore         = totals[this.playerId] ?? this._myScore;
     if (mySubmittedCard)    this._mySubmittedCard  = mySubmittedCard;
+    if (mySelectedVote)     this._selectedVote     = mySelectedVote;
     if (myProfile?.nickname) {
       this._nickname = myProfile.nickname;
       document.getElementById('nickname-input').value    = this._nickname;
@@ -489,8 +546,34 @@ export class DixitMobile extends MobileBaseGame {
     }
 
     if (phase === 'round-result' || phase === 'final') {
-      this._showRoundResultScreen(0, phase === 'final');
+      const resultData = roundResultData ? {
+        storytellerCardId: roundResultData.storytellerCardId,
+        cardOwnerMap:      roundResultData.cardOwnerMap,
+        votesOnCard:       roundResultData.votesOnCard,
+        scoringCase:       roundResultData.scoringCase
+      } : null;
+      this._showRoundResultScreen(0, phase === 'final', resultData);
       return;
+    }
+  }
+
+  showScreen(screenId) {
+    super.showScreen(screenId);
+    if (screenId === 'waiting') {
+      this._updateWaitingMyActionCard();
+    }
+  }
+
+  _updateWaitingMyActionCard() {
+    const wrap = document.getElementById('dx-waiting-my-action');
+    const img = document.getElementById('dx-waiting-my-card');
+    if (!wrap || !img) return;
+
+    if (this._mySubmittedCard) {
+      img.src = `/games/dixit/assets/cards/${this._mySubmittedCard}.png`;
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
     }
   }
 

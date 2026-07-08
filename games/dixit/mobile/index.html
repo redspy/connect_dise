@@ -37,6 +37,15 @@
     <div class="dx-waiting-wrap">
       <div id="waiting-nickname" class="dx-waiting-nickname"></div>
       <div id="waiting-hint" class="dx-waiting-hint">게임 시작을 기다리는 중...</div>
+      
+      <!-- 내가 제출한 카드 정보 고정 노출 영역 -->
+      <div id="dx-waiting-my-action" class="dx-waiting-my-action hidden" style="text-align: center; margin: 10px 0;">
+        <p class="dx-action-desc" style="font-size: 13px; opacity: 0.7; margin-bottom: 6px;">내가 제출한 카드</p>
+        <div class="dx-my-action-card-wrap" style="display: inline-block; width: 80px; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.2);">
+          <img id="dx-waiting-my-card" src="" alt="제출한 카드" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+      </div>
+      
       <div id="waiting-players" class="dx-waiting-players"></div>
       <div class="dx-status-bar" id="wait-status-bar"></div>
       <button id="btn-ready" class="dx-btn-primary">준비하기</button>
@@ -55,6 +64,9 @@
     <div class="dx-hand-container" id="storyteller-hand"></div>
     <div class="dx-clue-input-area">
       <input type="text" id="clue-input" placeholder="힌트를 입력하세요 (단어, 문장, 소리 등)" autocomplete="off">
+      <p class="dx-hint-tips" style="font-size: 11px; opacity: 0.6; text-align: center; margin-top: 4px; line-height: 1.4;">
+        💡 <b>이야기꾼 팁:</b> 전원이 맞히거나 틀리면 0점! 일부만 맞히도록 절묘한 힌트를 적으세요.
+      </p>
       <button id="submit-clue-btn" class="dx-btn-primary" disabled>카드와 힌트를 선택하세요</button>
     </div>
   </div>
@@ -94,6 +106,30 @@
     <div class="dx-result-wrap">
       <h1 id="result-title" class="dx-result-title">라운드 종료</h1>
       <p id="result-msg" class="dx-result-msg">PC 화면에서 확인하세요!</p>
+      
+      <!-- 복기용 상세 요약 추가 -->
+      <div id="dx-result-detail" class="dx-result-detail hidden">
+        <div class="dx-detail-row">
+          <span class="dx-detail-label">내 역할:</span>
+          <span id="dx-detail-role" class="dx-detail-val">-</span>
+        </div>
+        <div class="dx-detail-row">
+          <span class="dx-detail-label">내 카드 득표 수:</span>
+          <span id="dx-detail-my-votes" class="dx-detail-val">0표</span>
+        </div>
+        <div class="dx-detail-row">
+          <span class="dx-detail-label">내가 선택한 카드:</span>
+          <span id="dx-detail-my-choice" class="dx-detail-val">-</span>
+        </div>
+        <div class="dx-detail-row">
+          <span class="dx-detail-label">라운드 판정:</span>
+          <span id="dx-detail-case" class="dx-detail-val">-</span>
+        </div>
+        <div class="dx-detail-tips" style="font-size: 11px; opacity: 0.6; text-align: center; margin-top: 8px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px;">
+          💡 <b>Dixit 팁:</b> 전원이 맞히거나 틀리면 이야기꾼은 0점을 얻습니다. 정답자를 일부만 유도하는 절묘한 힌트 조율이 핵심입니다!
+        </div>
+      </div>
+
       <div class="dx-my-score-box">
         <span class="dx-score-label">내 점수</span>
         <div id="my-score" class="dx-my-score">0</div>
