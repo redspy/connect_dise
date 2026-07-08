@@ -15,6 +15,9 @@ export class DobbleMobile extends MobileBaseGame {
     this._mode          = 'image';
     this._winScore      = 10;
     this._myCard        = [];
+    this._myCardVersion = 1;
+    this._centerCardVersion = 1;
+    this._waitingResponse = false;
     this._score         = 0;
     this._frozen        = false;
     this._freezeInterval = null;
@@ -41,6 +44,9 @@ export class DobbleMobile extends MobileBaseGame {
 
   onReset() {
     this._myCard  = [];
+    this._myCardVersion = 1;
+    this._centerCardVersion = 1;
+    this._waitingResponse = false;
     this._score   = 0;
     this._frozen  = false;
     this._clearFreeze();
@@ -58,31 +64,49 @@ export class DobbleMobile extends MobileBaseGame {
   // ─── Message handlers ────────────────────────────────────────────────────
 
   _wireMessages() {
-    this.onMessage('gameStarted', ({ mode, winScore }) => {
+    this.onMessage('gameStarted', ({ mode, winScore, centerCardVersion }) => {
       this._mode     = mode;
       this._winScore = winScore;
+      this._centerCardVersion = centerCardVersion ?? 1;
       this._score    = 0;
       this._frozen   = false;
+      this._waitingResponse = false;
       this._clearFreeze();
       this._updateScore();
     });
 
-    this.onMessage('cardDealt', ({ card }) => {
+    this.onMessage('cardDealt', ({ card, version }) => {
       this._myCard = card;
+      this._myCardVersion = version ?? 1;
+      this._waitingResponse = false;
       this._renderCard();
       this.showScreen('game');
     });
 
-    this.onMessage('tapResult', ({ correct, newCard, symbolIndex, penaltyMs }) => {
+    this.onMessage('centerCardUpdated', ({ version }) => {
+      this._centerCardVersion = version ?? 1;
+    });
+
+    this.onMessage('tapResult', ({ correct, newCard, version, symbolIndex, penaltyMs, code }) => {
+      this._waitingResponse = false;
       if (correct) {
         this.vibrate('light');
         this._myCard = newCard;
+        this._myCardVersion = version ?? 1;
         this._showFeedback(true, symbolIndex);
         setTimeout(() => this._renderCard(), 300);
       } else {
-        this.vibrate('double');
-        this._applyFreeze(penaltyMs ?? FREEZE_MS);
-        this._showFeedback(false, null);
+        if (code === 'tooLate') {
+          // 선점 실패 (이미 이전 카드/이전 라운드인 탭)
+          this.vibrate('light');
+          this._showFeedbackTooLate();
+          this._renderCard(); // lock 해제된 카드를 다시 렌더링하여 interaction 가능케 함
+        } else {
+          // 오답
+          this.vibrate('double');
+          this._applyFreeze(penaltyMs ?? FREEZE_MS);
+          this._showFeedback(false, null);
+        }
       }
     });
 
@@ -108,6 +132,13 @@ export class DobbleMobile extends MobileBaseGame {
 
     this.onMessage('playerListUpdated', ({ players }) => {
       this._renderWaitingPlayers(players);
+    });
+
+    this.onMessage('lobbyState', ({ mode, winScore, players }) => {
+      this._mode = mode;
+      this._winScore = winScore;
+      this._renderWaitingPlayers(players);
+      this.showScreen('waiting');
     });
 
     this.onMessage('rejoinState', (payload) => {
@@ -165,8 +196,17 @@ export class DobbleMobile extends MobileBaseGame {
       cell.dataset.symbolIndex = symbolIdx;
       cell.appendChild(this._makeSymbol(symbolIdx));
       cell.addEventListener('click', () => {
-        if (this._frozen) return;
-        this.sendToHost('tapSymbol', { symbolIndex: symbolIdx });
+        if (this._frozen || this._waitingResponse) return;
+        this._waitingResponse = true;
+
+        // 시각적으로 즉시 탭 반응을 보여줌
+        cell.classList.add('tapped');
+
+        this.sendToHost('tapSymbol', {
+          symbolIndex: symbolIdx,
+          cardVersion: this._myCardVersion,
+          centerCardVersion: this._centerCardVersion
+        });
       });
       container.appendChild(cell);
     }
@@ -216,6 +256,19 @@ export class DobbleMobile extends MobileBaseGame {
       el.textContent = '오답! ❌';
       el.classList.add('wrong');
     }
+
+    clearTimeout(this._feedbackTimer);
+    this._feedbackTimer = setTimeout(() => {
+      el.classList.add('hidden');
+    }, 1500);
+  }
+
+  _showFeedbackTooLate() {
+    const el = document.getElementById('tap-feedback');
+    if (!el) return;
+    el.classList.remove('hidden', 'correct', 'wrong');
+    el.textContent = '이미 늦었습니다! 💨';
+    el.classList.add('wrong');
 
     clearTimeout(this._feedbackTimer);
     this._feedbackTimer = setTimeout(() => {
@@ -282,11 +335,13 @@ export class DobbleMobile extends MobileBaseGame {
 
   // ─── Rejoin state ─────────────────────────────────────────────────────────
 
-  _applyRejoinState({ phase, mode, winScore, myCard, centerCard, score, frozenPlayers }) {
+  _applyRejoinState({ phase, mode, winScore, myCard, myCardVersion, centerCard, centerCardVersion, score, frozenPlayers }) {
     if (phase !== 'playing') return;
     this._mode     = mode;
     this._winScore = winScore;
     this._myCard   = myCard ?? [];
+    this._myCardVersion = myCardVersion ?? 1;
+    this._centerCardVersion = centerCardVersion ?? 1;
     this._score    = score ?? 0;
     this._updateScore();
 

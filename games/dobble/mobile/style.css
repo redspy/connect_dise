@@ -37,8 +37,9 @@ body.db-mobile {
   box-sizing: border-box;
 }
 
-.db-screen.hidden {
-  display: none;
+.db-screen.hidden,
+.hidden {
+  display: none !important;
 }
 
 /* ── 공통 컴포넌트 ───────────────────────────────────────────────── */
@@ -281,6 +282,12 @@ body.db-mobile {
   transform: scale(0.91);
   border-color: var(--db-gold);
   background: var(--db-panel2);
+}
+
+.db-symbol-cell.tapped {
+  opacity: 0.6;
+  border-color: var(--db-gold);
+  pointer-events: none;
 }
 
 .db-my-card.frozen .db-symbol-cell {

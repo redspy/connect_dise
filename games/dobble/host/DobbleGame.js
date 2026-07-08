@@ -4,7 +4,7 @@ import {
   hanjaSymbols, hangulSymbols, hanjaMeanings,
   hiraganaSymbols, katakanaSymbols, kanaHangulFeedback,
 } from '../shared/DobbleEngine.js';
-import { DobbleDemoSimulator } from './DobbleDemoSimulator.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 const FREEZE_MS     = 3000;
 const HIGHLIGHT_MS  = 2000;
@@ -21,13 +21,15 @@ export class DobbleGame extends HostBaseGame {
     this._deck       = [];
     this._centerCard = [];
     this._playerCards = new Map();  // id → number[]
+    this._playerCardVersions = new Map(); // id → number
+    this._centerCardVersion = 1;
     this._mode       = 'image';
     this._winScore   = 10;
     this._roundLock  = false;
     this._gameStarted = false;
     this._readyCount = 0;
     this._flashTimer = null;
-    this._demoSimulator = new DobbleDemoSimulator(this);
+    this._demoSimulator = new DemoSimulator(this);
     this._isDemo = false;
 
     this._wireMessages();
@@ -47,6 +49,11 @@ export class DobbleGame extends HostBaseGame {
     }
     document.querySelector('game-appbar').onRestart = () => this.resetSession();
 
+    const restartBtn = document.getElementById('btn-restart');
+    if (restartBtn) {
+      restartBtn.onclick = () => this.resetSession();
+    }
+
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
@@ -60,6 +67,9 @@ export class DobbleGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+    }
     this._scores.set(player.id, 0);
     this._renderLobby();
     this.updateLobbyReady(this._readyCount);
@@ -70,6 +80,7 @@ export class DobbleGame extends HostBaseGame {
     this._scores.delete(playerId);
     this._frozen.delete(playerId);
     this._playerCards.delete(playerId);
+    this._playerCardVersions.delete(playerId);
     clearTimeout(this._freezeTimers.get(playerId));
     this._freezeTimers.delete(playerId);
     this._renderLobby();
@@ -90,7 +101,9 @@ export class DobbleGame extends HostBaseGame {
         mode:          this._mode,
         winScore:      this._winScore,
         myCard:        myCard ?? [],
+        myCardVersion: this._playerCardVersions.get(player.id) ?? 1,
         centerCard:    this._centerCard,
+        centerCardVersion: this._centerCardVersion,
         score:         this._scores.get(player.id) ?? 0,
         frozenPlayers: [...this._frozen],
         scores:        Object.fromEntries(this._scores),
@@ -106,6 +119,15 @@ export class DobbleGame extends HostBaseGame {
         }))
         .sort((a, b) => b.score - a.score);
       this.sendToPlayer(player.id, 'gameFinished', { rankings });
+    } else {
+      // 로비 상태일 때 lobbyState 전송으로 프리징 가드 적용
+      this.sendToPlayer(player.id, 'lobbyState', {
+        phase: 'lobby',
+        mode: this._mode,
+        winScore: this._winScore,
+        players: this._buildPlayerList(),
+        readyCount: this._readyCount,
+      });
     }
   }
 
@@ -125,6 +147,8 @@ export class DobbleGame extends HostBaseGame {
     this._frozen.clear();
     this._freezeTimers.clear();
     this._playerCards.clear();
+    this._playerCardVersions.clear();
+    this._centerCardVersion = 1;
     this._deck        = [];
     this._centerCard  = [];
     this._gameStarted = false;
@@ -147,8 +171,13 @@ export class DobbleGame extends HostBaseGame {
       this._broadcastPlayerList();
     });
 
-    this.onMessage('tapSymbol', (player, { symbolIndex }) => {
-      this._onTapSymbol(player.id, Number(symbolIndex));
+    this.onMessage('tapSymbol', (player, { symbolIndex, cardVersion, centerCardVersion }) => {
+      this._onTapSymbol(
+        player.id,
+        Number(symbolIndex),
+        cardVersion !== undefined ? Number(cardVersion) : null,
+        centerCardVersion !== undefined ? Number(centerCardVersion) : null
+      );
     });
 
     this.onMessage('requestRematch', () => {
@@ -184,19 +213,30 @@ export class DobbleGame extends HostBaseGame {
   _startGame() {
     this._gameStarted = true;
     this._deck = generateDeck();
+    this._centerCardVersion = 1;
+    this._playerCardVersions.clear();
     for (const id of this.players.keys()) this._scores.set(id, 0);
 
     // 각 플레이어에게 카드 1장 분배
     for (const id of this.players.keys()) {
       this._playerCards.set(id, this._drawFromDeck());
+      this._playerCardVersions.set(id, 1);
     }
     this._centerCard = this._drawFromDeck();
 
-    this.broadcast('gameStarted', { mode: this._mode, winScore: this._winScore });
+    this.broadcast('gameStarted', {
+      mode: this._mode,
+      winScore: this._winScore,
+      centerCardVersion: this._centerCardVersion
+    });
+
     for (const id of this.players.keys()) {
-      this.sendToPlayer(id, 'cardDealt', { card: this._playerCards.get(id) });
+      this.sendToPlayer(id, 'cardDealt', {
+        card: this._playerCards.get(id),
+        version: this._playerCardVersions.get(id) ?? 1
+      });
     }
-    this.broadcast('centerCardUpdated', { card: this._centerCard });
+    this.broadcast('centerCardUpdated', { card: this._centerCard, version: this._centerCardVersion });
 
     this.setPhase('playing');
     this._renderCenterCard();
@@ -208,13 +248,33 @@ export class DobbleGame extends HostBaseGame {
     return this._deck.pop();
   }
 
-  _onTapSymbol(id, symbolIndex) {
+  _onTapSymbol(id, symbolIndex, clientCardVersion, clientCenterCardVersion) {
     if (this._roundLock)      return;
     if (this._frozen.has(id)) return;
     if (!this._gameStarted)   return;
 
+    // 1. 카드 버전 검증 (더블탭 방지)
+    const currentCardVersion = this._playerCardVersions.get(id) ?? 1;
+    if (clientCardVersion !== null && clientCardVersion !== currentCardVersion) {
+      this.sendToPlayer(id, 'tapResult', { correct: false, code: 'tooLate' });
+      return;
+    }
+
+    // 2. 중앙 카드 버전 검증 (선점 실패 피드백)
+    if (clientCenterCardVersion !== null && clientCenterCardVersion !== this._centerCardVersion) {
+      this.sendToPlayer(id, 'tapResult', { correct: false, code: 'tooLate' });
+      return;
+    }
+
+    const playerCard = this._playerCards.get(id);
+    // 3. 내 카드에 탭한 심볼이 실제로 들어있는지 검증
+    if (!playerCard || !playerCard.includes(symbolIndex)) {
+      this._applyFreeze(id);
+      return;
+    }
+
+    // 4. 중앙 카드에 탭한 심볼이 들어있는지 검증
     if (!this._centerCard.includes(symbolIndex)) {
-      // 오답 — 패널티
       this._applyFreeze(id);
       return;
     }
@@ -225,20 +285,26 @@ export class DobbleGame extends HostBaseGame {
     this._scores.set(id, newScore);
 
     // 카드 교환
-    const newCenterCard  = this._playerCards.get(id).slice();
+    const newCenterCard  = playerCard.slice();
     const newPlayerCard  = this._drawFromDeck();
     this._playerCards.set(id, newPlayerCard);
-    this._centerCard = newCenterCard;
 
-    // 정답자에게 전송 (새 카드 포함)
+    const newCardVersion = currentCardVersion + 1;
+    this._playerCardVersions.set(id, newCardVersion);
+
+    this._centerCard = newCenterCard;
+    this._centerCardVersion += 1;
+
+    // 정답자에게 전송 (새 카드와 새 버전 포함)
     this.sendToPlayer(id, 'tapResult', {
       correct:     true,
       newCard:     newPlayerCard,
+      version:     newCardVersion,
       symbolIndex: symbolIndex,
     });
 
     // 전체에 중앙 카드·점수 갱신 전송
-    this.broadcast('centerCardUpdated', { card: this._centerCard });
+    this.broadcast('centerCardUpdated', { card: this._centerCard, version: this._centerCardVersion });
     this.broadcast('stateUpdate', {
       scores:       Object.fromEntries(this._scores),
       frozenPlayers: [...this._frozen],
@@ -264,7 +330,7 @@ export class DobbleGame extends HostBaseGame {
 
   _applyFreeze(id) {
     this._frozen.add(id);
-    this.sendToPlayer(id, 'tapResult', { correct: false, penaltyMs: FREEZE_MS });
+    this.sendToPlayer(id, 'tapResult', { correct: false, code: 'wrong', penaltyMs: FREEZE_MS });
     this.broadcast('stateUpdate', {
       scores:        Object.fromEntries(this._scores),
       frozenPlayers: [...this._frozen],
@@ -282,6 +348,41 @@ export class DobbleGame extends HostBaseGame {
       this._renderScoreCards();
     }, FREEZE_MS);
     this._freezeTimers.set(id, t);
+  }
+
+  // ─── Demo Helper APIs ──────────────────────────────────────────────────────
+
+  attachDemoPlayers(bots) {
+    bots.forEach(b => {
+      this._profiles.set(b.id, { nickname: b.nickname });
+      this.players.set(b.id, { id: b.id, color: b.color });
+      this._scores.set(b.id, 0);
+    });
+  }
+
+  detachDemoPlayers(botIds) {
+    botIds.forEach(id => {
+      this._profiles.delete(id);
+      this.players.delete(id);
+      this._scores.delete(id);
+      this._frozen.delete(id);
+      this._playerCards.delete(id);
+      this._playerCardVersions.delete(id);
+      clearTimeout(this._freezeTimers.get(id));
+      this._freezeTimers.delete(id);
+    });
+  }
+
+  getCurrentCenterCard() {
+    return this._centerCard;
+  }
+
+  getCurrentCenterCardVersion() {
+    return this._centerCardVersion;
+  }
+
+  getPlayerCardVersion(id) {
+    return this._playerCardVersions.get(id) ?? 1;
   }
 
   _endGame() {
