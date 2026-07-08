@@ -33,6 +33,32 @@
     </div>
   </div>
 
+  <!-- 2-2. 망보기 예측 화면 -->
+  <div class="pp-mobile-screen game-screen hidden" data-screen="lookout-predict">
+    <div class="pp-mobile-card" style="padding-bottom: 24px;">
+      <div class="pp-round-badge">라운드 <span id="predict-round-num">1</span></div>
+      <h2 class="pp-m-title">🔭 관전 및 예측</h2>
+      <p class="pp-m-desc">해적들이 보물을 두고 협상 중입니다.<br>이번 라운드에 배신자가 나올지 예측해 보세요!</p>
+      
+      <div class="pp-predict-choices" style="width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+        <button id="btn-predict-trust" class="pp-choice-btn btn-split" style="padding: 12px; margin-bottom: 4px;">
+          <span style="font-size: 1.5rem;">🤝</span>
+          <span style="font-weight: bold; font-size: 1rem; margin-top: 4px;">모두 의리를 지킨다 (Split)</span>
+          <span style="font-size: 0.75rem; opacity: 0.8; font-weight: normal;">모든 짝이 금화를 나눌 것이라 예측</span>
+        </button>
+        <button id="btn-predict-betray" class="pp-choice-btn btn-steal" style="padding: 12px;">
+          <span style="font-size: 1.5rem;">🏴‍☠️</span>
+          <span style="font-weight: bold; font-size: 1rem; margin-top: 4px;">배신자가 나타난다 (Steal)</span>
+          <span style="font-size: 0.75rem; opacity: 0.8; font-weight: normal;">최소 한 명 이상 배신할 것이라 예측</span>
+        </button>
+      </div>
+      
+      <div class="pp-gold-status">
+        맞히면 평화수당 외에 <strong style="color: var(--pp-gold);">+10 🪙</strong> 보너스!
+      </div>
+    </div>
+  </div>
+
   <!-- 3. 역할 공개 화면 -->
   <div class="pp-mobile-screen game-screen hidden" data-screen="role-reveal">
     <div class="pp-mobile-card">
@@ -92,7 +118,7 @@
         <!-- 슬라이드 레일 -->
         <div id="steal-slider-track" class="pp-slider-track">
           <div id="steal-slider-handle" class="pp-slider-handle">☠️</div>
-          <span class="pp-slider-text">위로 슬라이드하여 훔치기 잠금 해제</span>
+          <span class="pp-slider-text">오른쪽으로 슬라이드하여 훔치기 잠금 해제</span>
         </div>
 
         <!-- 실제 훔치기 버튼 (처음엔 비활성화) -->

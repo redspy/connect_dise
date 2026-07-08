@@ -555,3 +555,21 @@ body.pirate-mobile-body {
 .hidden {
   display: none !important;
 }
+
+/* 훔치기 버튼 잠금 해제 활성화 애니메이션 */
+.pp-choice-btn.btn-steal:not(.disabled) {
+  animation: stealButtonGlow 1.5s infinite alternate;
+  border-color: #fca5a5;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes stealButtonGlow {
+  from {
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    transform: scale(1);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+    transform: scale(1.02);
+  }
+}

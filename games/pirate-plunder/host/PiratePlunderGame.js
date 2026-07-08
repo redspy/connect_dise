@@ -18,6 +18,8 @@ export class PiratePlunderGame extends HostBaseGame {
     this.countdownTimer = null;
     this._demoSimulator = new DemoSimulator(this);
     this._isDemoActive = false;
+    this.predictions = {};
+    this.maxRounds = 5;
 
     this._wireMessages();
   }
@@ -69,16 +71,7 @@ export class PiratePlunderGame extends HostBaseGame {
 
     if (btnDemoStop) {
       btnDemoStop.onclick = () => {
-        this._isDemoActive = false;
-        if (demoBanner) demoBanner.classList.add('hidden');
-
-        // QR 블러 원복
-        if (this._lobbyEl) {
-          const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
-          if (qrCard) qrCard.style.filter = '';
-        }
-
-        this._demoSimulator.stop();
+        this._stopDemoAndRestore();
       };
     }
 
@@ -86,7 +79,10 @@ export class PiratePlunderGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
-    if (this._isDemoActive) return;
+    if (this._isDemoActive) {
+      console.log('[Demo] Real player joined. Stopping demo...');
+      this._stopDemoAndRestore();
+    }
     this._updateLobby();
   }
 
@@ -95,13 +91,22 @@ export class PiratePlunderGame extends HostBaseGame {
     this._profiles.delete(playerId);
     this._updateLobby();
 
-    // If game is in progress and player count drops below 3, reset to lobby
+    // 게임 진행 도중 누군가 이탈하면 게임 세션 리셋
     if (this.phase !== 'lobby' && this.phase !== 'loading') {
-      if (this.playerCount < 3) {
-        alert('플레이어 수 부족으로 게임을 계속 진행할 수 없습니다. 로비로 돌아갑니다.');
-        this.resetSession();
-      }
+      alert('플레이어의 연결이 끊어져 게임을 계속 진행할 수 없습니다. 로비로 돌아갑니다.');
+      this.resetSession();
     }
+  }
+
+  _stopDemoAndRestore() {
+    this._isDemoActive = false;
+    const demoBanner = document.getElementById('demo-banner');
+    if (demoBanner) demoBanner.classList.add('hidden');
+    if (this._lobbyEl) {
+      const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
+      if (qrCard) qrCard.style.filter = '';
+    }
+    this._demoSimulator.stop();
   }
 
   onReadyUpdate({ readyCount }) {
@@ -132,11 +137,13 @@ export class PiratePlunderGame extends HostBaseGame {
       };
 
       if (this.phase === 'negotiation') {
-        const hasSubmitted = !!this.decisions[player.id];
+        const hasSubmitted = isLookout ? !!this.predictions[player.id] : !!this.decisions[player.id];
         payload = {
           ...payload,
           hasSubmitted,
-          decision: hasSubmitted ? this.decisions[player.id] : null,
+          hasPredicted: isLookout ? !!this.predictions[player.id] : false,
+          prediction: isLookout ? this.predictions[player.id] : null,
+          decision: !isLookout && hasSubmitted ? this.decisions[player.id] : null,
         };
       } else if (this.phase === 'reveal') {
         payload = {
@@ -167,6 +174,8 @@ export class PiratePlunderGame extends HostBaseGame {
     this.currentPairs = [];
     this.decisions = {};
     this.lastPayouts = {};
+    this.predictions = {};
+    this.maxRounds = 5;
     this._stopTimer();
     this._stopCountdown();
 
@@ -216,6 +225,15 @@ export class PiratePlunderGame extends HostBaseGame {
         this._resolveResult();
       }
     });
+
+    this.onMessage('submitPrediction', (player, { prediction }) => {
+      if (this._isDemoActive) return;
+      if (this.phase !== 'negotiation') return;
+      if (this.currentLookout !== player.id) return;
+
+      this.predictions[player.id] = prediction;
+      console.log(`[Lookout] Prediction submitted by ${player.id}: ${prediction}`);
+    });
   }
 
   // ─── Game Flow Logic ──────────────────────────────────────────────────────
@@ -225,6 +243,10 @@ export class PiratePlunderGame extends HostBaseGame {
   }
 
   _startGame() {
+    // 라운드 수 설정 읽기
+    const selectedRounds = document.querySelector('input[name="pp-max-rounds"]:checked');
+    this.maxRounds = selectedRounds ? parseInt(selectedRounds.value, 10) : 5;
+
     // Initialize scores
     const playerIds = Array.from(this.players.keys());
     playerIds.forEach(id => {
@@ -240,6 +262,7 @@ export class PiratePlunderGame extends HostBaseGame {
     this.currentRound = roundNum;
     this.decisions = {};
     this.lastPayouts = {};
+    this.predictions = {};
     this.setPhase('setup');
 
     // Partner pairing and Lookout assignment
@@ -346,6 +369,9 @@ export class PiratePlunderGame extends HostBaseGame {
     const roundText = document.getElementById('current-round-text');
     if (roundText) roundText.textContent = this.currentRound;
 
+    const maxRoundText = document.getElementById('max-round-text');
+    if (maxRoundText) maxRoundText.textContent = this.maxRounds;
+
     // Render pairs container for status tracking
     this._renderNegotiationPairs();
     this._updateSubmitUI();
@@ -386,10 +412,27 @@ export class PiratePlunderGame extends HostBaseGame {
     // Calculate payouts
     this.lastPayouts = {};
 
-    // Lookout gets flat 20 gold
+    // 짝들의 실제 결정 중 'steal'이 있었는지 확인
+    let hasSteal = false;
+    this.currentPairs.forEach(([p1, p2]) => {
+      const d1 = this.decisions[p1] || 'split';
+      const d2 = this.decisions[p2] || 'split';
+      if (d1 === 'steal' || d2 === 'steal') {
+        hasSteal = true;
+      }
+    });
+
+    // Lookout gets flat 20 gold + prediction bonus
+    let lookoutCorrect = false;
+    let lookoutPayout = 20;
     if (this.currentLookout) {
-      this.lastPayouts[this.currentLookout] = 20;
-      this.scores[this.currentLookout] += 20;
+      const prediction = this.predictions[this.currentLookout];
+      lookoutCorrect = (prediction === 'betray' && hasSteal) || (prediction === 'trust' && !hasSteal);
+      if (prediction) {
+        lookoutPayout = lookoutCorrect ? 30 : 20;
+      }
+      this.lastPayouts[this.currentLookout] = lookoutPayout;
+      this.scores[this.currentLookout] += lookoutPayout;
     }
 
     // Calculate for pairs
@@ -444,16 +487,17 @@ export class PiratePlunderGame extends HostBaseGame {
       this.sendToPlayer(this.currentLookout, 'revealResult', {
         ownDecision: null,
         partnerDecision: null,
-        payout: 20,
+        payout: lookoutPayout,
         partnerPayout: null,
         gold: this.scores[this.currentLookout],
+        predictionSuccess: lookoutCorrect,
       });
     }
 
     // Wait 9 seconds, then go to next round or end game
     this._stopTimer();
     this.timer = setTimeout(() => {
-      if (this.currentRound < 5) {
+      if (this.currentRound < this.maxRounds) {
         this._startRound(this.currentRound + 1);
       } else {
         this._endGame();
@@ -626,14 +670,37 @@ export class PiratePlunderGame extends HostBaseGame {
     if (this.currentLookout) {
       const p = this.getPlayer(this.currentLookout);
       const name = this._profiles.get(this.currentLookout)?.nickname || '익명';
+      const prediction = this.predictions[this.currentLookout];
+      
+      // 짝들 중 배신자가 있었는지 판단
+      let hasSteal = false;
+      this.currentPairs.forEach(([p1, p2]) => {
+        const d1 = this.decisions[p1] || 'split';
+        const d2 = this.decisions[p2] || 'split';
+        if (d1 === 'steal' || d2 === 'steal') {
+          hasSteal = true;
+        }
+      });
+      const isCorrect = prediction ? ((prediction === 'betray' && hasSteal) || (prediction === 'trust' && !hasSteal)) : false;
+      const payout = this.lastPayouts[this.currentLookout] || 20;
+
       const card = document.createElement('div');
       card.className = 'pp-reveal-card split-split'; // Green felt
+      
+      let predictionText = '예측하지 않음';
+      if (prediction === 'trust') {
+        predictionText = '모두 신뢰 🤝 예측';
+      } else if (prediction === 'betray') {
+        predictionText = '배신 발생 🏴‍☠️ 예측';
+      }
+
       card.innerHTML = `
         <div style="font-weight: bold; color: var(--pp-gold); font-size: 1.1rem;">망보기 정산</div>
         <div class="pp-player-color" style="background: ${p?.color || '#888'}; margin-top: 10px;"></div>
         <div class="pp-player-name" style="margin-top: 6px;">${name}</div>
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--pp-gold); margin: 15px 0;">+20 💰</div>
-        <div class="pp-result-label">안전한 감시자 👁️</div>
+        <div style="font-size: 1.5rem; font-weight: 800; color: var(--pp-gold); margin: 12px 0;">+${payout} 💰</div>
+        <div class="pp-choice-indicator split" style="margin-bottom: 8px;">${predictionText}</div>
+        <div class="pp-result-label" style="font-size: 0.95rem; ${prediction ? (isCorrect ? 'color: var(--pp-split-green); border-color: var(--pp-split-green);' : 'color: var(--pp-text-muted); border-color: rgba(255,255,255,0.1);') : 'color: var(--pp-text-muted); border-color: rgba(255,255,255,0.1);'}">${prediction ? (isCorrect ? '예측 성공 🎯 (+10)' : '예측 실패 👁️') : '수동 대기 👁️'}</div>
       `;
       container.appendChild(card);
     }

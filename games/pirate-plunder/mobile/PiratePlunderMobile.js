@@ -103,6 +103,24 @@ export class PiratePlunderMobile extends MobileBaseGame {
         this.vibrate([100, 50, 100]);
       };
     }
+
+    // Predict buttons
+    const btnPredictTrust = document.getElementById('btn-predict-trust');
+    const btnPredictBetray = document.getElementById('btn-predict-betray');
+    if (btnPredictTrust) {
+      btnPredictTrust.onclick = () => {
+        if (this.role !== 'lookout') return;
+        this._submitPrediction('trust');
+        this.vibrate(50);
+      };
+    }
+    if (btnPredictBetray) {
+      btnPredictBetray.onclick = () => {
+        if (this.role !== 'lookout') return;
+        this._submitPrediction('betray');
+        this.vibrate(50);
+      };
+    }
   }
 
   // ─── Swipe Slider for Steal ───────────────────────────────────────────────
@@ -210,6 +228,13 @@ export class PiratePlunderMobile extends MobileBaseGame {
     document.getElementById('waiting-desc').textContent = `${decision === 'split' ? '나누기 🤝' : '훔치기 🏴‍☠️'} 선택을 보냈습니다. 파트너의 선택을 대기 중입니다.`;
   }
 
+  _submitPrediction(prediction) {
+    this.sendToHost('submitPrediction', { prediction });
+    this.showScreen('waiting');
+    document.getElementById('waiting-title').textContent = '예측 완료!';
+    document.getElementById('waiting-desc').textContent = `[${prediction === 'trust' ? '모두 신뢰 🤝' : '배신 발생 🏴‍☠️'}] 예측을 보냈습니다. TV 화면으로 정산 결과를 감시하세요.`;
+  }
+
   // ─── Socket Message Handlers ──────────────────────────────────────────────
 
   _wireMessages() {
@@ -227,6 +252,8 @@ export class PiratePlunderMobile extends MobileBaseGame {
       document.getElementById('reveal-current-gold').textContent = data.gold;
       document.getElementById('neg-round-num').textContent = data.round;
       document.getElementById('neg-current-gold').textContent = data.gold;
+      const predictRound = document.getElementById('predict-round-num');
+      if (predictRound) predictRound.textContent = data.round;
 
       const roleEmoji = document.getElementById('role-emoji');
       const roleTitle = document.getElementById('role-title');
@@ -267,9 +294,7 @@ export class PiratePlunderMobile extends MobileBaseGame {
     this.onMessage('phaseChange', (data) => {
       if (data.phase === 'negotiation') {
         if (this.role === 'lookout') {
-          this.showScreen('waiting');
-          document.getElementById('waiting-title').textContent = '협상 감시 중...';
-          document.getElementById('waiting-desc').textContent = '다른 해적들이 보물을 두고 협상하고 있습니다. 망을 보며 기다리세요.';
+          this.showScreen('lookout-predict');
         } else {
           // Reset slider for negotiation phase
           this._resetSlider();
@@ -383,9 +408,13 @@ export class PiratePlunderMobile extends MobileBaseGame {
         this.showScreen('role-reveal');
       } else if (data.phase === 'negotiation') {
         if (this.role === 'lookout') {
-          this.showScreen('waiting');
-          document.getElementById('waiting-title').textContent = '협상 감시 중...';
-          document.getElementById('waiting-desc').textContent = '다른 해적들이 보물을 두고 협상하고 있습니다. 망을 보며 기다리세요.';
+          if (data.hasPredicted) {
+            this.showScreen('waiting');
+            document.getElementById('waiting-title').textContent = '예측 완료!';
+            document.getElementById('waiting-desc').textContent = `[${data.prediction === 'trust' ? '모두 신뢰 🤝' : '배신 발생 🏴‍☠️'}] 예측을 보냈습니다. TV 화면으로 정산 결과를 감시하세요.`;
+          } else {
+            this.showScreen('lookout-predict');
+          }
         } else {
           if (data.hasSubmitted) {
             this.showScreen('waiting');

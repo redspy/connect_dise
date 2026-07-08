@@ -352,7 +352,7 @@
   0% { transform: scale(1); }
   30% { transform: scale(1.2) rotate(15deg); }
   60% { transform: scale(0.9) rotate(-15deg); }
-  100% { transform: scale(0.6) opacity: 0.3; }
+  100% { transform: scale(0.6); opacity: 0.3; }
 }
 
 .pp-result-label {
@@ -520,4 +520,49 @@
 
 .hidden {
   display: none !important;
+}
+
+/* 결과 카드 비주얼 강화 */
+.pp-reveal-card.split-split {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.2) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(0, 0, 0, 0.6)) !important;
+}
+.pp-reveal-card.steal-steal {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.2) !important;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(0, 0, 0, 0.6)) !important;
+  animation: shakeRevealCard 0.5s ease-in-out !important;
+}
+.pp-reveal-card.steal-split,
+.pp-reveal-card.split-steal {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 12px 30px rgba(245, 158, 11, 0.2) !important;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(0, 0, 0, 0.6)) !important;
+}
+
+@keyframes shakeRevealCard {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px) rotate(-1deg); }
+  40%, 80% { transform: translateX(6px) rotate(1deg); }
+}
+
+/* 1등 랭크 행 비주얼 강화 */
+.pp-rank-row.rank-1 {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.25), rgba(0, 0, 0, 0.6)) !important;
+  border-color: rgba(245, 158, 11, 0.6) !important;
+  transform: scale(1.03) !important;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3) !important;
+  animation: rankOnePulse 2s infinite alternate !important;
+}
+
+@keyframes rankOnePulse {
+  from {
+    transform: scale(1.03);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+  }
+  to {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(245, 158, 11, 0.4);
+  }
 }
