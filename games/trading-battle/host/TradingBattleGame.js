@@ -1,6 +1,6 @@
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { generateStockData, randomStockName } from './stockData.js';
-import { TradingDemoSimulator } from './TradingDemoSimulator.js';
+import { DemoSimulator } from './DemoSimulator.js';
 
 const INITIAL_BALANCE = 100000000;
 
@@ -60,8 +60,11 @@ export class TradingBattleGame extends HostBaseGame {
 
     // 가격 변동률 추적
     this._priceHistory = [];
+    this._lastTopPlayerId = null;
+    this._analysisTimer = null;
+    this._countdownTimer = null;
 
-    this._demoSimulator = new TradingDemoSimulator(this);
+    this._demoSimulator = new DemoSimulator(this);
     this._wireMessages();
   }
 
@@ -81,7 +84,7 @@ export class TradingBattleGame extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
-        if (!this._isDemo) {
+        if (!this._demoSimulator.isDemo) {
           this._demoSimulator.startDemo();
         }
       };
@@ -136,7 +139,7 @@ export class TradingBattleGame extends HostBaseGame {
     const board = document.getElementById('game-board');
     if (board) board.classList.toggle('hidden', to !== 'trading');
 
-    if (this._isDemo) {
+    if (this._demoSimulator && this._demoSimulator.isDemo) {
       this._demoSimulator.onPhaseChange(to);
     }
   }
@@ -150,6 +153,8 @@ export class TradingBattleGame extends HostBaseGame {
     this._gameStarted = false;
     this._revealedCount = 0;
     this._playerMarkers = [];
+    this._priceHistory = [];
+    this._lastTopPlayerId = null;
 
     for (const p of this.players.values()) this._initPlayerPosition(p.id);
     this.renderLobbyPlayers(this._getLobbyProfiles());
@@ -384,7 +389,7 @@ export class TradingBattleGame extends HostBaseGame {
       this._updatePriceDisplay(historyCandles[historyCandles.length - 1]?.close ?? 0);
 
       // 10초 차트 분석 후 카운트다운
-      setTimeout(() => {
+      this._analysisTimer = setTimeout(() => {
         this._showCountdown(3, () => {
           this._startTimers();
         });
@@ -449,6 +454,10 @@ export class TradingBattleGame extends HostBaseGame {
       candle,
       players: this._buildPlayerList(),
     });
+
+    if (this._demoSimulator && this._demoSimulator.isDemo) {
+      this._demoSimulator.onCandleRevealed(candle);
+    }
   }
 
   _settleOrders(candle) {
@@ -493,6 +502,8 @@ export class TradingBattleGame extends HostBaseGame {
   _stopTimers() {
     if (this._gameTimer) { clearInterval(this._gameTimer); this._gameTimer = null; }
     if (this._candleTimer) { clearInterval(this._candleTimer); this._candleTimer = null; }
+    if (this._analysisTimer) { clearTimeout(this._analysisTimer); this._analysisTimer = null; }
+    if (this._countdownTimer) { clearTimeout(this._countdownTimer); this._countdownTimer = null; }
   }
 
   // ─── Order handling ──────────────────────────────────────────────────────
@@ -698,9 +709,13 @@ export class TradingBattleGame extends HostBaseGame {
     this.broadcast('countdown', { count });
 
     if (count > 0) {
-      setTimeout(() => this._showCountdown(count - 1, onComplete), 1000);
+      this._countdownTimer = setTimeout(() => this._showCountdown(count - 1, onComplete), 1000);
     } else {
       el.classList.add('hidden');
+      if (this._countdownTimer) {
+        clearTimeout(this._countdownTimer);
+        this._countdownTimer = null;
+      }
       onComplete();
     }
   }
@@ -711,6 +726,16 @@ export class TradingBattleGame extends HostBaseGame {
     const m = Math.floor(this._timeLeft / 60000);
     const s = Math.floor((this._timeLeft % 60000) / 1000);
     el.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+    // 30초 이하일 때 라스트 스퍼트 연출
+    const timerWrap = el.closest('.timer-wrap');
+    if (timerWrap) {
+      if (this._timeLeft <= 30000 && this._timeLeft > 0) {
+        timerWrap.classList.add('last-spurt');
+      } else {
+        timerWrap.classList.remove('last-spurt');
+      }
+    }
   }
 
   _updateTimerProgress() {
@@ -762,6 +787,17 @@ export class TradingBattleGame extends HostBaseGame {
       const pnl = p.pnlPct;
       const pnlClass = pnl >= 0 ? 'positive' : 'negative';
       const isFirst = i === 0;
+
+      // 상태 태그 계산 (대중성/드라마 강화)
+      let statusTag = '';
+      if (p.position === 'long2x' || p.position === 'short2x') {
+        statusTag = '<span class="status-tag high-risk">고위험 2배 ⚡</span>';
+      } else if (p.equity < INITIAL_BALANCE * 0.5) {
+        statusTag = '<span class="status-tag danger">청산 위기 ⚠️</span>';
+      } else if (p.equity > INITIAL_BALANCE * 1.5) {
+        statusTag = '<span class="status-tag fire">수익 폭발 🔥</span>';
+      }
+
       return `
         <div class="player-panel ${isFirst ? 'first-place' : ''}" style="--player-color:${p.color}">
           <div class="player-left">
@@ -773,7 +809,7 @@ export class TradingBattleGame extends HostBaseGame {
             </div>
           </div>
           <div class="player-middle">
-            <div class="player-name">${p.nickname}</div>
+            <div class="player-name">${p.nickname} ${statusTag}</div>
             <div class="player-balance">₩${p.equity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
           </div>
           <div class="player-right">
@@ -795,6 +831,14 @@ export class TradingBattleGame extends HostBaseGame {
     if (el) {
       const pnl = first.pnlPct;
       el.textContent = `👑 ${first.nickname}  ${pnl >= 0 ? '+' : ''}${pnl.toFixed(1)}%`;
+
+      // 선두가 바뀌었으면 애니메이션 효과 부여
+      if (this._lastTopPlayerId !== first.id) {
+        this._lastTopPlayerId = first.id;
+        el.classList.remove('leader-change');
+        void el.offsetWidth; // reflow trigger
+        el.classList.add('leader-change');
+      }
     }
   }
 
@@ -816,6 +860,7 @@ export class TradingBattleGame extends HostBaseGame {
     const pos = this._positions.get(playerId);
     const currentPrice = this._getCurrentPrice();
     const equity = pos ? this._calcEquity(pos, currentPrice) : INITIAL_BALANCE;
+    const rankings = this.phase === 'game_result' ? this._buildRankings() : null;
     this.sendToPlayer(playerId, 'rejoinState', {
       phase: this.phase,
       stockName: this._stockName,
@@ -824,6 +869,7 @@ export class TradingBattleGame extends HostBaseGame {
       myPosition: pos ?? { type: 'cash', balance: INITIAL_BALANCE, entryBalance: INITIAL_BALANCE },
       equity,
       timeLeft: this._timeLeft,
+      rankings,
     });
   }
 }

@@ -34,6 +34,7 @@ export class TradingMobile extends MobileBaseGame {
     this._wireUI();
     this._wireMessages();
     this._renderAvatarGrid();
+    this._analysisCountdownTimer = null;
   }
 
   // ─── MobileBaseGame hooks ────────────────────────────────────────────────
@@ -53,6 +54,11 @@ export class TradingMobile extends MobileBaseGame {
     this._gamePhase = 'lobby';
     this._clearCountdown();
     this._stopCandleTimer();
+
+    if (this._analysisCountdownTimer) {
+      clearTimeout(this._analysisCountdownTimer);
+      this._analysisCountdownTimer = null;
+    }
 
     if (this._nickname) {
       this._sendProfile();
@@ -120,7 +126,16 @@ export class TradingMobile extends MobileBaseGame {
       }
       this._pendingOrder = orderType; // 다음 캔들까지 잠금
       this._renderTradingScreen();
-      this._showSettledOverlay();
+      this._showSettledOverlay(orderType);
+
+      // 모바일 햅틱 피드백 (진동)
+      if (navigator.vibrate) {
+        try {
+          navigator.vibrate(50);
+        } catch (e) {
+          // ignore
+        }
+      }
     });
 
     this.onMessage('playerOrderPending', ({ players }) => {
@@ -362,8 +377,21 @@ export class TradingMobile extends MobileBaseGame {
     }
   }
 
-  _showSettledOverlay() {
-    document.getElementById('settled-overlay')?.classList.remove('hidden');
+  _showSettledOverlay(orderType) {
+    const overlay = document.getElementById('settled-overlay');
+    if (!overlay) return;
+
+    // 주문 형태에 따른 색상 구분 (롱=초록, 숏=빨강, 2배=금색)
+    overlay.className = 'settled-overlay'; // 기본 상태로 초기화
+    if (orderType === 'long') {
+      overlay.classList.add('settled-long');
+    } else if (orderType === 'short') {
+      overlay.classList.add('settled-short');
+    } else if (orderType === 'long2x' || orderType === 'short2x') {
+      overlay.classList.add('settled-leverage');
+    }
+
+    overlay.classList.remove('hidden');
   }
 
   _hideSettledOverlay() {
@@ -437,6 +465,7 @@ export class TradingMobile extends MobileBaseGame {
     myPosition,
     equity,
     timeLeft,
+    rankings,
   }) {
     if (settings) this._leverageEnabled = settings.leverageEnabled ?? true;
     if (players)
@@ -451,7 +480,11 @@ export class TradingMobile extends MobileBaseGame {
       this.showScreen('trading');
       this._startCandleTimer();
     } else if (phase === 'game_result') {
-      // 서버에서 rankings를 다시 보내줄 것이므로 대기
+      if (rankings) {
+        this._showGameResult(rankings);
+      } else {
+        this.showScreen('game_result');
+      }
     } else {
       this.showScreen('waiting');
     }
@@ -474,11 +507,15 @@ export class TradingMobile extends MobileBaseGame {
     el.textContent = count;
 
     if (count > 0) {
-      setTimeout(
+      this._analysisCountdownTimer = setTimeout(
         () => this._showAnalysisCountdown(count - 1, onComplete),
         1000,
       );
     } else {
+      if (this._analysisCountdownTimer) {
+        clearTimeout(this._analysisCountdownTimer);
+        this._analysisCountdownTimer = null;
+      }
       onComplete();
     }
   }

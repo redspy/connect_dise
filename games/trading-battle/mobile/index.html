@@ -65,13 +65,16 @@
     <!-- ── 차트 분석 화면 ── -->
     <div class="tb-screen hidden" data-screen="chart_analysis">
       <div class="chart-analysis-wrap">
-        <div class="chart-analysis-title">📈 차트 분석</div>
-        <div class="chart-analysis-hint">
-          게임이 곧 시작됩니다!<br />차트를 미리 분석하세요
+        <div class="chart-analysis-title">📈 차트 분석 및 가이드</div>
+        <div class="chart-analysis-card">
+          <div class="guide-item">1️⃣ 공용 화면의 <b>실시간 차트</b>를 보세요.</div>
+          <div class="guide-item">2️⃣ 오를 것 같으면 <b>상승(롱)</b>, 내릴 것 같으면 <b>하락(숏)</b>!</div>
+          <div class="guide-item">3️⃣ 기회가 오면 <b>2배 레버리지</b>로 순위를 역전하세요!</div>
+          <div class="guide-item">4️⃣ 애매할 땐 <b>포지션 정리</b>로 자산을 지킵니다.</div>
         </div>
         <div class="chart-analysis-timer">
           <div id="analysis-countdown" class="analysis-countdown">10</div>
-          <div class="analysis-timer-label">초</div>
+          <div class="analysis-timer-label">초 후 거래 시작</div>
         </div>
       </div>
     </div>
@@ -128,25 +131,25 @@
       <div class="order-area">
         <!-- 현금 상태: 4가지 주문 버튼 -->
         <div id="order-grid" class="order-grid">
-          <button id="btn-long2x" class="order-btn long2x">
-            <span class="order-btn-icon">🚀</span>
-            <span class="order-btn-name">2배 롱</span>
-            <span class="order-btn-sub">상승×2</span>
-          </button>
-          <button id="btn-short2x" class="order-btn short2x">
-            <span class="order-btn-icon">💥</span>
-            <span class="order-btn-name">2배 숏</span>
-            <span class="order-btn-sub">하락×2</span>
-          </button>
           <button id="btn-long" class="order-btn long">
             <span class="order-btn-icon">📈</span>
-            <span class="order-btn-name">롱</span>
-            <span class="order-btn-sub">상승 베팅</span>
+            <span class="order-btn-name">상승 (롱)</span>
+            <span class="order-btn-sub">상승 시 수익</span>
           </button>
           <button id="btn-short" class="order-btn short">
             <span class="order-btn-icon">📉</span>
-            <span class="order-btn-name">숏</span>
-            <span class="order-btn-sub">하락 베팅</span>
+            <span class="order-btn-name">하락 (숏)</span>
+            <span class="order-btn-sub">하락 시 수익</span>
+          </button>
+          <button id="btn-long2x" class="order-btn long2x">
+            <span class="order-btn-icon">🚀</span>
+            <span class="order-btn-name">2배 상승 (2x롱)</span>
+            <span class="order-btn-sub">수익/손실 2배</span>
+          </button>
+          <button id="btn-short2x" class="order-btn short2x">
+            <span class="order-btn-icon">💥</span>
+            <span class="order-btn-name">2배 하락 (2x숏)</span>
+            <span class="order-btn-sub">수익/손실 2배</span>
           </button>
         </div>
 
@@ -154,8 +157,8 @@
         <div id="sell-btn-wrap" class="sell-btn-wrap hidden">
           <button id="btn-cash" class="order-btn-sell">
             <span class="order-btn-icon">💰</span>
-            <span class="order-btn-name">매도</span>
-            <span class="order-btn-sub">현금 전환</span>
+            <span class="order-btn-name">포지션 정리 (현금)</span>
+            <span class="order-btn-sub">자산 보호</span>
           </button>
         </div>
       </div>

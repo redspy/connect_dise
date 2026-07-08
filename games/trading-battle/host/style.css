@@ -26,6 +26,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 10;
 }
 
 /* ── 게임 보드 ── */
@@ -38,6 +40,10 @@
 
 .game-board.hidden {
   display: none;
+}
+
+.hidden {
+  display: none !important;
 }
 
 /* 트레이딩 페이즈에서 게임보드 표시 */
@@ -612,4 +618,56 @@ body:not(:has(.tb-overlay:not(.hidden))) .game-board {
     width: 95vw !important;
     padding: 24px 16px !important;
   }
+}
+
+/* ── 애니메이션 및 태그 추가 ── */
+.leader-change {
+  animation: leaderPulse 0.8s ease-out;
+}
+
+@keyframes leaderPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(195, 245, 255, 0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(195, 245, 255, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(195, 245, 255, 0); }
+}
+
+.last-spurt .timer-value {
+  color: #ff4d4d !important;
+  text-shadow: 0 0 10px rgba(255, 77, 77, 0.6);
+  animation: pulseRed 1.0s infinite alternate;
+}
+
+@keyframes pulseRed {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.06); }
+}
+
+.status-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  text-transform: uppercase;
+  display: inline-block;
+  vertical-align: middle;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.status-tag.high-risk {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #F59E0B;
+}
+
+.status-tag.danger {
+  background: rgba(180, 0, 43, 0.15);
+  border: 1px solid rgba(180, 0, 43, 0.4);
+  color: #ff4d4d;
+}
+
+.status-tag.fire {
+  background: rgba(64, 229, 108, 0.15);
+  border: 1px solid rgba(64, 229, 108, 0.4);
+  color: #40e56c;
 }

@@ -33,6 +33,10 @@
 
 .tb-screen.hidden { display: none !important; }
 
+.hidden {
+  display: none !important;
+}
+
 /* ── 설정 화면 ── */
 .setup-wrap {
   flex: 1;
@@ -593,3 +597,56 @@
 
 .position-pnl-pct.negative,
 .position-pnl-amount.negative { color: var(--negative); }
+
+/* ── 가이드 카드 및 주문별 상태 오버레이 ── */
+.chart-analysis-card {
+  background: var(--surface-low);
+  border: 1px solid rgba(0, 218, 243, 0.25);
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 320px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.guide-item {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--on-surface);
+}
+
+.guide-item b {
+  color: var(--primary);
+}
+
+/* 주문 종류별 오버레이 */
+.settled-overlay.settled-long .settled-icon {
+  background: rgba(2, 201, 83, 0.12);
+  border-color: #02c953;
+  color: #02c953;
+}
+.settled-overlay.settled-long .settled-text {
+  color: #02c953;
+}
+
+.settled-overlay.settled-short .settled-icon {
+  background: rgba(255, 77, 77, 0.12);
+  border-color: #ff4d4d;
+  color: #ff4d4d;
+}
+.settled-overlay.settled-short .settled-text {
+  color: #ff4d4d;
+}
+
+.settled-overlay.settled-leverage .settled-icon {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: #F59E0B;
+  color: #F59E0B;
+}
+.settled-overlay.settled-leverage .settled-text {
+  color: #F59E0B;
+}
