@@ -315,3 +315,50 @@ body.mobile-controller {
   height: 40px;
   background: var(--border-color);
 }
+
+/* 실시간 관전 및 활성 펄스 애니메이션 */
+@keyframes spectatePulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+.spectate-pulse {
+  display: inline-block;
+  animation: spectatePulse 1.8s infinite ease-in-out;
+  color: #3498db;
+  font-weight: bold;
+}
+
+@keyframes activePulse {
+  0% { text-shadow: 0 0 5px rgba(233, 69, 96, 0.4); }
+  50% { text-shadow: 0 0 15px rgba(233, 69, 96, 0.8); }
+  100% { text-shadow: 0 0 5px rgba(233, 69, 96, 0.4); }
+}
+.active-pulse {
+  animation: activePulse 1.5s infinite ease-in-out;
+  color: var(--primary-color);
+  font-weight: 800;
+}
+
+/* 결과 공개 배경 플래시 애니메이션 */
+@keyframes flashGreen {
+  0% { background-color: rgba(46, 204, 113, 0.35); }
+  100% { background-color: var(--bg-color); }
+}
+@keyframes flashBlue {
+  0% { background-color: rgba(52, 152, 219, 0.35); }
+  100% { background-color: var(--bg-color); }
+}
+@keyframes flashRed {
+  0% { background-color: rgba(233, 69, 96, 0.35); }
+  100% { background-color: var(--bg-color); }
+}
+.flash-green {
+  animation: flashGreen 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+.flash-blue {
+  animation: flashBlue 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+.flash-red {
+  animation: flashRed 1.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}

@@ -16,12 +16,20 @@
   <div class="hl-overlay" data-phase="lobby">
     <game-lobby title="🐄 허드 로직 (Herd Logic)" min-players="2">
       <div class="hl-intro">
+        <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid var(--neon-gold); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+          <span style="font-weight: bold; color: var(--neon-gold); font-size: 1.1rem;">👥 추천 인원: 3 ~ 6명</span>
+        </div>
         <h3>대다수의 평범한 생각에 정답이 있습니다!</h3>
         <p>어떤 질문이 주어지면, 남들이 가장 많이 적을 것 같은 답변을 적어야 합니다.</p>
         <p>다수파에 동조하면 점수를 얻지만, 혼자만 튀는 엉뚱한 답을 적은 플레이어는 <strong>핑크 카우(Pink Cow) 🐄</strong> 토큰을 가져가며 점수를 빼앗깁니다!</p>
         <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 15px; width: 100%;">🤖 데모 플레이 실행</button>
       </div>
     </game-lobby>
+  </div>
+
+  <!-- 데모 진행 알림 배너 -->
+  <div id="demo-indicator-banner" class="demo-banner hidden">
+    🤖 데모 플레이 시뮬레이션 구동 중... <span id="demo-step-time"></span>
   </div>
 
   <!-- 2. 게임 본 화면 -->
@@ -33,7 +41,7 @@
       <div class="hl-hud">
         <div class="hl-hud-item">
           <span class="hud-label">라운드</span>
-          <span id="hud-round" class="hud-val">1 / 3</span>
+          <span id="hud-round" class="hud-val">1 / 4</span>
         </div>
         <div class="hl-hud-item">
           <span class="hud-label">단계</span>
@@ -49,9 +57,20 @@
         </div>
       </div>
 
+      <!-- 카운트다운 오버레이 -->
+      <div id="countdown-overlay" class="countdown-overlay hidden">
+        <span id="countdown-number">3</span>
+      </div>
+
       <!-- 하단: 플레이어 카드 그리드 (답변 플립 / 상태 표시) -->
       <div class="players-cards-grid" id="players-grid">
         <!-- 동적으로 플레이어 카드가 렌더링됨 -->
+      </div>
+
+      <!-- 규칙 설명 가이드 힌트 -->
+      <div class="rules-hint-banner">
+        📢 <strong>동조 규칙:</strong> 가장 많이 겹친 답변(다수파)은 <strong>+1점</strong> (동률 다수파 모두 인정) | 
+        🐄 <strong>핑크 카우:</strong> 혼자만 튀는 답변을 낸 유일한 1명은 핑크 카우를 받고, 보유 중에는 <strong>득점 차단!</strong>
       </div>
 
       <!-- 콘트롤 패널 (호스트 전용 조작 버튼) -->
@@ -67,6 +86,9 @@
     <div class="hl-result-panel">
       <h2 class="hl-result-title">🏆 성적 발표</h2>
       <div id="ranking-list" class="ranking-container"></div>
+      <div class="rules-hint-banner" style="margin-top: 0; margin-bottom: 20px;">
+        🐄 핑크 카우를 마지막에 쥐고 있던 플레이어는 최종 패널티로 순위 최하위로 밀려납니다.
+      </div>
       <button id="btn-restart-result" class="hl-btn-restart">로비로 돌아가기</button>
     </div>
   </div>

@@ -57,12 +57,28 @@ export class PanicCockpitGame extends HostBaseGame {
     if (this._gameActive) {
       console.log('[Panic Cockpit] Player left, resetting game.');
       this.resetSession();
+    } else {
+      this.renderLobbyPlayers(this._playerNicknames);
     }
   }
 
   onPlayerRejoin(player) {
-    console.log(`[Panic Cockpit] Player ${player.id} rejoined.`);
-    if (!this._gameActive) return;
+    console.log(`[Panic Cockpit] Player ${player.id} rejoined. GameActive: ${this._gameActive}, Phase: ${this.phase}`);
+    
+    // 로비 재연결 프리징 가드
+    if (!this._gameActive) {
+      if (this.phase === 'lobby') {
+        this.sendToPlayer(player.id, 'lobbyState', {
+          players: [...this.players.values()].map(p => ({ id: p.id, nickname: p.nickname, color: p.color }))
+        });
+      } else if (this.phase === 'result') {
+        this.sendToPlayer(player.id, 'resultState', {
+          success: this._lastSuccess,
+          message: this._lastMessage
+        });
+      }
+      return;
+    }
 
     // 모바일 위젯 상태 재발송
     const widgets = this._playerWidgets.get(player.id);
@@ -100,18 +116,30 @@ export class PanicCockpitGame extends HostBaseGame {
     this.updateLobbyReady(readyCount);
   }
 
-  onReset() {
+  cleanupRuntime() {
     this._demoSimulator.stopDemo();
     this._gameActive = false;
 
-    if (this._gameTimer) clearInterval(this._gameTimer);
-    if (this._flightTimer) clearInterval(this._flightTimer);
+    if (this._gameTimer) {
+      clearInterval(this._gameTimer);
+      this._gameTimer = null;
+    }
+    if (this._flightTimer) {
+      clearInterval(this._flightTimer);
+      this._flightTimer = null;
+    }
 
-    this._hullHealth = 100;
-    this._distance = 0;
     this._commands = [];
     this._commandIdCounter = 0;
     this._playerWidgets.clear();
+  }
+
+  onReset() {
+    this.cleanupRuntime();
+
+    this._hullHealth = 100;
+    this._distance = 0;
+    this._sirenPlaying = false;
 
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
@@ -222,9 +250,12 @@ export class PanicCockpitGame extends HostBaseGame {
       // 모바일 실패 알림
       if (!this._isDemo) {
         this.sendToPlayer(cmd.shownToPlayerId, 'resolveInstruction', { cmdId: cmd.id, failed: true });
+        this.sendToPlayer(cmd.targetPlayerId, 'actionFeedback', { key: cmd.widgetKey, success: false });
       }
 
       this._playDamageEffect();
+      this._playExplosionSound();
+      this._showFeedbackText('HULL COMPROMISED -15', 'fail');
     });
 
     // 만료 제외
@@ -351,10 +382,15 @@ export class PanicCockpitGame extends HostBaseGame {
       healthFill.className = 'health-bar-fill danger';
     }
 
-    // 비상 플래시 노출
+    // 비상 플래시 노출 및 사이렌 실행
     const flash = document.querySelector('.warning-flash');
     if (flash) {
-      flash.style.display = this._hullHealth < 30 ? 'block' : 'none';
+      if (this._hullHealth < 30) {
+        flash.style.display = 'block';
+        this._playSiren();
+      } else {
+        flash.style.display = 'none';
+      }
     }
   }
 
@@ -369,6 +405,8 @@ export class PanicCockpitGame extends HostBaseGame {
 
   _endGame(success, message) {
     this._gameActive = false;
+    this._lastSuccess = success;
+    this._lastMessage = message;
 
     if (this._gameTimer) clearInterval(this._gameTimer);
     if (this._flightTimer) clearInterval(this._flightTimer);
@@ -391,7 +429,170 @@ export class PanicCockpitGame extends HostBaseGame {
     this.setPhase('result');
   }
 
+  // ─── 오디오 및 비주얼 연출 ──────────────────────────────────────────────
+
+  _playSiren() {
+    if (this._sirenPlaying) return;
+    this._sirenPlaying = true;
+    
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const playOscillator = () => {
+      if (!this._gameActive || this._hullHealth >= 30) {
+        this._sirenPlaying = false;
+        audioCtx.close();
+        return;
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+      
+      setTimeout(playOscillator, 800);
+    };
+    playOscillator();
+  }
+
+  _playExplosionSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+      setTimeout(() => audioCtx.close(), 600);
+    } catch (e) {
+      console.warn('Audio play failed', e);
+    }
+  }
+
+  _playSuccessSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.2);
+      setTimeout(() => audioCtx.close(), 300);
+    } catch (e) {
+      console.warn('Audio play failed', e);
+    }
+  }
+
+  _showFeedbackText(text, type) {
+    const container = document.getElementById('cockpit-container');
+    if (!container) return;
+    const el = document.createElement('div');
+    el.className = `floating-feedback ${type}`;
+    el.textContent = text;
+    el.style.position = 'absolute';
+    el.style.left = '50%';
+    el.style.top = '40%';
+    el.style.transform = 'translate(-50%, -50%)';
+    el.style.fontSize = '2rem';
+    el.style.fontWeight = 'bold';
+    el.style.zIndex = '100';
+    el.style.pointerEvents = 'none';
+    el.style.animation = 'floatUp 0.8s ease-out forwards';
+    if (type === 'success') {
+      el.style.color = 'var(--neon-green)';
+      el.style.textShadow = '0 0 10px rgba(57, 255, 20, 0.6)';
+    } else {
+      el.style.color = 'var(--neon-red)';
+      el.style.textShadow = '0 0 10px rgba(255, 60, 60, 0.6)';
+    }
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+  }
+
   // ─── 메시지 처리 및 조작 피드백 ──────────────────────────────────────────
+
+  handleControlAction(playerId, { key, value }) {
+    if (!this._gameActive) return;
+
+    const widgets = this._playerWidgets.get(playerId);
+    if (!widgets || !widgets[key]) return;
+
+    // 로컬 위젯 상태 업데이트
+    widgets[key].value = value;
+
+    // 매칭 명령어 감지
+    let matchedIndex = -1;
+    for (let i = 0; i < this._commands.length; i++) {
+      const cmd = this._commands[i];
+      if (cmd.targetPlayerId === playerId && cmd.widgetKey === key) {
+        if (cmd.targetValue === 'click' && key === 'btnAction') {
+          matchedIndex = i;
+          break;
+        } else if (cmd.targetValue === value) {
+          matchedIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (matchedIndex !== -1) {
+      const cmd = this._commands[matchedIndex];
+      
+      // 명령어 풀에서 소거
+      this._commands.splice(matchedIndex, 1);
+
+      // 모바일에 성공 신호 발송 (햅틱 트리거용)
+      if (!this._isDemo) {
+        this.sendToPlayer(cmd.shownToPlayerId, 'resolveInstruction', { cmdId: cmd.id, success: true });
+        
+        // 조작을 수행한 본인에게도 피드백을 전달하여 양방향 피드백을 구현
+        this.sendToPlayer(playerId, 'actionFeedback', { key, success: true });
+      }
+
+      this._playSuccessSound();
+      
+      // 보너스 비행 거리
+      this._distance += 25;
+      const distEl = document.getElementById('stat-distance');
+      if (distEl) distEl.textContent = `${this._distance}m`;
+
+      this._showFeedbackText('SUCCESS +25m', 'success');
+      this._renderCommands();
+
+      // 새 명령 채워 넣기
+      while (this._commands.length < this._maxCommands) {
+        this._generateCommand();
+      }
+    } else {
+      // 오조작 시 붉은 글로우 효과 및 모바일 피드백
+      if (!this._isDemo) {
+        this.sendToPlayer(playerId, 'actionFeedback', { key, success: false });
+      }
+      this._showFeedbackText('SYSTEM MALFUNCTION', 'fail');
+    }
+  }
 
   _wireGameMessages() {
     this.onMessage('setProfile', (player, { nickname }) => {
@@ -400,56 +601,13 @@ export class PanicCockpitGame extends HostBaseGame {
       this.renderLobbyPlayers(this._playerNicknames);
     });
 
-    this.onMessage('controlAction', (playerId, { key, value }) => {
-      if (!this._gameActive) return;
-
-      const widgets = this._playerWidgets.get(playerId);
-      if (!widgets || !widgets[key]) return;
-
-      // 로컬 위젯 상태 업데이트
-      widgets[key].value = value;
-
-      // 매칭 명령어 감지
-      let matchedIndex = -1;
-      for (let i = 0; i < this._commands.length; i++) {
-        const cmd = this._commands[i];
-        if (cmd.targetPlayerId === playerId && cmd.widgetKey === key) {
-          if (cmd.targetValue === 'click' && key === 'btnAction') {
-            matchedIndex = i;
-            break;
-          } else if (cmd.targetValue === value) {
-            matchedIndex = i;
-            break;
-          }
-        }
-      }
-
-      if (matchedIndex !== -1) {
-        const cmd = this._commands[matchedIndex];
-        
-        // 명령어 풀에서 소거
-        this._commands.splice(matchedIndex, 1);
-
-        // 모바일에 성공 신호 발송 (햅틱 트리거용)
-        this.sendToPlayer(cmd.shownToPlayerId, 'resolveInstruction', { cmdId: cmd.id, success: true });
-        
-        // 보너스 비행 거리
-        this._distance += 25;
-        const distEl = document.getElementById('stat-distance');
-        if (distEl) distEl.textContent = `${this._distance}m`;
-
-        this._renderCommands();
-
-        // 새 명령 채워 넣기
-        while (this._commands.length < this._maxCommands) {
-          this._generateCommand();
-        }
-      }
+    this.onMessage('controlAction', (player, payload) => {
+      this.handleControlAction(player.id, payload);
     });
   }
 }
 
-// 칵핏 흔들림 키프레임 주입
+// 칵핏 흔들림 및 피드백 텍스트 키프레임 주입
 if (typeof document !== 'undefined') {
   const style = document.createElement('style');
   style.textContent = `
@@ -460,6 +618,11 @@ if (typeof document !== 'undefined') {
       50% { transform: translate(-5px, 8px) rotate(-0.5deg); }
       70% { transform: translate(7px, 4px) rotate(0.8deg); }
       90% { transform: translate(-3px, -3px) rotate(-0.3deg); }
+    }
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translate(-50%, -30%) scale(0.8); }
+      15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+      100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
     }
   `;
   document.head.appendChild(style);

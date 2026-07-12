@@ -163,8 +163,10 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <label style="font-size: 0.9rem; font-weight: bold; color: var(--text-muted);">닉네임 입력</label>
           <input type="text" id="input-nickname" placeholder="닉네임을 적어주세요" style="padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 1rem;" maxlength="8">
+          <div id="nickname-error" class="hidden" style="color: #ef4444; font-size: 0.8rem; text-align: left; margin-top: -2px;"></div>
         </div>
         <button id="btn-join" class="btn-primary" style="padding: 16px; border-radius: 12px; font-weight: bold; background: #06b6d4; border:none; color:black; font-size: 1rem; cursor:pointer;">입장 및 준비 완료</button>
+        <button id="btn-how-to-play" style="background: transparent; border: none; color: #06b6d4; text-decoration: underline; font-size: 0.85rem; cursor: pointer; margin-top: 4px;">🎮 게임 방법 보기</button>
       </div>
       <div></div>
     </div>
@@ -182,7 +184,7 @@
     <div class="ha-screen hidden" data-screen="role-reveal">
       <div style="text-align: center;">
         <h2 style="font-size: 1.6rem; color: #f59e0b;">🤫 정체 확인 시간</h2>
-        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">스마트폰을 가리고 아래 카드를 터치하세요.</p>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">스마트폰을 가리고 아래 카드를 <strong>꾹 누르세요</strong>.</p>
       </div>
 
       <div class="flip-card-container" id="reveal-card-container">
@@ -190,8 +192,8 @@
           <!-- 앞면 -->
           <div class="card-face card-front">
             <span style="font-size: 4rem; margin-bottom: 20px;">❓</span>
-            <h3 style="font-size: 1.3rem; color: white;">터치하여 정체 공개</h3>
-            <p style="font-size: 0.8rem; margin-top: 10px;">다른 사람에게 안 보이게 하세요!</p>
+            <h3 style="font-size: 1.3rem; color: white;">누르고 있어 정체 공개</h3>
+            <p style="font-size: 0.8rem; margin-top: 10px;">떼면 카드가 다시 닫힙니다!</p>
           </div>
           <!-- 뒷면 -->
           <div class="card-face card-back" id="reveal-card-back">
@@ -215,11 +217,13 @@
       </div>
 
       <div class="profile-setup-box">
-        <div style="text-align: center; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px;">
+        <div style="text-align: center; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; user-select: none;">
           <span style="font-size: 0.85rem; color: var(--text-muted);">내 제시어: </span>
-          <strong style="font-size: 1.2rem; color: #06b6d4;" id="submit-hint-my-word">사과</strong>
+          <div id="btn-reveal-my-word" style="display: inline-block; padding: 6px 12px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; cursor: pointer; color: #94a3b8; font-size: 0.9rem; font-weight: bold; margin-left: 6px;">길게 눌러 제시어 확인</div>
+          <strong style="font-size: 1.2rem; color: #06b6d4; display: none;" id="submit-hint-my-word">사과</strong>
         </div>
         <input type="text" id="input-hint-word" placeholder="한 단어만 입력 (예: 빨간색)" style="padding: 14px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 1rem; text-align: center;" maxlength="10">
+        <div id="hint-error" class="hidden" style="color: #ef4444; font-size: 0.8rem; text-align: center; margin-top: -4px;"></div>
         <button id="btn-submit-hint" class="btn-primary" style="padding: 16px; border-radius: 12px; font-weight: bold; background: #06b6d4; border:none; color:black; font-size: 1rem; cursor:pointer;">힌트 보내기</button>
       </div>
       <div></div>
@@ -238,6 +242,47 @@
       <div></div>
     </div>
 
+  </div>
+
+  <!-- 게임 방법 모달 -->
+  <div id="rule-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(6, 9, 19, 0.92); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;">
+    <div style="background: rgba(20, 24, 38, 0.95); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 24px; width: 100%; max-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); position: relative; max-height: 80vh; overflow-y: auto;">
+      <h3 style="font-size: 1.3rem; font-weight: 800; color: #06b6d4; margin-bottom: 16px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">🎮 게임 플레이 가이드</h3>
+      
+      <div style="text-align: left; font-size: 0.85rem; line-height: 1.6; display: flex; flex-direction: column; gap: 16px; color: #e2e8f0; font-family: inherit;">
+        <div>
+          <strong style="color: #f59e0b; font-size: 0.95rem;">1단계: 역할 및 단어 확인</strong>
+          <p style="margin-top: 4px; color: #94a3b8;">게임이 시작되면 화면에 카드가 나타납니다. <strong>카드를 꾹 누르고 있는 동안</strong> 자신의 역할(시민 또는 스파이)과 비밀 제시어를 확인할 수 있습니다. 다른 사람에게 보이지 않도록 주의하세요!</p>
+        </div>
+        <div>
+          <strong style="color: #f59e0b; font-size: 0.95rem;">2단계: 힌트 단어 전송</strong>
+          <p style="margin-top: 4px; color: #94a3b8;">제시어를 설명하는 <strong>단어 하나</strong>(띄어쓰기 없음)를 적어서 호스트 화면으로 보냅니다. 시민은 자신의 제시어를 설명하고, 스파이는 정체를 숨기기 위해 시민인 척 그럴듯한 단어를 만들어 내야 합니다.</p>
+        </div>
+        <div>
+          <strong style="color: #f59e0b; font-size: 0.95rem;">3단계: 자유 토론 및 스파이 투표</strong>
+          <p style="margin-top: 4px; color: #94a3b8;">호스트 화면에 떠오른 단어 힌트들을 기반으로 토론합니다. 토론이 끝난 후, 스파이로 의심되는 플레이어를 스마트폰으로 지목해 투표합니다.</p>
+        </div>
+        <div>
+          <strong style="color: #f59e0b; font-size: 0.95rem;">4단계: 승리 조건</strong>
+          <p style="margin-top: 4px; color: #94a3b8;">다수결 투표로 탈락한 사람이 <strong>스파이</strong>라면 <strong>시민의 승리</strong>! 스파이가 살아남았거나 무고한 시민이 탈락했다면 <strong>스파이의 승리</strong>입니다.</p>
+        </div>
+      </div>
+
+      <button id="btn-close-rules" class="btn-primary" style="margin-top: 24px; padding: 12px; width: 100%; border-radius: 12px; background: #06b6d4; border: none; color: black; font-weight: bold; cursor: pointer; font-size: 0.95rem;">가이드 닫기</button>
+    </div>
+  </div>
+
+  <!-- 커스텀 Confirm 모달 -->
+  <div id="custom-confirm" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(6, 9, 19, 0.85); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;">
+    <div style="background: rgba(20, 24, 38, 0.95); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 24px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+      <div style="font-size: 3rem; margin-bottom: 12px;">🚨</div>
+      <h3 id="custom-confirm-title" style="font-size: 1.25rem; font-weight: bold; color: white; margin-bottom: 8px;">스파이 지목</h3>
+      <p id="custom-confirm-desc" style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px;"></p>
+      <div style="display: flex; gap: 12px;">
+        <button id="btn-confirm-cancel" style="flex: 1; padding: 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: transparent; color: white; font-weight: bold; cursor: pointer; font-size: 0.95rem;">취소</button>
+        <button id="btn-confirm-ok" style="flex: 1; padding: 14px; border-radius: 12px; border: none; background: #ef4444; color: white; font-weight: bold; cursor: pointer; font-size: 0.95rem;">지목</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="./main.js"></script>

@@ -111,6 +111,15 @@
       transition: width 1s linear;
     }
 
+    .timer-bar.critical {
+      animation: pulseRed 0.5s infinite alternate;
+    }
+
+    @keyframes pulseRed {
+      0% { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+      100% { background: #ec4899; box-shadow: 0 0 2px #ec4899; }
+    }
+
     /* 투표 결과 및 아바타 목록 */
     .vote-panel {
       width: 100%;
@@ -215,6 +224,11 @@
     <div id="demo-banner" class="hidden" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; background: rgba(10, 12, 18, 0.9); border: 2px solid rgba(168, 85, 247, 0.6); padding: 10px 24px; border-radius: 30px; display: flex; align-items: center; gap: 15px; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
       <span style="color: #a855f7; font-weight: bold; font-size: 0.95rem;">🤖 데모 시뮬레이션 재생 중...</span>
       <button id="btn-demo-stop" style="background: #ef4444; border:none; color:white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; cursor: pointer; font-family: inherit;">중단하기</button>
+    </div>
+
+    <!-- 데모 상태 배지 -->
+    <div id="demo-status-badge" class="hidden" style="position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 10000; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); padding: 4px 16px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: #c084fc; text-transform: uppercase; letter-spacing: 1px; backdrop-filter: blur(5px); box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+      Demo Stage: <span id="demo-stage-text">Lobby</span> | Scenario: <span id="demo-scenario-text">시민 승리</span>
     </div>
 
     <!-- 1. Lobby Phase -->

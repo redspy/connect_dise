@@ -37,6 +37,9 @@ let myColor = null;
 let isActiveGuesser = false;
 let currentAngle = 90;
 let lastVibratedAngle = 90;
+let currentConcept = null;
+let activeGuesserId = null;
+let activeGuesserNickname = '';
 
 // ─── Screen Transition ─────────────────────────────────────────────────────
 
@@ -61,8 +64,14 @@ mobile.on('rejoin', () => {
 mobile.on('reset', () => {
   myRole = null;
   isActiveGuesser = false;
+  currentConcept = null;
+  activeGuesserId = null;
+  activeGuesserNickname = '';
   roleBadge.className = 'sm-role-badge hidden';
   roleBadge.textContent = '대기 중';
+
+  // 바디 플래시 클래스 제거
+  document.body.classList.remove('flash-green', 'flash-blue', 'flash-red');
 
   if (btnReady) {
     btnReady.disabled = false;
@@ -80,8 +89,11 @@ mobile.on('hostDisconnect', () => {
 
 // ─── Game Message Listeners ────────────────────────────────────────────────
 
-mobile.onMessage('roleAssign', ({ role, targetAngle, concept, giverNickname, round }) => {
+mobile.onMessage('roleAssign', ({ role, targetAngle, concept, giverNickname, round, activeGuesserId: serverActiveGuesserId, activeGuesserNickname: serverActiveGuesserNickname }) => {
   myRole = role;
+  currentConcept = concept;
+  activeGuesserId = serverActiveGuesserId;
+  activeGuesserNickname = serverActiveGuesserNickname;
 
   roleBadge.classList.remove('hidden');
   roleBadge.className = `sm-role-badge ${role}`;
@@ -105,16 +117,35 @@ mobile.onMessage('clueSubmitted', ({ clue }) => {
   if (myRole !== 'guesser') return;
 
   guesserClueTitle.textContent = `제시어: "${clue}"`;
-  guesserConceptLeft.textContent = giverConceptLeft.textContent;
-  guesserConceptRight.textContent = giverConceptRight.textContent;
+  if (currentConcept) {
+    guesserConceptLeft.textContent = currentConcept.left;
+    guesserConceptRight.textContent = currentConcept.right;
+  }
 
   // 턴 판별
-  // 주석: roleAssign 단계에서 activeGuesserId가 설정되어 배분됩니다.
-  isActiveGuesser = true; // 기본적으로 추측 참여 허용
+  const myPlayer = mobile.getMyPlayer();
+  isActiveGuesser = (myPlayer && myPlayer.id === activeGuesserId);
 
   // 다이얼 기본값 세팅
   currentAngle = 90;
   _updateWheelRotation(90);
+
+  if (isActiveGuesser) {
+    touchWheel.style.opacity = '1';
+    touchWheel.style.pointerEvents = 'auto';
+    dialSlider.disabled = false;
+    btnSubmitGuess.classList.remove('hidden');
+    btnSubmitGuess.disabled = true; // 다이얼 조정 전에 비활성화
+    dialControlNotice.innerHTML = `🔥 <span class="active-pulse">내 차례입니다!</span> 다이얼을 움직여 추측 각도를 제출해 주세요.`;
+    mobile.vibrate('double');
+  } else {
+    touchWheel.style.opacity = '0.4';
+    touchWheel.style.pointerEvents = 'none';
+    dialSlider.disabled = true;
+    btnSubmitGuess.classList.add('hidden');
+    const displayGname = activeGuesserNickname || '다른 추측자';
+    dialControlNotice.innerHTML = `👀 <b>${displayGname}</b>님이 조작 중입니다. <span class="spectate-pulse">실시간 관전 중...</span>`;
+  }
 
   showScreen('guesser-play');
 });
@@ -122,8 +153,33 @@ mobile.onMessage('clueSubmitted', ({ clue }) => {
 mobile.onMessage('guessResolved', ({ targetAngle, guessAngle, points }) => {
   document.getElementById('val-target-angle').textContent = `${Math.round(targetAngle)}°`;
   document.getElementById('val-guess-angle').textContent = `${Math.round(guessAngle)}°`;
-  document.getElementById('reveal-score-title').textContent = points > 0 ? `+${points}점 획득!` : '0점...';
   document.getElementById('reveal-score-icon').textContent = points > 0 ? '🎯' : '💨';
+
+  // 배경 플래시 연출 적용
+  document.body.classList.remove('flash-green', 'flash-blue', 'flash-red');
+  void document.body.offsetWidth; // Reflow 트리거로 애니메이션 리셋
+  if (points === 4) {
+    document.body.classList.add('flash-green');
+  } else if (points > 0) {
+    document.body.classList.add('flash-blue');
+  } else {
+    document.body.classList.add('flash-red');
+  }
+
+  // 점수 카운트업 연출
+  const scoreTitle = document.getElementById('reveal-score-title');
+  if (points > 0) {
+    let currentVal = 0;
+    const interval = setInterval(() => {
+      currentVal++;
+      scoreTitle.textContent = `+${currentVal}점 획득!`;
+      if (currentVal >= points) {
+        clearInterval(interval);
+      }
+    }, 150);
+  } else {
+    scoreTitle.textContent = '0점...';
+  }
 
   showScreen('reveal');
 

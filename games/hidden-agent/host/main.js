@@ -16,6 +16,33 @@ const WORD_PAIRS = [
   { citizen: '콜라', spy: '사이다' },
   { citizen: '라면', spy: '우동' },
   { citizen: '안경', spy: '선글라스' },
+  { citizen: '산', spy: '언덕' },
+  { citizen: '달리기', spy: '걷기' },
+  { citizen: '영화관', spy: '미술관' },
+  { citizen: '선생님', spy: '학생' },
+  { citizen: '도서관', spy: '서점' },
+  { citizen: '자전거', spy: '오토바이' },
+  { citizen: '지하철', spy: '버스' },
+  { citizen: '선풍기', spy: '에어컨' },
+  { citizen: '장갑', spy: '양말' },
+  { citizen: '안마기', spy: '침대' },
+  { citizen: '시계', spy: '달력' },
+  { citizen: '우산', spy: '비옷' },
+  { citizen: '피아노', spy: '바이올린' },
+  { citizen: '노트북', spy: '태블릿' },
+  { citizen: '유튜브', spy: '넷플릭스' },
+  { citizen: '소주', spy: '맥주' },
+  { citizen: '온천', spy: '사우나' },
+  { citizen: '기차', spy: '고속버스' },
+  { citizen: '노래방', spy: '클럽' },
+  { citizen: '편의점', spy: '마트' },
+  { citizen: '치킨', spy: '족발' },
+  { citizen: '독서', spy: '공부' },
+  { citizen: '카메라', spy: '거울' },
+  { citizen: '가을', spy: '봄' },
+  { citizen: '겨울', spy: '여름' },
+  { citizen: '주스', spy: '우유' },
+  { citizen: '연필', spy: '볼펜' },
 ];
 
 class HiddenAgentGame extends HostBaseGame {
@@ -29,6 +56,7 @@ class HiddenAgentGame extends HostBaseGame {
     this._playerVotes = new Map();      // playerId -> targetPlayerId string
 
     this._gameTimer = null;
+    this._setupInterval = null;
     this._demoSimulator = new DemoSimulator(this);
     this._isDemoActive = false;
     this._gameTimerLimit = 0;
@@ -168,6 +196,18 @@ class HiddenAgentGame extends HostBaseGame {
     this._isDemoActive = false;
     const demoBanner = document.getElementById('demo-banner');
     if (demoBanner) demoBanner.classList.add('hidden');
+    
+    // 데모 상태 배지 원복
+    if (this._demoSimulator && typeof this._demoSimulator._updateDemoBadge === 'function') {
+      this._demoSimulator._updateDemoBadge(null);
+    }
+
+    // 복기 보드 원복
+    const replayBoard = document.getElementById('replay-board');
+    if (replayBoard) {
+      replayBoard.remove();
+    }
+
     if (this._lobbyEl) {
       const qrCard = this._lobbyEl.querySelector('.lobby-qr-card');
       if (qrCard) qrCard.style.filter = '';
@@ -279,12 +319,12 @@ class HiddenAgentGame extends HostBaseGame {
     const countdownEl = document.getElementById('setup-countdown');
     if (countdownEl) countdownEl.textContent = countdownVal;
 
-    const setupInterval = setInterval(() => {
+    this._setupInterval = setInterval(() => {
       countdownVal--;
       if (countdownEl) countdownEl.textContent = countdownVal;
 
       if (countdownVal <= 0) {
-        clearInterval(setupInterval);
+        this._stopTimer();
         this._startDiscussionPhase();
       }
     }, 1000);
@@ -403,31 +443,29 @@ class HiddenAgentGame extends HostBaseGame {
     const el = document.getElementById('vote-status-text');
     if (el) el.textContent = `투표 완료: ${votedCount} / ${total}명`;
 
-    // 게이지 및 투표 마크 갱신
+    // 게이지 및 투표 마크 갱신 (오직 완료한 사람의 카드에 체크 표시만 갱신)
     this._playerVotes.forEach((targetId, voterId) => {
       const card = document.getElementById(`vote-card-${voterId}`);
       if (card) card.classList.add('voted');
     });
 
-    // 각 유저의 득표수 계산 및 바 업데이트
-    const votesCounter = new Map();
-    this._playerVotes.forEach((targetId) => {
-      votesCounter.set(targetId, (votesCounter.get(targetId) || 0) + 1);
-    });
-
+    // 각 유저의 득표수는 투표 진행 중에는 절대 표시하지 않는다. (설계 가이드라인 준수)
     this.players.forEach(p => {
-      const votes = votesCounter.get(p.id) || 0;
-      const pct = (votes / total) * 100;
       const progressFill = document.getElementById(`vote-progress-${p.id}`);
       const progressText = document.getElementById(`vote-count-text-${p.id}`);
 
-      if (progressFill) progressFill.style.width = `${pct}%`;
-      if (progressText) progressText.textContent = `득표: ${votes}표`;
+      if (progressFill) progressFill.style.width = `0%`;
+      if (progressText) progressText.textContent = `투표 대기 중`;
     });
   }
 
   _revealResult() {
     this.setPhase('result');
+
+    // 데모 배지 업데이트
+    if (this._isDemoActive && this._demoSimulator && typeof this._demoSimulator._updateDemoBadge === 'function') {
+      this._demoSimulator._updateDemoBadge('RESULT');
+    }
 
     // 득표수 통계
     const voteCounts = new Map();
@@ -508,6 +546,56 @@ class HiddenAgentGame extends HostBaseGame {
       `;
     }
 
+    // 결과 화면에 복기 보드 추가
+    const resultPanel = document.querySelector('[data-phase="result"]');
+    if (resultPanel) {
+      let replayBoard = document.getElementById('replay-board');
+      if (!replayBoard) {
+        replayBoard = document.createElement('div');
+        replayBoard.id = 'replay-board';
+        replayBoard.style.cssText = 'margin-top: 30px; width: 100%; max-width: 600px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; text-align: left;';
+        
+        const restartBtn = document.getElementById('btn-restart');
+        if (restartBtn) {
+          resultPanel.insertBefore(replayBoard, restartBtn);
+        } else {
+          resultPanel.appendChild(replayBoard);
+        }
+      }
+
+      let boardHtml = `<h3 style="font-size: 1.1rem; color: #a855f7; margin-bottom: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">📊 라운드 복기 리포트</h3>`;
+      boardHtml += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+
+      this.players.forEach(p => {
+        const nickname = this._profiles.get(p.id)?.nickname ?? '익명';
+        const role = this._assignedRoles.get(p.id);
+        const roleText = role === 'spy' ? '<span style="color:#ef4444;">스파이</span>' : '<span style="color:#06b6d4;">시민</span>';
+        const hint = this._playerHints.get(p.id) || '제출 안 함';
+        
+        const votedTargetId = this._playerVotes.get(p.id);
+        const votedTargetName = votedTargetId ? (this._profiles.get(votedTargetId)?.nickname ?? '익명') : '기권';
+        
+        const receivedVotes = voteCounts.get(p.id) || 0;
+        const isEliminated = (eliminatedPlayerId === p.id);
+        const elimText = isEliminated ? ' ❌ (탈락)' : '';
+
+        boardHtml += `
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+            <div>
+              <strong style="color: ${p.color};">${nickname}</strong> (${roleText})${elimText}
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">힌트: "${hint}"</div>
+            </div>
+            <div style="text-align: right; font-size: 0.85rem;">
+              <div>지목: <span style="color: #f59e0b;">${votedTargetName}</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">득표: ${receivedVotes}표</div>
+            </div>
+          </div>
+        `;
+      });
+      boardHtml += `</div>`;
+      replayBoard.innerHTML = boardHtml;
+    }
+
     // 모바일에 게임 종료 및 결과 패킷 송신
     this.broadcast('phaseChange', {
       phase: 'result',
@@ -522,7 +610,9 @@ class HiddenAgentGame extends HostBaseGame {
 
   _startTimer(seconds, onTimeout) {
     this._stopTimer();
-    this._gameTimerLimit = seconds;
+    // 데모 중에는 제한시간 5배 가속화
+    const limit = this._isDemoActive ? Math.max(3, Math.floor(seconds / 5)) : seconds;
+    this._gameTimerLimit = limit;
     this._gameTimerStart = Date.now();
 
     const isDiscussion = (this.phase === 'discussion');
@@ -536,11 +626,15 @@ class HiddenAgentGame extends HostBaseGame {
       const remaining = Math.max(0, this._gameTimerLimit - elapsed);
 
       const pct = (remaining / this._gameTimerLimit) * 100;
-      if (timerBar) timerBar.style.width = `${pct}%`;
+      if (timerBar) {
+        timerBar.style.width = `${pct}%`;
+        timerBar.classList.toggle('critical', remaining <= 5 && remaining > 0);
+      }
       if (timerText) timerText.textContent = `남은 시간: ${remaining}초`;
 
       if (remaining <= 0) {
         this._stopTimer();
+        if (timerBar) timerBar.classList.remove('critical');
         if (onTimeout) onTimeout();
       }
     }, 200);
@@ -550,6 +644,10 @@ class HiddenAgentGame extends HostBaseGame {
     if (this._gameTimer) {
       clearInterval(this._gameTimer);
       this._gameTimer = null;
+    }
+    if (this._setupInterval) {
+      clearInterval(this._setupInterval);
+      this._setupInterval = null;
     }
   }
 }

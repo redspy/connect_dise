@@ -27,6 +27,8 @@ export class SpectrumGame extends HostBaseGame {
     this._scores = new Map();
     this._round = 1;
     this._maxRounds = 3;
+    this._revealMode = false;
+    this._lastPoints = 0;
 
     this._clue = '';
     this._targetAngle = 90;
@@ -88,7 +90,11 @@ export class SpectrumGame extends HostBaseGame {
 
   onPlayerRejoin(player) {
     console.log(`[Spectrum Mind] Player ${player.id} rejoined.`);
-    if (!this._gameActive) return;
+    if (!this._gameActive) {
+      // 로비 재연결 프리징 가드
+      this.sendToPlayer(player.id, 'reset');
+      return;
+    }
 
     const isGiver = this._giver?.id === player.id;
 
@@ -102,11 +108,19 @@ export class SpectrumGame extends HostBaseGame {
 
       if (this.phase === 'guess') {
         this.sendToPlayer(player.id, 'clueSubmitted', { clue: this._clue });
+        if (this._revealMode) {
+          this.sendToPlayer(player.id, 'guessResolved', {
+            targetAngle: this._targetAngle,
+            guessAngle: this._activeAngle,
+            points: this._lastPoints
+          });
+        }
       }
     } else {
       this.sendToPlayer(player.id, 'roleAssign', {
         role: 'guesser',
         activeGuesserId: this._activeGuesser.id,
+        activeGuesserNickname: this._activeGuesser.nickname,
         concept: this._currentConcept,
         giverNickname: this._giver?.nickname || '출제자',
         round: this._round
@@ -114,6 +128,13 @@ export class SpectrumGame extends HostBaseGame {
 
       if (this.phase === 'guess') {
         this.sendToPlayer(player.id, 'clueSubmitted', { clue: this._clue });
+        if (this._revealMode) {
+          this.sendToPlayer(player.id, 'guessResolved', {
+            targetAngle: this._targetAngle,
+            guessAngle: this._activeAngle,
+            points: this._lastPoints
+          });
+        }
       }
     }
   }
@@ -146,6 +167,7 @@ export class SpectrumGame extends HostBaseGame {
     this._gameActive = true;
     this._round = 1;
     this._scores.clear();
+    this._maxRounds = Math.max(3, this.players.size);
 
     for (const id of this.players.keys()) {
       this._scores.set(id, 0);
@@ -158,10 +180,12 @@ export class SpectrumGame extends HostBaseGame {
     this._clue = '';
     this._targetAngle = 20 + Math.floor(Math.random() * 140); // 20 ~ 160 deg
     this._activeAngle = 90;
+    this._revealMode = false;
+    this._lastPoints = 0;
 
     const plist = [...this.players.values()];
     this._giver = plist[(this._round - 1) % plist.length];
-    this._activeGuesser = plist[plist.length > 1 ? this._round % plist.length : 0];
+    this._activeGuesser = plist[plist.length > 1 ? (this._round) % plist.length : 0];
 
     this._currentConcept = CONCEPTS[Math.floor(Math.random() * CONCEPTS.length)];
 
@@ -172,6 +196,7 @@ export class SpectrumGame extends HostBaseGame {
     document.getElementById('concept-right').textContent = this._currentConcept.right;
     document.getElementById('reveal-controls').classList.add('hidden');
     document.getElementById('guess-status-area').classList.remove('hidden');
+    document.getElementById('active-guesser-name').textContent = this._activeGuesser?.nickname || '추측자';
 
     this.setPhase('clue');
 
@@ -189,6 +214,7 @@ export class SpectrumGame extends HostBaseGame {
           this.sendToPlayer(p.id, 'roleAssign', {
             role: 'guesser',
             activeGuesserId: this._activeGuesser.id,
+            activeGuesserNickname: this._activeGuesser.nickname,
             concept: this._currentConcept,
             giverNickname: this._giver.nickname,
             round: this._round
@@ -389,20 +415,24 @@ export class SpectrumGame extends HostBaseGame {
     else if (diff <= 12) points = 3;
     else if (diff <= 20) points = 2;
 
-    // 점수 합산 (출제자 제외 모든 플레이어 합산)
-    for (const [id, score] of this._scores) {
-      if (id !== this._giver.id) {
-        this._scores.set(id, score + points);
-      }
+    this._revealMode = true;
+    this._lastPoints = points;
+
+    // 점수 합산 (활성 추측자만 합산)
+    if (this._activeGuesser) {
+      const currentScore = this._scores.get(this._activeGuesser.id) || 0;
+      this._scores.set(this._activeGuesser.id, currentScore + points);
     }
 
     // 결과 노출
     document.getElementById('guess-status-area').classList.add('hidden');
     const badge = document.getElementById('points-earned');
     badge.textContent = points > 0 ? `+${points}점!` : '0점...';
-    document.getElementById('reveal-controls').classList.remove('hidden');
 
-    this._drawDial(true);
+    // 튕김 및 페이드 애니메이션 실행
+    this._animateReveal(() => {
+      document.getElementById('reveal-controls').classList.remove('hidden');
+    });
 
     if (!this._isDemo) {
       this.broadcast('guessResolved', {
@@ -415,6 +445,135 @@ export class SpectrumGame extends HostBaseGame {
         if (this._isDemo) this._handleNextRound();
       }, 5000));
     }
+  }
+
+  _animateReveal(callback) {
+    const startTime = performance.now();
+    const duration = 1200; // 1.2s
+    const initialBounce = 8; // bounce angle magnitude
+
+    const animate = (now) => {
+      if (!this._gameActive || !this._revealMode) return;
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Elastic Ease-Out bounce
+      const bounceOffset = initialBounce * Math.exp(-4 * progress) * Math.cos(progress * Math.PI * 5);
+      const wedgeAlpha = progress;
+
+      this._drawDialAnimated(wedgeAlpha, this._activeAngle + bounceOffset);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        this._drawDial(true);
+        if (callback) callback();
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  _drawDialAnimated(wedgeAlpha, needleAngle) {
+    const canvas = document.getElementById('sm-dial-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+
+    // 1. 다이얼 배경 반원
+    ctx.beginPath();
+    ctx.arc(HUB_X, HUB_Y, DIAL_RADIUS, Math.PI, 2 * Math.PI);
+    ctx.lineTo(HUB_X, HUB_Y);
+    ctx.closePath();
+    ctx.fillStyle = '#111827';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#374151';
+    ctx.stroke();
+
+    // 2. 결과 공개 시 득점 영역 그리기
+    this._drawWedgesAnimated(ctx, wedgeAlpha);
+
+    // 3. 눈금 그리기 (10도 간격)
+    ctx.save();
+    for (let angle = 0; angle <= 180; angle += 10) {
+      const rad = (Math.PI * (180 - angle)) / 180;
+      const startX = HUB_X + Math.cos(rad) * (DIAL_RADIUS - 15);
+      const startY = HUB_Y - Math.sin(rad) * (DIAL_RADIUS - 15);
+      const endX = HUB_X + Math.cos(rad) * DIAL_RADIUS;
+      const endY = HUB_Y - Math.sin(rad) * DIAL_RADIUS;
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.lineWidth = angle % 30 === 0 ? 3 : 1;
+      ctx.strokeStyle = angle % 30 === 0 ? '#9ca3af' : '#4b5563';
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 4. 추측 지시 바늘 (빨간색 눈금)
+    const activeRad = (Math.PI * (180 - needleAngle)) / 180;
+    const needleX = HUB_X + Math.cos(activeRad) * (DIAL_RADIUS - 5);
+    const needleY = HUB_Y - Math.sin(activeRad) * (DIAL_RADIUS - 5);
+
+    ctx.beginPath();
+    ctx.moveTo(HUB_X, HUB_Y);
+    ctx.lineTo(needleX, needleY);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#e94560';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = '#e94560';
+    ctx.stroke();
+    ctx.shadowBlur = 0; // reset
+
+    // 5. 다이얼 중심 허브 (메탈 질감)
+    ctx.beginPath();
+    ctx.arc(HUB_X, HUB_Y, 24, 0, 2 * Math.PI);
+    const grad = ctx.createRadialGradient(HUB_X - 5, HUB_Y - 5, 2, HUB_X, HUB_Y, 24);
+    grad.addColorStop(0, '#f3f4f6');
+    grad.addColorStop(0.5, '#9ca3af');
+    grad.addColorStop(1, '#374151');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#1f2937';
+    ctx.stroke();
+  }
+
+  _drawWedgesAnimated(ctx, wedgeAlpha) {
+    const centerDeg = this._targetAngle;
+
+    // Wedges: 4점(센터 8도), 3점(양옆 24도), 2점(양옆 40도)
+    const wedges = [
+      { width: 40, color: `rgba(52, 152, 219, ${0.45 * wedgeAlpha})` }, // 2점
+      { width: 24, color: `rgba(46, 204, 113, ${0.6 * wedgeAlpha})` },  // 3점
+      { width: 8,  color: `rgba(241, 196, 15, ${0.85 * wedgeAlpha})` }   // 4점
+    ];
+
+    wedges.forEach(w => {
+      const half = w.width / 2;
+      const startRad = (Math.PI * (180 - (centerDeg + half))) / 180;
+      const endRad = (Math.PI * (180 - (centerDeg - half))) / 180;
+
+      ctx.beginPath();
+      ctx.arc(HUB_X, HUB_Y, DIAL_RADIUS - 8, startRad, endRad);
+      ctx.lineTo(HUB_X, HUB_Y);
+      ctx.closePath();
+      ctx.fillStyle = w.color;
+      ctx.fill();
+    });
+
+    // 비밀 목표 라인 (골드 점선)
+    const targetRad = (Math.PI * (180 - this._targetAngle)) / 180;
+    ctx.beginPath();
+    ctx.moveTo(HUB_X, HUB_Y);
+    ctx.lineTo(HUB_X + Math.cos(targetRad) * DIAL_RADIUS, HUB_Y - Math.sin(targetRad) * DIAL_RADIUS);
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = `rgba(241, 196, 15, ${wedgeAlpha})`;
+    ctx.stroke();
+    ctx.setLineDash([]); // reset
   }
 }
 

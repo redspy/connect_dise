@@ -62,9 +62,10 @@ class HiddenAgentController extends MobileBaseGame {
       const nickname = inputEl.value.trim();
 
       if (!nickname) {
-        alert('닉네임을 입력해 주세요!');
+        this._showError('nickname-error', '닉네임을 입력해 주세요!');
         return;
       }
+      this._hideError('nickname-error');
 
       // 로컬 스토리지 저장
       localStorage.setItem('ha_nickname', nickname);
@@ -78,25 +79,75 @@ class HiddenAgentController extends MobileBaseGame {
       document.getElementById('waiting-desc').textContent = '다른 플레이어들이 다 모이면 방장이 게임을 시작합니다.';
     };
 
-    // 2. 3D 카드 플립 제어
+    // 1-2. 온보딩 가이드 팝업 바인딩
+    const btnHowToPlay = document.getElementById('btn-how-to-play');
+    const ruleModal = document.getElementById('rule-modal');
+    const btnCloseRules = document.getElementById('btn-close-rules');
+    if (btnHowToPlay && ruleModal && btnCloseRules) {
+      btnHowToPlay.onclick = () => {
+        ruleModal.classList.remove('hidden');
+      };
+      btnCloseRules.onclick = () => {
+        ruleModal.classList.add('hidden');
+      };
+    }
+
+    // 2. 3D 카드 플립 제어 (꾹 누르는 동안에만)
     const cardContainer = document.getElementById('reveal-card-container');
     const card = document.getElementById('reveal-card');
     if (cardContainer && card) {
-      cardContainer.onclick = () => {
+      const showCard = () => {
+        card.classList.add('flipped');
         if (!this._isCardRevealed) {
-          card.classList.add('flipped');
           this._isCardRevealed = true;
           this.vibrate(100); // 탭할 때 약한 진동 피드백
-
-          // 정체를 충분히 확인하도록 4초 뒤 자동으로 대기 화면 전환 유도 버튼 노출 혹은 자동 처리
-          setTimeout(() => {
-            // 토론 페이즈 개시 전까지 정체 확인을 계속 보여줌
-            if (this._myRole) {
-              console.log('Role confirmed, waiting for host...');
-            }
-          }, 3000);
         }
       };
+      const hideCard = () => {
+        card.classList.remove('flipped');
+        this._isCardRevealed = false;
+      };
+
+      cardContainer.addEventListener('mousedown', showCard);
+      cardContainer.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        showCard();
+      });
+
+      cardContainer.addEventListener('mouseup', hideCard);
+      cardContainer.addEventListener('touchend', hideCard);
+      cardContainer.addEventListener('mouseleave', hideCard);
+      cardContainer.addEventListener('touchcancel', hideCard);
+    }
+
+    // 2-2. 힌트 화면 제시어 꾹 누르기 확인
+    const btnRevealMyWord = document.getElementById('btn-reveal-my-word');
+    const submitHintMyWord = document.getElementById('submit-hint-my-word');
+    if (btnRevealMyWord && submitHintMyWord) {
+      const revealWord = () => {
+        submitHintMyWord.style.display = 'inline-block';
+        btnRevealMyWord.style.display = 'none';
+        this.vibrate(50);
+      };
+      const concealWord = () => {
+        submitHintMyWord.style.display = 'none';
+        btnRevealMyWord.style.display = 'inline-block';
+      };
+
+      btnRevealMyWord.addEventListener('mousedown', revealWord);
+      btnRevealMyWord.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        revealWord();
+      });
+
+      btnRevealMyWord.addEventListener('mouseup', concealWord);
+      btnRevealMyWord.addEventListener('touchend', concealWord);
+      btnRevealMyWord.addEventListener('mouseleave', concealWord);
+      btnRevealMyWord.addEventListener('touchcancel', concealWord);
+
+      // 안전 가드: 전역 마우스업/터치엔드 시 닫기
+      document.addEventListener('mouseup', concealWord);
+      document.addEventListener('touchend', concealWord);
     }
 
     // 3. 힌트 단어 전송 버튼
@@ -105,14 +156,15 @@ class HiddenAgentController extends MobileBaseGame {
       const hint = hintInput.value.trim();
 
       if (!hint) {
-        alert('힌트 단어를 입력해 주세요!');
+        this._showError('hint-error', '힌트 단어를 입력해 주세요!');
         return;
       }
 
       if (hint.includes(' ')) {
-        alert('띄어쓰기 없이 단어 하나만 입력해 주세요!');
+        this._showError('hint-error', '띄어쓰기 없이 단어 하나만 입력해 주세요!');
         return;
       }
+      this._hideError('hint-error');
 
       // 힌트 송신
       this.sendToHost('submitHint', { hint });
@@ -168,10 +220,21 @@ class HiddenAgentController extends MobileBaseGame {
 
     // 2. 호스트 페이즈 전환 브로드캐스트 수신
     this.onMessage('phaseChange', (data) => {
+      // 새로운 페이즈로 전환할 때 발생 가능한 오류 클리어
+      this._hideError('hint-error');
+      
       switch (data.phase) {
         case 'discussion':
           // 내 단어를 힌트 입력 화면에 가볍게 박아줌
-          document.getElementById('submit-hint-my-word').textContent = this._myWord;
+          const submitHintMyWord = document.getElementById('submit-hint-my-word');
+          const btnRevealMyWord = document.getElementById('btn-reveal-my-word');
+          if (submitHintMyWord) {
+            submitHintMyWord.textContent = this._myWord;
+            submitHintMyWord.style.display = 'none'; // 초기 숨김
+          }
+          if (btnRevealMyWord) {
+            btnRevealMyWord.style.display = 'inline-block';
+          }
           this.showScreen('submit-hint');
           break;
 
@@ -209,7 +272,15 @@ class HiddenAgentController extends MobileBaseGame {
       document.getElementById('waiting-title').textContent = '힌트 제출 완료!';
       document.getElementById('waiting-desc').textContent = '이미 단어를 제출했습니다. 다른 사람들의 제출을 기다리고 있습니다.';
     } else if (data.phase === 'discussion') {
-      document.getElementById('submit-hint-my-word').textContent = this._myWord;
+      const submitHintMyWord = document.getElementById('submit-hint-my-word');
+      const btnRevealMyWord = document.getElementById('btn-reveal-my-word');
+      if (submitHintMyWord) {
+        submitHintMyWord.textContent = this._myWord;
+        submitHintMyWord.style.display = 'none';
+      }
+      if (btnRevealMyWord) {
+        btnRevealMyWord.style.display = 'inline-block';
+      }
       this.showScreen('submit-hint');
     } else if (data.hasSubmittedVote && data.phase === 'voting') {
       this.showScreen('waiting');
@@ -247,13 +318,13 @@ class HiddenAgentController extends MobileBaseGame {
       `;
 
       btn.onclick = () => {
-        if (confirm(`진짜 [${target.nickname}]을 스파이로 지목하시겠습니까?`)) {
+        this._showCustomConfirm(`진짜 [${target.nickname}]을 스파이로 지목하시겠습니까?`, () => {
           this.sendToHost('submitVote', { targetId: target.id });
           this.showScreen('waiting');
           document.getElementById('waiting-title').textContent = '투표 완료!';
           document.getElementById('waiting-desc').textContent = `[${target.nickname}]을 스파이로 투표했습니다. 집계 완료 대기 중...`;
           this.vibrate([80, 50, 80]); // 투표 시 찌르륵 진동 피드백
-        }
+        });
       };
 
       container.appendChild(btn);
@@ -290,6 +361,45 @@ class HiddenAgentController extends MobileBaseGame {
     } else {
       this.vibrate(500); // 패배: 웅- 무거운 진동
     }
+  }
+
+  // ─── 커스텀 에러 및 컨펌 모달 헬퍼 ────────────────────────────────────────
+
+  _showError(elementId, message) {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.textContent = message;
+      el.classList.remove('hidden');
+    }
+  }
+
+  _hideError(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) {
+      el.classList.add('hidden');
+      el.textContent = '';
+    }
+  }
+
+  _showCustomConfirm(desc, onConfirm) {
+    const modal = document.getElementById('custom-confirm');
+    const descEl = document.getElementById('custom-confirm-desc');
+    const btnOk = document.getElementById('btn-confirm-ok');
+    const btnCancel = document.getElementById('btn-confirm-cancel');
+    
+    if (!modal || !descEl) return;
+    
+    descEl.textContent = desc;
+    modal.classList.remove('hidden');
+    
+    btnOk.onclick = () => {
+      modal.classList.add('hidden');
+      if (onConfirm) onConfirm();
+    };
+    
+    btnCancel.onclick = () => {
+      modal.classList.add('hidden');
+    };
   }
 }
 

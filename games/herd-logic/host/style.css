@@ -371,3 +371,103 @@
   transform: translateY(-2px);
   box-shadow: 0 0 20px var(--neon-gold);
 }
+
+/* 추가 스타일 */
+.rules-hint-banner {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #ccc;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.demo-banner {
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #7c1a80 0%, #4a0d4d 100%);
+  border: 2px solid #ff00ea;
+  color: #fff;
+  font-weight: bold;
+  padding: 8px 24px;
+  border-radius: 30px;
+  z-index: 10000;
+  box-shadow: 0 0 20px rgba(255, 0, 234, 0.6);
+  animation: demoPulse 1.5s infinite alternate;
+  font-size: 0.95rem;
+}
+
+@keyframes demoPulse {
+  from { box-shadow: 0 0 10px rgba(255, 0, 234, 0.4); transform: translateX(-50%) scale(1); }
+  to { box-shadow: 0 0 25px rgba(255, 0, 234, 0.8); transform: translateX(-50%) scale(1.03); }
+}
+
+.countdown-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  font-size: 8rem;
+  font-weight: 900;
+  color: var(--neon-gold);
+  text-shadow: 0 0 40px var(--neon-gold);
+  animation: zoomFade 1s infinite;
+}
+
+@keyframes zoomFade {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* 다수파 매칭 성공 카드 (초록 파동 효과) */
+.hl-card-front.match {
+  border-color: #2eff54 !important;
+  background: #e2f0d9;
+  box-shadow: 0 0 20px rgba(46, 255, 84, 0.4), inset 0 0 15px rgba(46, 255, 84, 0.2);
+  animation: matchGlow 1.5s infinite alternate;
+}
+
+@keyframes matchGlow {
+  from { box-shadow: 0 0 10px rgba(46, 255, 84, 0.3); }
+  to { box-shadow: 0 0 25px rgba(46, 255, 84, 0.7); }
+}
+
+/* 동률 다수파 카드 (금색 매칭 성공 효과) */
+.hl-card-front.gold-match {
+  border-color: var(--neon-gold) !important;
+  background: #fffbeb;
+  color: var(--text-dark);
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.5), inset 0 0 20px rgba(255, 215, 0, 0.3);
+  animation: goldGlow 1.5s infinite alternate;
+}
+
+@keyframes goldGlow {
+  from { box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); }
+  to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); }
+}
+
+.gold-badge {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background: var(--neon-gold);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  z-index: 60;
+  border: 1px solid #fff;
+}
+
