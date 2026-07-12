@@ -32,6 +32,12 @@
     <game-appbar title="🌀 디멘션 위버 — Asymmetric Space"></game-appbar>
 
     <div class="dw-main-content">
+      <!-- 데모 모드 표시 배너 -->
+      <div id="demo-indicator-banner" class="demo-indicator-banner hidden" style="display: flex; align-items: center; gap: 15px;">
+        <span>🤖 데모 시뮬레이션 작동 중 (Attract Mode)</span>
+        <button id="btn-stop-demo-playing" style="padding: 4px 12px; background: #ef4444; border: 1px solid #ff8080; border-radius: 6px; color: #fff; font-weight: bold; cursor: pointer; font-size: 0.8rem; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);">중단</button>
+      </div>
+
       <!-- 상단: HUD -->
       <div class="dw-hud">
         <div class="dw-hud-item">
@@ -72,8 +78,15 @@
   <!-- 3. 결과 오버레이 -->
   <div class="dw-overlay hidden" data-phase="result">
     <div class="dw-result-panel">
+      <div id="result-medal" style="font-size: 4.5rem; margin-bottom: 10px;">🏅</div>
       <h2 id="result-headline" class="dw-result-title">🏆 시공간 돌파 성공!</h2>
-      <p id="result-summary" style="font-size: 1.1rem; color: #ccc; margin-bottom: 25px;">선체 피해 20% 이내 완주 달성</p>
+      <p id="result-summary" style="font-size: 1.1rem; color: #ccc; margin-bottom: 15px;">선체 피해 20% 이내 완주 달성</p>
+      
+      <!-- 통계 지표 추가 -->
+      <div class="dw-result-stats" id="result-stats" style="margin-bottom: 25px; text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px;">
+        <!-- 동적 렌더링 -->
+      </div>
+
       <button id="btn-restart-result" class="dw-btn-restart">로비로 돌아가기</button>
     </div>
   </div>

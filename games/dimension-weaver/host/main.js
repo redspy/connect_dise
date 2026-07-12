@@ -27,6 +27,13 @@ export class DimensionWeaverHost extends HostBaseGame {
     this._particles = [];
     this._drawnDistance = 0;
 
+    // 대중성 보강 및 스테이지/통계 변수
+    this._stats = { buildCount: 0, trapCount: 0, gateCount: 0 };
+    this._stage = 1;
+    this._stageTickMs = 280;
+    this._stageAnnounceText = '';
+    this._stageAnnounceTimer = 0;
+
     this._wireMessages();
   }
 
@@ -42,9 +49,25 @@ export class DimensionWeaverHost extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          // 실운영 플레이어가 한 명이라도 있으면 데모 시작 차단
+          if (this.players.size > 0) {
+            alert('현재 접속 중인 플레이어가 있어 데모 모드를 실행할 수 없습니다.');
+            return;
+          }
           this._demoSimulator.startDemo();
           demoPlayBtn.textContent = '⏹️ 데모 중지';
+          document.getElementById('demo-indicator-banner')?.classList.remove('hidden');
         } else {
+          this._demoSimulator.stopDemo();
+          this.resetSession();
+        }
+      };
+    }
+
+    const stopDemoPlayingBtn = document.getElementById('btn-stop-demo-playing');
+    if (stopDemoPlayingBtn) {
+      stopDemoPlayingBtn.onclick = () => {
+        if (this._isDemo) {
           this._demoSimulator.stopDemo();
           this.resetSession();
         }
@@ -62,13 +85,22 @@ export class DimensionWeaverHost extends HostBaseGame {
     this.renderLobbyPlayers(this._playerNicknames);
   }
 
+  onPlayerDisconnect(playerId) {
+    if (this._gameActive) {
+      // 실시간 협동 게임 중 이탈 감지 -> 차원 균열 정지
+      this._pauseGameForRejoin();
+      this.broadcast('pauseState', { paused: true, pausedPlayerId: playerId });
+    }
+  }
+
   onPlayerLeave(playerId) {
     this._playerRoles.delete(playerId);
     this.renderLobbyPlayers(this._playerNicknames);
 
     if (this._gameActive) {
-      // 실시간 협동 게임 중 이탈 감지 -> 차원 균열 정지
+      // 플레이어가 영구 탈퇴한 경우에도 남은 플레이어가 있다면 정지 유지
       this._pauseGameForRejoin();
+      this.broadcast('pauseState', { paused: true, pausedPlayerId: playerId });
     }
   }
 
@@ -81,15 +113,46 @@ export class DimensionWeaverHost extends HostBaseGame {
       const savedRoles = this._playerRoles.get(player.id) || ['alpha'];
       this._playerRoles.set(player.id, savedRoles);
 
+      // 모바일에 동기화할 시야 데이터(upcoming) 즉시 계산
+      const upcoming = [];
+      for (let i = 0; i < 5; i++) {
+        const idx = this._distance + i;
+        if (idx < this._map.length) {
+          upcoming.push({
+            x: idx,
+            floor: this._map[idx].floor,
+            challenge: this._map[idx].challenge,
+            challengeActive: this._map[idx].challengeActive,
+            challengeRow: this._map[idx].challengeRow,
+            gateColor: this._map[idx].gateColor
+          });
+        }
+      }
+
       this.sendToPlayer(player.id, 'assignRole', {
         roles: savedRoles,
         distance: this._distance,
-        hull: this._hull
+        hull: this._hull,
+        paused: this._isPausedForRejoin,
+        upcoming
       });
 
-      this._resumeGameAfterRejoin();
+      // 오프라인 상태인 다른 플레이어가 없는 경우에만 게임 재개 및 unpause 브로드캐스트
+      if (this._disconnectedPlayers.size === 0) {
+        this._resumeGameAfterRejoin();
+        this.broadcast('pauseState', { paused: false });
+      }
     } else {
-      this.sendToPlayer(player.id, 'lobbyState', { phase: 'lobby' });
+      if (this.phase === 'result') {
+        // 결과 상태에서 재접속 시 결과 정보를 동기화
+        this.sendToPlayer(player.id, 'gameFinished', {
+          win: this._hull > 0,
+          distance: this._distance,
+          stats: this._stats
+        });
+      } else {
+        this.sendToPlayer(player.id, 'lobbyState', { phase: 'lobby' });
+      }
     }
   }
 
@@ -107,11 +170,19 @@ export class DimensionWeaverHost extends HostBaseGame {
     this._playerRoles.clear();
     this._particles = [];
     this._drawnDistance = 0;
+    
+    this._stats = { buildCount: 0, trapCount: 0, gateCount: 0 };
+    this._stage = 1;
+    this._stageTickMs = 280;
+    this._stageAnnounceText = '';
+    this._stageAnnounceTimer = 0;
+
     if (this._gameInterval) clearInterval(this._gameInterval);
 
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
 
+    document.getElementById('demo-indicator-banner')?.classList.add('hidden');
     document.getElementById('stabilization-banner')?.classList.add('hidden');
     document.getElementById('roles-board').innerHTML = '';
 
@@ -131,7 +202,7 @@ export class DimensionWeaverHost extends HostBaseGame {
         gateColor: null // 'red' | 'blue' | 'green'
       };
 
-      // 5칸 간격으로 랜덤 장애물 생성 (앞의 5칸은 안전 지대)
+      // 4칸 간격으로 랜덤 장애물 생성 (앞의 5칸은 안전 지대)
       if (x > 5 && x % 4 === 0) {
         const rand = Math.random();
         if (rand < 0.35) {
@@ -169,6 +240,12 @@ export class DimensionWeaverHost extends HostBaseGame {
     this._playerRoles.clear();
     this._particles = [];
     this._drawnDistance = 0;
+
+    this._stats = { buildCount: 0, trapCount: 0, gateCount: 0 };
+    this._stage = 1;
+    this._stageTickMs = 280;
+    this._stageAnnounceText = '';
+    this._stageAnnounceTimer = 0;
 
     this._maxDistance = this._isDemo ? 20 : 100;
     this._generateMap();
@@ -214,11 +291,11 @@ export class DimensionWeaverHost extends HostBaseGame {
   _startLoop() {
     if (this._gameInterval) clearInterval(this._gameInterval);
 
-    // 초당 4틱 (250ms 당 1칸 이동)
+    // 가변 틱 주기로 실행
     this._gameInterval = setInterval(() => {
       if (this._isPausedForRejoin) return;
       this._tick();
-    }, 250);
+    }, this._stageTickMs);
 
     // 60fps 애니메이션 렌더 루프 (카메라 보간 및 파티클 전용)
     const render = () => {
@@ -232,6 +309,16 @@ export class DimensionWeaverHost extends HostBaseGame {
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);
+  }
+
+  _updateInterval() {
+    if (this._gameInterval) clearInterval(this._gameInterval);
+    if (!this._gameActive) return;
+
+    this._gameInterval = setInterval(() => {
+      if (this._isPausedForRejoin) return;
+      this._tick();
+    }, this._stageTickMs);
   }
 
   _updateParticles() {
@@ -263,7 +350,36 @@ export class DimensionWeaverHost extends HostBaseGame {
   _tick() {
     const col = this._map[this._distance];
     
-    // 1. 게이트 장애물 체크 (통과 가능 여부 판단)
+    // 1. 스테이지 확인 및 업데이트 (0~30m: Stage 1, 31~60m: Stage 2, 61~100m: Stage 3)
+    let nextStage = 1;
+    let nextTickMs = 280;
+    let stageName = 'STAGE 1: 시공간 진입';
+    if (this._distance > 60) {
+      nextStage = 3;
+      nextTickMs = 150;
+      stageName = 'STAGE 3: 혼돈의 폭풍 (SPEED UP!)';
+    } else if (this._distance > 30) {
+      nextStage = 2;
+      nextTickMs = 210;
+      stageName = 'STAGE 2: 중력 가속 (SPEED UP!)';
+    }
+
+    if (nextStage !== this._stage) {
+      this._stage = nextStage;
+      this._stageTickMs = nextTickMs;
+      this._stageAnnounceText = stageName;
+      this._stageAnnounceTimer = 8; // 8틱 동안 안내 문구 그리기
+      this._updateInterval();
+      
+      // 모바일에 스테이지 클리어 및 속도 증가 알림 브로드캐스트
+      this.broadcast('stageClear', { stage: this._stage, tickMs: this._stageTickMs });
+    }
+
+    if (this._stageAnnounceTimer > 0) {
+      this._stageAnnounceTimer--;
+    }
+
+    // 2. 게이트 장애물 체크 (통과 가능 여부 판단)
     if (col && col.challenge === 'gate' && col.challengeActive) {
       // 잠긴 게이트를 만나면 전진이 가로막힘 (체력은 안 달지만 멈춤)
       document.getElementById('hud-phase-label').textContent = `게이트 차단 (${col.gateColor.toUpperCase()})`;
@@ -273,7 +389,7 @@ export class DimensionWeaverHost extends HostBaseGame {
       document.getElementById('hud-phase-label').textContent = '차원 동기화 정상';
     }
 
-    // 2. 가시 장애물 피격 체크
+    // 3. 가시 장애물 피격 체크
     if (col && col.challenge === 'spike' && col.challengeActive) {
       if (col.challengeRow === this._runnerRow) {
         this._damageHull(20, '가시 충돌');
@@ -287,7 +403,7 @@ export class DimensionWeaverHost extends HostBaseGame {
     // HUD 갱신
     document.getElementById('hud-distance').textContent = `${this._distance} / ${this._maxDistance}m`;
 
-    // 3. 디딤판 체크 및 자동 경로 조절
+    // 4. 디딤판 체크 및 자동 경로 조절
     const nextCol = this._map[this._distance];
     if (nextCol) {
       // 러너가 딛고 있는 칸이 구멍(0)인 경우 인접한 solid row로 자동 회피 시도
@@ -334,6 +450,7 @@ export class DimensionWeaverHost extends HostBaseGame {
     this.broadcast('mapTick', {
       distance: this._distance,
       hull: this._hull,
+      runnerRow: this._runnerRow,
       upcoming
     });
 
@@ -402,6 +519,27 @@ export class DimensionWeaverHost extends HostBaseGame {
 
     const headline = document.getElementById('result-headline');
     const summary = document.getElementById('result-summary');
+    const medalEl = document.getElementById('result-medal');
+
+    let medal = '🥉 BRONZE';
+    let medalIcon = '🥉';
+    if (win) {
+      if (this._hull === 100) {
+        medal = '👑 PERFECT';
+        medalIcon = '👑';
+      } else if (this._hull >= 70) {
+        medal = '🥇 GOLD';
+        medalIcon = '🥇';
+      } else if (this._hull >= 40) {
+        medal = '🥈 SILVER';
+        medalIcon = '🥈';
+      }
+    } else {
+      medal = '💀 DESTROYED';
+      medalIcon = '💀';
+    }
+
+    if (medalEl) medalEl.textContent = medalIcon;
 
     if (win) {
       headline.textContent = '🏆 시공간 돌파 성공!';
@@ -413,12 +551,175 @@ export class DimensionWeaverHost extends HostBaseGame {
       summary.textContent = `선체가 버티지 못하고 파괴되었습니다. (최종 이동 거리: ${this._distance}m)`;
     }
 
+    const statsEl = document.getElementById('result-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div><span>달성 등급</span><span class="stat-val" style="color:var(--neon-gold);">${medal}</span></div>
+        <div><span>최종 이동 거리</span><span class="stat-val">${this._distance}m</span></div>
+        <div><span>남은 선체 (HULL)</span><span class="stat-val">${this._hull}%</span></div>
+        <div><span>길 개척 횟수</span><span class="stat-val">${this._stats.buildCount}회</span></div>
+        <div><span>가시 제거 횟수</span><span class="stat-val">${this._stats.trapCount}회</span></div>
+        <div><span>게이트 개방 횟수</span><span class="stat-val">${this._stats.gateCount}회</span></div>
+      `;
+    }
+
     this.broadcast('gameFinished', {
       win,
-      distance: this._distance
+      distance: this._distance,
+      stats: this._stats
     });
 
     this.setPhase('result');
+
+    // 데모 플레이 종료 시 일정 시간 후 자동으로 로비로 복원 (Attract Loop 완결)
+    if (this._isDemo) {
+      setTimeout(() => {
+        if (this.phase === 'result') {
+          this.resetSession();
+        }
+      }, 5000); // 5초 대기 후 로비로 원복
+    }
+  }
+
+  // ─── 공개 액션 메서드 (봇/플레이어 공통 및 거리/시야 제약 추가) ────────────────
+
+  _sendFailure(playerId, type, payload) {
+    // 봇 플레이어(bot_*)인 경우는 메시지 전송 생략
+    if (playerId.startsWith('bot_')) return;
+    this.sendToPlayer(playerId, 'actionFailure', { type, ...payload });
+  }
+
+  handleBuildPath(playerId, { x, row }) {
+    if (!this._gameActive) return false;
+
+    const roles = this._playerRoles.get(playerId) || [];
+    if (!roles.includes('alpha')) {
+      this._sendFailure(playerId, 'buildPath', { x, row, reason: 'unauthorized' });
+      return false;
+    }
+
+    const mapX = parseInt(x);
+    const r = parseInt(row);
+
+    // 거리 제약 (시야 5칸 이내만 복구 가능)
+    if (mapX < this._distance || mapX >= this._distance + 5) {
+      this._sendFailure(playerId, 'buildPath', { x, row, reason: 'out-of-bounds' });
+      return false;
+    }
+
+    if (mapX >= 0 && mapX < this._map.length && r >= 0 && r < 5) {
+      if (this._map[mapX].floor[r] !== 1) {
+        this._map[mapX].floor[r] = 1;
+        this._stats.buildCount++;
+        
+        // 해당 플레이어에게 성공 신호
+        this.sendToPlayer(playerId, 'actionSuccess', { type: 'buildPath', x, row });
+        
+        // 💫 성공 파티클 연출 추가
+        this._spawnSuccessParticles(mapX, r, '#00f3ff');
+        this._renderCanvas();
+        return true;
+      }
+    }
+    this._sendFailure(playerId, 'buildPath', { x, row, reason: 'invalid-state' });
+    return false;
+  }
+
+  handleDisableTrap(playerId, { x }) {
+    if (!this._gameActive) return false;
+
+    const roles = this._playerRoles.get(playerId) || [];
+    if (!roles.includes('beta')) {
+      this._sendFailure(playerId, 'disableTrap', { x, reason: 'unauthorized' });
+      return false;
+    }
+
+    const mapX = parseInt(x);
+    
+    // 거리 제약 (시야 5칸 이내만 함정 해제 가능)
+    if (mapX < this._distance || mapX >= this._distance + 5) {
+      this._sendFailure(playerId, 'disableTrap', { x, reason: 'out-of-bounds' });
+      return false;
+    }
+
+    if (mapX >= 0 && mapX < this._map.length) {
+      const col = this._map[mapX];
+      if (col.challenge === 'spike' && col.challengeActive) {
+        col.challengeActive = false;
+        this._stats.trapCount++;
+        
+        // 해당 플레이어에게 성공 신호
+        this.sendToPlayer(playerId, 'actionSuccess', { type: 'disableTrap', x });
+        
+        // 💫 성공 파티클 연출 추가
+        this._spawnSuccessParticles(mapX, col.challengeRow, '#ff007f');
+        this._renderCanvas();
+        return true;
+      }
+    }
+    this._sendFailure(playerId, 'disableTrap', { x, reason: 'invalid-state' });
+    return false;
+  }
+
+  handleUnlockGate(playerId, { color }) {
+    if (!this._gameActive) return false;
+
+    const roles = this._playerRoles.get(playerId) || [];
+    if (!roles.includes('gamma')) {
+      this._sendFailure(playerId, 'unlockGate', { color, reason: 'unauthorized' });
+      return false;
+    }
+
+    let unlockedAny = false;
+    // 거리 제약 강화 (가장 앞 4칸 이내 게이트만 해제 허용)
+    for (let x = this._distance; x < this._distance + 4; x++) {
+      if (x >= this._map.length) break;
+      const col = this._map[x];
+      if (col.challenge === 'gate' && col.gateColor === color && col.challengeActive) {
+        col.challengeActive = false;
+        unlockedAny = true;
+        this._stats.gateCount++;
+        
+        // 💫 성공 파티클 연출 추가
+        this._spawnSuccessParticles(x, 2, color === 'red' ? '#ef4444' : (color === 'blue' ? '#00f3ff' : '#22c55e'));
+      }
+    }
+
+    if (unlockedAny) {
+      // 해당 플레이어에게 성공 신호
+      this.sendToPlayer(playerId, 'actionSuccess', { type: 'unlockGate', color });
+      this._renderCanvas();
+      return true;
+    }
+    this._sendFailure(playerId, 'unlockGate', { color, reason: 'no-gate-detected' });
+    return false;
+  }
+
+  _spawnSuccessParticles(mapX, row, color) {
+    if (!this._canvas) return;
+    const cellW = this._canvas.width / 10;
+    const cellH = this._canvas.height / 5;
+    
+    // 화면상의 렌더링 x 좌표 보정
+    const fraction = this._drawnDistance % 1;
+    const baseCol = Math.floor(this._drawnDistance);
+    const viewOffset = baseCol - 2;
+    const screenCol = mapX - viewOffset;
+    
+    const rx = (screenCol - fraction) * cellW + cellW / 2;
+    const ry = row * cellH + cellH / 2;
+
+    for (let i = 0; i < 15; i++) {
+      this._particles.push({
+        x: rx,
+        y: ry,
+        vx: (Math.random() - 0.5) * 6,
+        vy: (Math.random() - 0.5) * 6 - 2,
+        color: color,
+        life: 20 + Math.random() * 10,
+        size: 1.5 + Math.random() * 2
+      });
+    }
   }
 
   // ─── 렌더링 ──────────────────────────────────────────────────────────────
@@ -499,13 +800,24 @@ export class DimensionWeaverHost extends HostBaseGame {
 
       // 4. 삼색 레이저 게이트 드로잉
       if (colData.challenge === 'gate' && colData.challengeActive) {
-        ctx.strokeStyle = colData.gateColor === 'red' ? '#ef4444' : (colData.gateColor === 'blue' ? '#00f3ff' : '#22c55e');
+        const colorVal = colData.gateColor === 'red' ? '#ef4444' : (colData.gateColor === 'blue' ? '#00f3ff' : '#22c55e');
+        ctx.strokeStyle = colorVal;
         ctx.lineWidth = 6;
         ctx.beginPath();
         ctx.moveTo(screenX + cellW / 2, 0);
         ctx.lineTo(screenX + cellW / 2, h);
         ctx.stroke();
         
+        // 게이트 근접 경고 연출 (앞 3칸 이내)
+        const distToGate = mapX - this._distance;
+        if (distToGate >= 0 && distToGate < 3) {
+          ctx.strokeStyle = `rgba(${colData.gateColor === 'red' ? '239,68,68' : (colData.gateColor === 'blue' ? '0,243,255' : '34,197,94')}, ${0.3 + 0.3 * Math.sin(Date.now() / 100)})`;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 8]);
+          ctx.strokeRect(screenX, 0, cellW, h);
+          ctx.setLineDash([]);
+        }
+
         // 레이저 에너지 입자
         ctx.fillStyle = '#fff';
         for (let i = 0; i < 5; i++) {
@@ -526,7 +838,7 @@ export class DimensionWeaverHost extends HostBaseGame {
     ctx.fill();
 
     // 헬멧 네온 바이저
-    ctx.fillStyle = 'var(--neon-cyan)';
+    ctx.fillStyle = '#00f3ff';
     ctx.beginPath();
     ctx.arc(runnerX + 4, runnerY - 2, 8, 0, Math.PI * 2);
     ctx.fill();
@@ -547,16 +859,49 @@ export class DimensionWeaverHost extends HostBaseGame {
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
     });
+
+    // 7. 스테이지 클리어 안내 문구 연출 그리기
+    if (this._stageAnnounceText && this._stageAnnounceTimer > 0) {
+      ctx.fillStyle = 'rgba(7, 11, 25, 0.85)';
+      ctx.fillRect(0, h / 2 - 35, w, 70);
+      
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2 - 35);
+      ctx.lineTo(w, h / 2 - 35);
+      ctx.moveTo(0, h / 2 + 35);
+      ctx.lineTo(w, h / 2 + 35);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 22px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this._stageAnnounceText, w / 2, h / 2);
+    }
   }
 
   _renderRolesBoard() {
     const board = document.getElementById('roles-board');
     if (!board) return;
 
+    // HTML 이스케이프 헬퍼
+    const escapeHtml = (str) => {
+      if (typeof str !== 'string') return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
     const plist = [...this.players.values()];
     board.innerHTML = plist.map(p => {
       const roles = this._playerRoles.get(p.id) || [];
       const nickname = this._playerNicknames.get(p.id) || p.nickname || '익명';
+      const escapedNickname = escapeHtml(nickname);
       
       const roleBadges = roles.map(r => {
         if (r === 'alpha') return '<span style="color:var(--neon-cyan);">🌀 길 개척사</span>';
@@ -567,7 +912,7 @@ export class DimensionWeaverHost extends HostBaseGame {
 
       return `
         <div class="role-chip">
-          <span style="font-weight: bold;">${nickname}</span>
+          <span style="font-weight: bold;">${escapedNickname}</span>
           <span>:</span>
           <span>${roleBadges}</span>
         </div>
@@ -586,53 +931,17 @@ export class DimensionWeaverHost extends HostBaseGame {
 
     // 1. 차원 알파: 블록 설치
     this.onMessage('buildPath', (player, { x, row }) => {
-      if (!this._gameActive) return;
-
-      const roles = this._playerRoles.get(player.id) || [];
-      if (!roles.includes('alpha')) return;
-
-      const mapX = parseInt(x);
-      const r = parseInt(row);
-
-      if (mapX >= 0 && mapX < this._map.length && r >= 0 && r < 5) {
-        this._map[mapX].floor[r] = 1;
-        this._renderCanvas();
-      }
+      this.handleBuildPath(player.id, { x, row });
     });
 
     // 2. 차원 베타: 장애물 소멸
     this.onMessage('disableTrap', (player, { x }) => {
-      if (!this._gameActive) return;
-
-      const roles = this._playerRoles.get(player.id) || [];
-      if (!roles.includes('beta')) return;
-
-      const mapX = parseInt(x);
-      if (mapX >= 0 && mapX < this._map.length) {
-        const col = this._map[mapX];
-        if (col.challenge === 'spike') {
-          col.challengeActive = false;
-          this._renderCanvas();
-        }
-      }
+      this.handleDisableTrap(player.id, { x });
     });
 
     // 3. 차원 감마: 레이저 게이트 컬러 오픈
     this.onMessage('unlockGate', (player, { color }) => {
-      if (!this._gameActive) return;
-
-      const roles = this._playerRoles.get(player.id) || [];
-      if (!roles.includes('gamma')) return;
-
-      // 러너 가시 시야에 들어온 게이트들 잠금 해제 (runner 거리 기준 앞 10칸 탐색)
-      for (let x = this._distance; x < this._distance + 10; x++) {
-        if (x >= this._map.length) break;
-        const col = this._map[x];
-        if (col.challenge === 'gate' && col.gateColor === color) {
-          col.challengeActive = false;
-        }
-      }
-      this._renderCanvas();
+      this.handleUnlockGate(player.id, { color });
     });
   }
 }

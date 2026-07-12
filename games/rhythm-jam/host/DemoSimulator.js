@@ -7,34 +7,21 @@ export class RhythmJamDemoSimulator {
   }
 
   startDemo() {
+    if (this.isDemo) return;
     this.isDemo = true;
-    this.game._isDemo = true;
-
-    const bots = [
-      { id: 'bot_bass', nickname: '🤖 리듬 천재 (Bass)', color: '#ff007f' },
-      { id: 'bot_snare', nickname: '🤖 비트 매니아 (Snare)', color: '#ffd700' },
-      { id: 'bot_hihat', nickname: '🤖 드럼 마스터 (Hi-hat)', color: '#00f3ff' }
-    ];
-
-    this.game.players.clear();
-    this.game._playerNicknames.clear();
-    bots.forEach(b => {
-      this.game._playerNicknames.set(b.id, b.nickname);
-      this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
-      this.game.sdk._players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
-    });
-
-    this.game._startGame();
+    this.game.enterDemoMode();
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
-    this.game._isDemo = false;
     this.clearTimeouts();
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
     this.tappedNotes.clear();
+    
+    // 호스트의 데모 플래그가 여전히 켜져있다면 동기화하여 호출
+    if (this.game._isDemo) {
+      this.game.exitDemoMode();
+    }
   }
 
   onStart() {
@@ -44,6 +31,7 @@ export class RhythmJamDemoSimulator {
   onTick(elapsedTime, notes) {
     if (!this.isDemo || !this.game._gameActive || this.game._isPausedForRejoin) return;
 
+    // 데모 봇은 3개 레인 고정
     const bots = ['bot_bass', 'bot_snare', 'bot_hihat'];
 
     notes.forEach(note => {
@@ -53,26 +41,24 @@ export class RhythmJamDemoSimulator {
       if (note.x <= 165 && note.x >= 120) {
         this.tappedNotes.add(note.id);
         const botId = bots[note.lane];
+        if (!botId) return;
         
         // 약간의 휴먼 지터를 가미해 리얼리티 제공 (0 ~ 40ms)
         const delay = Math.random() * 40;
-        this._queueAction('tapNote', botId, {}, delay);
+        this._queueAction(botId, delay);
       }
     });
   }
 
-  _queueAction(msgType, botId, payload, delay) {
+  _queueAction(botId, delay) {
     const tid = setTimeout(() => {
       if (!this.game._gameActive || this.game._isPausedForRejoin) return;
 
       const botPlayer = this.game.getPlayer(botId);
       if (!botPlayer) return;
 
-      const handler = this.game.sdk._messageHandlers.get(msgType);
-      if (handler) {
-        // SDK 메타 메시지 핸들러 직접 격발
-        handler(payload, botId);
-      }
+      // 호스트의 공식 시뮬레이션 탭 API 호출
+      this.game.simulateTapNote(botId);
     }, delay);
 
     this.timeouts.push(tid);

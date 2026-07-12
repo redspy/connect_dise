@@ -31,6 +31,25 @@
           </div>
 
           <button id="btn-ready" class="sm-btn primary-btn hidden">준비하기</button>
+
+          <!-- 모바일 대기 화면 카드 하단에 튜토리얼 추가 -->
+          <div class="tutorial-section" style="margin-top: 15px;">
+            <h3>🛸 차원별 파일럿 조작 가이드</h3>
+            <div class="tutorial-cards">
+              <div class="t-card alpha">
+                <span class="t-badge">🌀 알파: 길 개척사</span>
+                <p>러너 앞 5칸의 <strong>붉은 구멍</strong>을 폰 그리드에서 탭하여 다리를 건설하세요.</p>
+              </div>
+              <div class="t-card beta">
+                <span class="t-badge">⚡ 베타: 장애물 소멸사</span>
+                <p>러너 경로에 생성되는 <strong>가시 함정</strong>을 폰 리스트에서 탭하여 제거하세요.</p>
+              </div>
+              <div class="t-card gamma">
+                <span class="t-badge">🔑 감마: 게이트 개방사</span>
+                <p>호스트 화면의 <strong>레이저 게이트 색상</strong>과 동일한 버튼을 탭하여 통과시키세요.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -40,6 +59,12 @@
         <div class="hud-bar">
           <div id="hud-dist-text" class="hud-tag">0 / 100m</div>
           <div id="hud-hull-text" class="hud-tag hull-tag">HULL: 100%</div>
+        </div>
+
+        <!-- 2인용 우선 위협 알림 큐 -->
+        <div id="priority-guide" class="card-bg hidden" style="border-color: var(--neon-gold); padding: 8px 12px;">
+          <span style="font-weight: bold; color: var(--neon-gold);">🚨 복합 조작 가이드:</span>
+          <span id="priority-text" style="font-size: 0.85rem; color: #fff;">안전 구역 비행 중</span>
         </div>
 
         <!-- 2-A. 차원 알파: 길 개척사 (5행 5열 그리드 맵 빌더) -->
@@ -55,6 +80,7 @@
         <!-- 2-B. 차원 베타: 장애물 소멸사 (함정 소거 스캐너 리스트) -->
         <div id="beta-panel" class="card-bg hidden">
           <span class="role-badge beta-color">⚡ 차원 베타: 장애물 소멸사</span>
+          <span id="beta-count-badge" class="count-badge">위험 감지: 0</span>
           <p class="role-desc">스캐너에 탐지된 가시 함정을 터치하여 무력화하세요!</p>
           
           <div id="beta-scans" class="beta-scan-list">
@@ -66,6 +92,16 @@
         <div id="gamma-panel" class="card-bg hidden">
           <span class="role-badge gamma-color">🔑 차원 감마: 게이트 개방사</span>
           <p class="role-desc">러너 앞을 가로막는 레이저 게이트의 색에 맞춰 코드를 일치시키세요!</p>
+          
+          <!-- 미니 신호등 -->
+          <div class="gamma-indicator-container">
+            <span class="indicator-label">차단 게이트 색상 감지:</span>
+            <div class="gamma-lights">
+              <div class="g-light red" id="light-red"></div>
+              <div class="g-light blue" id="light-blue"></div>
+              <div class="g-light green" id="light-green"></div>
+            </div>
+          </div>
           
           <div class="gamma-buttons">
             <button class="gate-btn red" data-color="red">🔴 RED LASER</button>
@@ -89,6 +125,10 @@
           <div id="result-icon" class="status-icon">🏆</div>
           <h2 id="result-headline">비행 성공!</h2>
           <p id="result-summary">시공간을 안정적으로 돌파했습니다.</p>
+          <!-- 결과 지표 통계판 -->
+          <div class="dw-result-stats" id="mobile-result-stats" style="margin-top: 15px; text-align: left; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; font-size: 0.85rem;">
+            <!-- 동적 삽입 -->
+          </div>
         </div>
       </div>
     </main>

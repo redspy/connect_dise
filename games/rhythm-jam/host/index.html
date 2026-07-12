@@ -11,11 +11,17 @@
   <!-- 메인 컨테이너 (z-index: 10 가드) -->
   <div class="pp-host-container">
     
+    <!-- 데모 활성화 배너 -->
+    <div id="demo-active-banner" class="demo-active-banner hidden">
+      <span class="demo-banner-text">🤖 데모 시뮬레이션 플레이 중... (플레이어 입장 시 자동 복구)</span>
+      <button id="btn-stop-demo-banner" class="btn-demo-stop">⏹️ 데모 중지</button>
+    </div>
+
     <!-- ─── 1. 대기실 페이즈 ─── -->
     <div class="dw-overlay" data-phase="lobby">
       <div class="lobby-header">
         <h1 class="lobby-title">🥁 RHYTHM JAM 🥁</h1>
-        <p class="lobby-desc">서로의 스마트폰을 드럼 패드 삼아, 떨어지는 박자에 맞춰 완벽한 합주를 연출하세요!</p>
+        <p class="lobby-desc">서로의 스마트폰을 드럼 패드 삼아, 떨어지는 박자에 맞춰 완벽한 합주를 연출하세요! (추천: 3명)</p>
       </div>
 
       <div class="lobby-setup-row">
@@ -116,6 +122,9 @@
             <span id="result-accuracy" class="stat-val text-green">0%</span>
           </div>
         </div>
+
+        <!-- 플레이어 개인 기여도 카드 영역 -->
+        <div id="result-contributions" class="result-contributions"></div>
 
         <button id="btn-restart-result" class="btn-primary">🔄 로비로 돌아가기</button>
       </div>

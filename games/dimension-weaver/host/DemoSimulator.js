@@ -32,6 +32,7 @@ export class DimensionWeaverDemoSimulator {
     this.game.players.clear();
     this.game.sdk._players.clear();
     this.game._playerNicknames.clear();
+    document.getElementById('demo-indicator-banner')?.classList.add('hidden');
   }
 
   onTick() {
@@ -72,9 +73,13 @@ export class DimensionWeaverDemoSimulator {
       const botPlayer = this.game.getPlayer(botId);
       if (!botPlayer) return;
 
-      const handler = this.game.sdk._messageHandlers.get(msgType);
-      if (handler) {
-        handler(botPlayer, payload);
+      // 공개된 호스트 게임 액션 API 호출
+      if (msgType === 'buildPath') {
+        this.game.handleBuildPath(botId, payload);
+      } else if (msgType === 'disableTrap') {
+        this.game.handleDisableTrap(botId, payload);
+      } else if (msgType === 'unlockGate') {
+        this.game.handleUnlockGate(botId, payload);
       }
     }, delay);
 

@@ -201,3 +201,38 @@
   transform: translateY(-2px);
   box-shadow: 0 0 25px var(--neon-cyan);
 }
+
+/* 데모 모드 표시기 */
+.demo-indicator-banner {
+  align-self: center;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px dashed var(--neon-gold);
+  color: var(--neon-gold);
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  animation: pulseDemo 2s infinite alternate;
+}
+
+@keyframes pulseDemo {
+  from { opacity: 0.8; box-shadow: 0 0 5px rgba(255, 215, 0, 0.1); }
+  to { opacity: 1; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+}
+
+/* 결과 통계 */
+.dw-result-stats div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: #a0aec0;
+  margin-bottom: 6px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+  padding-bottom: 4px;
+}
+
+.dw-result-stats span.stat-val {
+  color: #fff;
+  font-weight: bold;
+}
