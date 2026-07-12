@@ -23,6 +23,12 @@ class WordBombMobile extends MobileBaseGame {
     this.showScreen('setup');
   }
 
+  onRejoin(player) {
+    // 연결 복구 중... 대기 상태 화면 띄우고 호스트에 상태 동기화 요청
+    this.showScreen('waiting');
+    this.sdk.sendToHost('requestSyncState', {});
+  }
+
   _setupUI() {
     const btnJoin = document.getElementById('btn-join');
     const btnReady = document.getElementById('btn-ready');
@@ -46,6 +52,7 @@ class WordBombMobile extends MobileBaseGame {
         btnReady.textContent = '준비 완료!';
         btnReady.disabled = true;
         this.sdk.ready();
+        this.sdk.sendToHost('playerReady', {});
       };
     }
 
@@ -57,6 +64,14 @@ class WordBombMobile extends MobileBaseGame {
 
         // 터치 피드백 햅틱
         this.sdk.vibrate('light');
+
+        // 120ms 컬러 플래시 피드백
+        const flashEl = document.getElementById('correct-flash-alert');
+        if (flashEl) {
+          flashEl.classList.remove('hidden');
+          void flashEl.offsetWidth; // reflow
+          setTimeout(() => flashEl.classList.add('hidden'), 120);
+        }
 
         // 호스트로 정답 통보 -> 턴 패스 유도
         this.sdk.sendToHost('submitCorrect', {});
@@ -90,6 +105,14 @@ class WordBombMobile extends MobileBaseGame {
         if (activePanel) activePanel.classList.remove('hidden');
         if (waitPanel) waitPanel.classList.add('hidden');
         if (keywordText) keywordText.textContent = keyword;
+
+        // 제시어 카드 뒤집힘 (플립) 연출 트리거
+        const cardFlip = document.getElementById('keyword-card-flip');
+        if (cardFlip) {
+          cardFlip.classList.remove('flip');
+          void cardFlip.offsetWidth; // reflow
+          cardFlip.classList.add('flip');
+        }
       } else {
         if (activePanel) activePanel.classList.add('hidden');
         if (waitPanel) waitPanel.classList.remove('hidden');
@@ -97,6 +120,49 @@ class WordBombMobile extends MobileBaseGame {
       }
 
       this.showScreen('game');
+    });
+
+    // 1.5. 5초 이하 임박 상황 더블 진동 경고 수신
+    this.sdk.onMessage('tickWarning', ({ remainingSec }) => {
+      if (this._isActive) {
+        // 5초 이하 매 초마다 짧게 징-징 두 번 진동
+        this.sdk.vibrate([100, 80, 100]);
+      }
+    });
+
+    // 1.8. 로비 상태 동기화 처리 (로비 재연결 프리징 가드)
+    this.sdk.onMessage('lobbyState', ({ isReady, category }) => {
+      this.showScreen('waiting');
+      const btnReady = document.getElementById('btn-ready');
+      if (btnReady) {
+        if (isReady) {
+          btnReady.classList.add('ready-btn');
+          btnReady.textContent = '준비 완료!';
+          btnReady.disabled = true;
+        } else {
+          btnReady.classList.remove('ready-btn');
+          btnReady.textContent = '준비 완료';
+          btnReady.disabled = false;
+        }
+      }
+    });
+
+    // 1.9. 결과 상태 동기화 처리
+    this.sdk.onMessage('resultState', ({ loserId, loserNick, passedCount }) => {
+      const statusText = document.getElementById('result-status-text');
+      const passedVal = document.getElementById('result-passed');
+      if (passedVal) passedVal.textContent = passedCount;
+
+      const isMeLoser = loserId === this.sdk.playerId;
+      if (statusText) {
+        statusText.className = 'result-status ' + (isMeLoser ? 'loser' : 'winner');
+        if (isMeLoser) {
+          statusText.innerHTML = '💥 당신의 폰에서 폭탄이 터졌습니다! (패배)';
+        } else {
+          statusText.innerHTML = `🎉 생존 완료! <br>(${loserNick} 플레이어 폭사)`;
+        }
+      }
+      this.showScreen('result');
     });
 
     // 2. 폭발 게임 종료 수신

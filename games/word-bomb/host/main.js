@@ -4,9 +4,10 @@ import { DemoSimulator } from './DemoSimulator.js';
 
 const KEYWORDS = {
   all: ['김밥', '스마트폰', '제주도', '에펠탑', '안경', '지갑', '강아지', '피자', '노래방', '선풍기', '우주선', '컴퓨터', '영화관', '자전거', '피아노', '도서관', '삼겹살', '기린', '소방서', '우산'],
-  food: ['피자', '치킨', '짜장면', '떡볶이', '김밥', '삼겹살', '라면', '햄버거', '초밥', '비빔밥', '김치찌개', '빙수', '삼계탕', '샌드위치', '와플', '갈비', '돈까스', '족발', '탕수육'],
-  animal: ['호랑이', '사자', '토끼', '코끼리', '원숭이', '판다', '고양이', '강아지', '펭귄', '돌고래', '기린', '여우', '늑대', '하마', '악어', '다람쥐', '코알라', '치타', '얼룩말'],
-  place: ['에펠탑', '제주도', '서울역', '학교', '놀이공원', '수영장', '박물관', '공항', '지하철', '소방서', '경찰서', '백화점', '우체국', '은행', '병원', '약국', '도서관', '카페']
+  kids: ['사과', '바나나', '경찰차', '사자', '토끼', '유치원', '놀이터', '자전거', '포도', '강아지', '고양이', '우산', '안경', '모자', '치약', '비누', '가방', '노래', '그림', '우유'],
+  family: ['캠핑', '삼겹살', '청소기', '냉장고', '제주도', '가족사진', '할머니', '김장', '소풍', '마트', '주차장', '세탁기', '영화관', '놀이공원', '비행기', '도서관', '커피', '생일파티', '등산', '온천'],
+  internet: ['킹받네', '중꺾마', '어쩔티비', '내돈내산', '갓생', '스포일러', '스트리머', '구독', '좋아요', '알림설정', '썸네일', '조회수', '알고리즘', '댓글', '쇼츠', '트렌드', '짤방', '밈', '악플러', '해커'],
+  adult: ['회사원', '야근', '월급날', '주택담보대출', '가상화폐', '주식투자', '세금', '숙취', '소개팅', '미팅', '해외직구', '대환대출', '연말정산', '부동산', '결혼식', '번아웃', '사표', '부장님', '치맥', '골프']
 };
 
 class WordBombHost extends HostBaseGame {
@@ -27,6 +28,18 @@ class WordBombHost extends HostBaseGame {
     this._category = 'all';
     this._lastTickTime = 0;
     this._lastBeepSec = 0;
+    this._lastIntervalStep = undefined;
+
+    // 소리 끄기/켜기 토글 상태
+    this._isMuted = false;
+
+    // 준비 완료 트래킹
+    this._readyPlayers = new Set();
+
+    // 데모용 실제 세션 백업
+    this._realPlayersBackup = new Map();
+    this._realNicknamesBackup = new Map();
+    this._realSdkPlayersBackup = new Map();
 
     // 데모 시뮬레이터 인젝션
     this._demoSimulator = new DemoSimulator(this);
@@ -54,11 +67,30 @@ class WordBombHost extends HostBaseGame {
       });
     }
 
+    // 소리 끄기/켜기 토글 핸들러
+    const muteBtn = document.getElementById('btn-mute-toggle');
+    if (muteBtn) {
+      muteBtn.onclick = () => {
+        this._isMuted = !this._isMuted;
+        muteBtn.textContent = this._isMuted ? '🔇 소리 꺼짐' : '🔊 소리 켜짐';
+      };
+    }
+
     // 데모 플레이 버튼 핸들러
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          // 실제 참가한 플레이어가 1명 이상 있으면 데모 불가
+          if (this.players.size > 0) {
+            const warningEl = document.getElementById('lobby-warning');
+            if (warningEl) {
+              warningEl.textContent = '⚠️ 접속 중인 플레이어가 있어 데모를 실행할 수 없습니다.';
+              warningEl.classList.remove('hidden');
+              setTimeout(() => warningEl.classList.add('hidden'), 3000);
+            }
+            return;
+          }
           this._demoSimulator.startDemo();
           demoPlayBtn.textContent = '⏹️ 데모 중지';
         } else {
@@ -85,6 +117,7 @@ class WordBombHost extends HostBaseGame {
   }
 
   _playBeepSound(frequency = 600, duration = 0.08) {
+    if (this._isMuted) return;
     if (!this._audioCtx) return;
     if (this._audioCtx.state === 'suspended') {
       this._audioCtx.resume();
@@ -104,7 +137,24 @@ class WordBombHost extends HostBaseGame {
     osc.stop(ctx.currentTime + duration);
   }
 
+  _playTurnStartSound() {
+    if (this._isMuted) return;
+    this._playBeepSound(440, 0.06);
+    setTimeout(() => {
+      this._playBeepSound(660, 0.08);
+    }, 60);
+  }
+
+  _playSuccessSound() {
+    if (this._isMuted) return;
+    this._playBeepSound(880, 0.05);
+    setTimeout(() => {
+      this._playBeepSound(1100, 0.08);
+    }, 50);
+  }
+
   _playExplosionSound() {
+    if (this._isMuted) return;
     if (!this._audioCtx) return;
     const ctx = this._audioCtx;
     const bufferSize = ctx.sampleRate * 0.8;
@@ -137,10 +187,18 @@ class WordBombHost extends HostBaseGame {
 
   // ─── 로비 및 참가자 제어 ───
   onPlayerJoin(player) {
+    // 데모 도중에 실제 플레이어가 난입하면 즉시 데모 중단하고 복구
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
+    this._readyPlayers.delete(player.id);
     this._renderLobbyGrid();
   }
 
   onPlayerLeave(playerId) {
+    this._readyPlayers.delete(playerId);
     this._renderLobbyGrid();
     
     // 게임 진행 도중 이탈 시 턴 매니징 예외 가드
@@ -172,14 +230,47 @@ class WordBombHost extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
-    // 튕겼다 재접속 시 이전 악기 파트 복구 및 타임스탬프 싱크 전파
     if (this._gameActive) {
       this._syncTurnToMobiles();
       this._renderCarousel();
+    } else {
+      this._syncGameStateToPlayer(player.id);
+    }
+  }
+
+  _syncGameStateToPlayer(playerId) {
+    if (this.phase === 'lobby') {
+      const isReady = this._readyPlayers.has(playerId);
+      this.sendToPlayer(playerId, 'lobbyState', {
+        phase: 'lobby',
+        isReady: isReady,
+        category: this._category
+      });
+    } else if (this.phase === 'playing') {
+      this._syncTurnToMobiles();
+    } else if (this.phase === 'result') {
+      const loserId = this._playersList[this._activePlayerIndex];
+      const loserNick = this._playerNicknames.get(loserId) || 'Unknown Player';
+      this.sendToPlayer(playerId, 'resultState', {
+        phase: 'result',
+        loserId: loserId,
+        loserNick: loserNick,
+        passedCount: this._passedWords
+      });
     }
   }
 
   onAllReady() {
+    // 2인 미만일 경우 시작 차단 가드 (단, 데모는 통과)
+    if (this.playerCount < 2 && !this._isDemo) {
+      const warningEl = document.getElementById('lobby-warning');
+      if (warningEl) {
+        warningEl.textContent = '⚠️ 게임 시작을 위해 최소 2명이 필요합니다.';
+        warningEl.classList.remove('hidden');
+        setTimeout(() => warningEl.classList.add('hidden'), 3000);
+      }
+      return;
+    }
     this._startGame();
   }
 
@@ -187,16 +278,23 @@ class WordBombHost extends HostBaseGame {
     this._gameActive = false;
     this._isDemo = false;
     this._playersList = [];
+    this._readyPlayers.clear();
     
     const demoPlayBtn = document.getElementById('demoPlayBtn');
-    if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 시뮬레이터 가동';
+    if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
 
     const catSelect = document.getElementById('category-select-box');
-    if (catSelect) catSelect.disabled = false;
+    if (catSelect) {
+      catSelect.disabled = false;
+      catSelect.value = this._category; // 기존 카테고리 기억 복원
+    }
 
     // 화면 뒤흔들림 클래스 리셋
     const container = document.querySelector('.pp-host-container');
     container?.classList.remove('screen-shake');
+
+    // 데모 시뮬레이터 정리
+    this._demoSimulator.stopDemo();
 
     this.setPhase('lobby');
     this._renderLobbyGrid();
@@ -216,9 +314,10 @@ class WordBombHost extends HostBaseGame {
 
     const catTitles = {
       all: '🌐 종합 제시어',
-      food: '🍕 맛있는 음식',
-      animal: '🦁 동물 나라',
-      place: '✈️ 세계 여행 & 사물'
+      kids: '👶 키즈 덱',
+      family: '🏡 패밀리 덱',
+      internet: '⚡ 밈/인터넷',
+      adult: '🔞 성인 파티'
     };
     const hudCat = document.getElementById('hud-category-title');
     if (hudCat) hudCat.textContent = catTitles[this._category] || '종합';
@@ -242,6 +341,9 @@ class WordBombHost extends HostBaseGame {
     this.setPhase('playing');
     this._syncTurnToMobiles();
     this._renderCarousel();
+
+    // 첫 턴 시작 사운드 연출
+    this._playTurnStartSound();
 
     this._lastTickTime = performance.now();
     this._lastBeepSec = Math.ceil(this._bombTime / 1000);
@@ -268,7 +370,6 @@ class WordBombHost extends HostBaseGame {
 
     // 째깍 째깍 비프음 사운드 주기 연산
     const remainingSecFloat = this._bombTime / 1000;
-    const currentSec = Math.ceil(remainingSecFloat);
     
     // 남은 시간 10초 미만(데드라인 가속) 시에는 0.5초마다 째깍 비프
     const isDeadline = remainingSecFloat <= 10;
@@ -284,6 +385,19 @@ class WordBombHost extends HostBaseGame {
       // 데드라인 가속 시 더 높은 톤의 비프음 경고
       const tone = isDeadline ? 850 : 500;
       this._playBeepSound(tone, isDeadline ? 0.05 : 0.08);
+
+      // 5초 이하 극단적 상황 시 150Hz 심장박동 저역 펄스 추가
+      if (remainingSecFloat <= 5) {
+        this._playBeepSound(150, 0.12);
+        
+        // 설명 중인 모바일 기기에 5초 이하 진동용 tickWarning 전송
+        const activePlayerId = this._playersList[this._activePlayerIndex];
+        if (activePlayerId && !activePlayerId.startsWith('bot_')) {
+          this.sendToPlayer(activePlayerId, 'tickWarning', {
+            remainingSec: Math.ceil(remainingSecFloat)
+          });
+        }
+      }
       
       const countdownEl = document.getElementById('timer-text');
       if (countdownEl) {
@@ -318,6 +432,10 @@ class WordBombHost extends HostBaseGame {
     const spotlightName = document.getElementById('active-describer-name');
     if (spotlightName) {
       spotlightName.textContent = activeNick;
+      // slide-in 애니메이션 트리거
+      spotlightName.classList.remove('slide-in');
+      void spotlightName.offsetWidth; // reflow
+      spotlightName.classList.add('slide-in');
     }
 
     // 모바일 전체에 비대칭 정보 전파
@@ -336,6 +454,9 @@ class WordBombHost extends HostBaseGame {
         });
       }
     });
+
+    // 턴 교체 시 짧은 알림 사운드 재생
+    this._playTurnStartSound();
   }
 
   _explode(isForced = false) {
@@ -361,7 +482,7 @@ class WordBombHost extends HostBaseGame {
 
     const resultCat = document.getElementById('result-category');
     if (resultCat) {
-      const catNames = { all: '종합', food: '음식', animal: '동물', place: '여행/사물' };
+      const catNames = { all: '종합', kids: '키즈', family: '패밀리', internet: '밈/인터넷', adult: '성인' };
       resultCat.textContent = catNames[this._category] || '종합';
     }
 
@@ -371,6 +492,10 @@ class WordBombHost extends HostBaseGame {
       loserNick: isForced ? '인원 부족' : loserNick,
       passedCount: this._passedWords
     });
+
+    if (this._isDemo) {
+      this._demoSimulator.onExplode();
+    }
 
     this.setPhase('result');
   }
@@ -383,6 +508,15 @@ class WordBombHost extends HostBaseGame {
       this._renderLobbyGrid();
     });
 
+    this.onMessage('playerReady', (player) => {
+      this._readyPlayers.add(player.id);
+      this._renderLobbyGrid();
+    });
+
+    this.onMessage('requestSyncState', (player) => {
+      this._syncGameStateToPlayer(player.id);
+    });
+
     this.onMessage('submitCorrect', (player) => {
       if (!this._gameActive || this._isExploded) return;
 
@@ -392,7 +526,16 @@ class WordBombHost extends HostBaseGame {
 
       this._passedWords++;
       const passedVal = document.getElementById('hud-passed-count');
-      if (passedVal) passedVal.textContent = this._passedWords;
+      if (passedVal) {
+        passedVal.textContent = this._passedWords;
+        // 성공 카운터 팝 애니메이션 트리거
+        passedVal.classList.remove('pop');
+        void passedVal.offsetWidth;
+        passedVal.classList.add('pop');
+      }
+
+      // 정답 성공 사운드 재생
+      this._playSuccessSound();
 
       // 차례 다음으로 패스
       this._activePlayerIndex = (this._activePlayerIndex + 1) % this._playersList.length;
@@ -406,6 +549,35 @@ class WordBombHost extends HostBaseGame {
         this._demoSimulator.onTurnChange();
       }
     });
+  }
+
+  // 데모 봇용 공개 메시지 라우터 (SDK 직접 조작 우회)
+  handleDemoSubmit(playerId) {
+    if (!this._gameActive || this._isExploded) return;
+
+    const activePlayerId = this._playersList[this._activePlayerIndex];
+    if (playerId !== activePlayerId) return;
+
+    this._passedWords++;
+    const passedVal = document.getElementById('hud-passed-count');
+    if (passedVal) {
+      passedVal.textContent = this._passedWords;
+      passedVal.classList.remove('pop');
+      void passedVal.offsetWidth;
+      passedVal.classList.add('pop');
+    }
+
+    this._playSuccessSound();
+
+    this._activePlayerIndex = (this._activePlayerIndex + 1) % this._playersList.length;
+
+    this._pickNextKeyword();
+    this._syncTurnToMobiles();
+    this._renderCarousel();
+
+    if (this._isDemo) {
+      this._demoSimulator.onTurnChange();
+    }
   }
 
   // ─── 캔버스 2D 폭탄 렌더링 ───
@@ -500,7 +672,8 @@ class WordBombHost extends HostBaseGame {
     board.innerHTML = '';
     this._playerNicknames.forEach((nickname, pid) => {
       const card = document.createElement('div');
-      card.className = 'player-card ready';
+      const isReady = this._readyPlayers.has(pid);
+      card.className = `player-card ${isReady ? 'ready' : ''}`;
       card.innerHTML = `
         <div class="player-dot"></div>
         <div class="player-name">${nickname}</div>

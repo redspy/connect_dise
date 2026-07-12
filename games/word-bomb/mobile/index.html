@@ -10,6 +10,8 @@
 <body class="mobile-controller">
   <!-- 폭발 시 적색 경보 사이렌 레이어 -->
   <div id="explosion-flash-alert" class="explosion-flash hidden"></div>
+  <!-- 정답 패스 시 피드백 플래시 레이어 -->
+  <div id="correct-flash-alert" class="correct-flash hidden"></div>
 
   <!-- 1. 로그인 화면 -->
   <div class="mobile-screen" data-screen="setup">
@@ -32,6 +34,17 @@
       <div class="waiting-spinner"></div>
       <h2 class="waiting-title">대기실 입장 완료</h2>
       <p class="waiting-desc">다른 플레이어들이 조인하고 있습니다.</p>
+      
+      <!-- 입문 튜토리얼 가이드 고정 -->
+      <div class="tutorial-card">
+        <div class="tutorial-title">📖 게임 방법 (3줄 요약)</div>
+        <ul class="tutorial-list">
+          <li>1. 자기 차례에만 스마트폰에 비밀 제시어가 보입니다.</li>
+          <li>2. 말로 설명하여 방 안 사람들이 정답을 맞히게 하세요!</li>
+          <li>3. 맞히는 즉시 <b>[정답!]</b>을 눌러 폭탄을 넘겨야 생존합니다!</li>
+        </ul>
+      </div>
+
       <button id="btn-ready" class="btn-ready">준비 완료</button>
     </div>
   </div>
@@ -56,10 +69,12 @@
     <div id="describer-active-panel" class="state-panel active-gold hidden">
       <div class="active-badge">🎤 설명할 차례입니다!</div>
       
-      <!-- 비밀 키워드 카드 -->
-      <div class="keyword-card">
-        <div class="card-lbl">비밀 제시어</div>
-        <div id="secret-keyword-text" class="card-word">제시어</div>
+      <!-- 비밀 키워드 카드 (플립 효과 지원용 card-container 구조) -->
+      <div class="card-container">
+        <div class="keyword-card" id="keyword-card-flip">
+          <div class="card-lbl">비밀 제시어</div>
+          <div id="secret-keyword-text" class="card-word">제시어</div>
+        </div>
       </div>
 
       <!-- 거대 정답 확인/패스 단축 단추 -->

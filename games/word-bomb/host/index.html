@@ -12,10 +12,11 @@
   <div class="pp-host-container">
 
     <!-- 1. 로비 단계 -->
-    <div class="dw-overlay" data-phase="lobby">
+    <div class="dw-overlay" data-phase="lobby" id="lobby-view">
       <div class="lobby-header">
         <h1 class="lobby-title">💣 WORD BOMB 💥</h1>
         <p class="lobby-subtitle">째깍째깍 터지기 전에 단어를 묘사하고 패스하세요!</p>
+        <button id="btn-mute-toggle" class="btn-mute">🔊 소리 켜짐</button>
       </div>
 
       <div class="setup-layout">
@@ -24,21 +25,24 @@
           <h2 class="section-title">📦 단어 카테고리</h2>
           <div class="select-wrapper">
             <select id="category-select-box" class="category-select">
-              <option value="all">🌐 종합 제시어 (All-round)</option>
-              <option value="food">🍕 맛있는 음식 (Delicious Food)</option>
-              <option value="animal">🦁 동물 나라 (Animal Kingdom)</option>
-              <option value="place">✈️ 세계 여행 & 사물 (Places & Objects)</option>
+              <option value="all">🌐 종합 제시어 (쉬움/보통)</option>
+              <option value="kids">👶 키즈 덱 (쉬움)</option>
+              <option value="family">🏡 패밀리 덱 (보통)</option>
+              <option value="internet">⚡ 밈/인터넷 (보통)</option>
+              <option value="adult">🔞 성인 파티 (어려움)</option>
             </select>
           </div>
 
           <div class="players-headline">참가 플레이어 목록</div>
+          <div id="lobby-warning" class="lobby-warning hidden">⚠️ 게임 시작을 위해 최소 2명이 필요합니다.</div>
           <div id="roles-board" class="players-grid"></div>
 
-          <button id="demoPlayBtn" class="btn-demo">🤖 데모 시뮬레이터 가동</button>
+          <button id="demoPlayBtn" class="btn-demo">🤖 데모 플레이 실행</button>
         </div>
 
         <!-- 입장 QR 안내 보드 -->
         <div class="qr-section card-bg">
+          <div id="demo-indicator-banner" class="demo-indicator-banner hidden">🤖 데모 플레이 진행 중...</div>
           <div id="qr-box"></div>
           <div class="qr-instruction">
             <p class="qr-main">개인 스마트폰으로 QR 코드를 스캔하세요!</p>

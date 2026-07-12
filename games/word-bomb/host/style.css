@@ -150,9 +150,36 @@ body.host-board::before {
 .players-headline {
   font-size: 1.2rem;
   color: #8b9bb4;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   border-left: 4px solid var(--neon-cyan);
   padding-left: 10px;
+}
+
+.lobby-warning {
+  background: rgba(255, 51, 51, 0.15);
+  border: 1px solid var(--neon-red);
+  color: #ff8888;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  animation: shake-alert 0.5s ease-in-out;
+}
+
+.demo-indicator-banner {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1.5px dashed var(--neon-gold);
+  color: var(--neon-gold);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 15px;
+  width: 100%;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+  text-align: center;
+  animation: heartbeat 2s infinite;
 }
 
 .players-grid {
@@ -165,26 +192,37 @@ body.host-board::before {
 }
 
 .player-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
   border-radius: 12px;
   padding: 15px;
   display: flex;
   align-items: center;
   gap: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
 }
 
+/* 준비 상태 구분 */
 .player-card.ready {
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+  background: rgba(57, 255, 20, 0.05);
+  border-color: var(--neon-green);
+  box-shadow: 0 0 12px rgba(57, 255, 20, 0.25);
+  color: #ffffff;
 }
 
 .player-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 8px var(--neon-cyan);
+  background: #555c68;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.player-card.ready .player-dot {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
 }
 
 .player-name {
@@ -208,6 +246,23 @@ body.host-board::before {
 .btn-demo:hover {
   transform: translateY(-2px);
   box-shadow: 0 0 15px var(--neon-cyan);
+}
+
+.btn-mute {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 10px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.btn-mute:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--neon-cyan);
 }
 
 #qr-box {
@@ -254,6 +309,18 @@ body.host-board::before {
   font-size: 1.8rem;
   font-weight: 800;
   color: var(--neon-cyan);
+  display: inline-block;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.hud-value.pop {
+  animation: num-pop 0.3s ease-out;
+}
+
+@keyframes num-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); color: var(--neon-green); text-shadow: 0 0 10px var(--neon-green); }
+  100% { transform: scale(1); }
 }
 
 .game-arena {
@@ -294,6 +361,7 @@ body.host-board::before {
   padding: 40px;
   text-align: center;
   animation: card-float 3s infinite alternate ease-in-out;
+  overflow: hidden;
 }
 
 .spotlight-title {
@@ -309,6 +377,17 @@ body.host-board::before {
   color: #fff;
   text-shadow: 0 0 20px var(--neon-gold);
   margin-bottom: 20px;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+}
+
+.active-name.slide-in {
+  animation: slide-snap 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes slide-snap {
+  0% { transform: translateX(80px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 .spotlight-sub {
