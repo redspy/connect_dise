@@ -11,6 +11,10 @@
     <!-- Header -->
     <header class="game-header">
       <div class="logo">🔔 PIT TRADE</div>
+      <div id="demo-badge" class="demo-status-banner hidden">
+        <span>🤖 데모 플레이 진행 중</span>
+        <button id="btn-stop-demo" class="btn-stop-demo">데모 중단</button>
+      </div>
       <div class="room-code">방 코드: <span id="room-code-val">----</span></div>
     </header>
 
@@ -24,6 +28,12 @@
         <div id="qr-box" class="qr-display-container"></div>
 
         <div class="lobby-controls">
+          <select id="demoScenarioSelect" class="demo-select" style="padding: 10px; border-radius: 8px; font-weight: bold; background: #0f172a; color: white; border: 1.5px solid #fbbf24; margin-right: 10px;">
+            <option value="monopoly">🏆 독점 승리 시나리오</option>
+            <option value="bear_pass">🐻 곰 카드 대난동 시나리오</option>
+            <option value="forced_leave">❌ 인원 부족 강제 종료</option>
+            <option value="reconnect">🔄 중간 재접속 복구</option>
+          </select>
           <button id="demoPlayBtn" class="btn-demo">🤖 데모 플레이 실행</button>
         </div>
 

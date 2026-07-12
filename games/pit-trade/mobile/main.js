@@ -20,9 +20,32 @@ class PitTradeMobile extends MobileBaseGame {
 
     this._hand = [];
     this._selectedCardIds = [];
+    this._toastTimer = null;
 
     this._setupUI();
     this._wireMessages();
+  }
+
+  onJoin(player) {
+    this.showScreen('setup');
+  }
+
+  onRejoin(player) {
+    // 재접속 시 호스트의 현재 페이즈 정보를 기반으로 화면을 복구하기 위해
+    // 호스트의 응답 패킷 대기. (동기화 패킷은 호스트가 rejoin 감지 후 자동 발송)
+  }
+
+  _showToast(msg, type = 'error') {
+    const toast = document.getElementById('toast-message');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.className = `toast-alert ${type}`;
+    toast.classList.remove('hidden');
+    
+    if (this._toastTimer) clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 1500);
   }
 
   onReset() {
@@ -110,7 +133,7 @@ class PitTradeMobile extends MobileBaseGame {
 
       // 곰 카드를 인계받았을 경우 비밀 햅틱 노티 작동
       if (gotBear) {
-        this.sdk.vibrate([150, 100, 150]);
+        this.sdk.vibrate('heavy');
         
         // 사이렌 적색 플래시 경보 레이어 깜빡임
         const flash = document.getElementById('explosion-flash-alert');
@@ -119,11 +142,82 @@ class PitTradeMobile extends MobileBaseGame {
           void flash.offsetWidth; // reflow
           setTimeout(() => flash.classList.add('hidden'), 250);
         }
+        this._showToast('🐻 곰 카드를 넘겨받았습니다! 경고!', 'error');
+      } else {
+        this.sdk.vibrate('medium');
+        this._showToast('🤝 거래가 성사되었습니다!', 'info');
       }
 
       this._renderHand();
       this._renderSelectedSlots();
       this._checkMonopolyStatus();
+    });
+
+    // 재접속 복구용 핸들러 등록
+    this.sdk.onMessage('lobbyState', ({ nickname }) => {
+      if (nickname) {
+        const hudNick = document.getElementById('hud-my-nick');
+        if (hudNick) hudNick.textContent = nickname;
+        const inputNick = document.getElementById('nickname-input');
+        if (inputNick) inputNick.value = nickname;
+      }
+      this.showScreen('waiting');
+    });
+
+    this.sdk.onMessage('gameState', ({ hand, poolCounts, activeTrade }) => {
+      this._hand = hand;
+      this._poolCounts = poolCounts;
+      if (activeTrade) {
+        this._selectedCardIds = [];
+        const handCopy = [...hand];
+        activeTrade.cardIds.forEach(cid => {
+          const idx = handCopy.indexOf(cid);
+          if (idx !== -1) {
+            this._selectedCardIds.push(idx);
+            handCopy[idx] = null; // 중복 인덱스 매칭 방지
+          }
+        });
+      } else {
+        this._selectedCardIds = [];
+      }
+      this._renderHand();
+      this._renderSelectedSlots();
+      this._checkMonopolyStatus();
+      this.showScreen('game');
+    });
+
+    this.sdk.onMessage('resultState', ({ winnerId, winnerNick, bearHolderId, scores }) => {
+      document.getElementById('bell-trigger-zone')?.classList.add('hidden');
+      
+      const winnerTxt = document.getElementById('result-winner-text');
+      if (winnerTxt) {
+        const isMeWinner = winnerId === this.sdk.getMyPlayer()?.id;
+        winnerTxt.textContent = isMeWinner ? '🎉 당신이 시장을 독점했습니다!' : `🔔 ${winnerNick} 승리!`;
+      }
+
+      const bearTxt = document.getElementById('result-bear-text');
+      if (bearTxt) {
+        const isMeBear = bearHolderId === this.sdk.getMyPlayer()?.id;
+        bearTxt.textContent = isMeBear ? '🐻 곰 카드 패널티 피격! (-50점 감점)' : '🐻 곰 카드 회피 성공!';
+        bearTxt.className = isMeBear ? 'bear-status loser' : 'bear-status';
+      }
+
+      const scoreList = document.getElementById('mobile-score-list');
+      if (scoreList) {
+        scoreList.innerHTML = '';
+        scores.forEach(([nick, val]) => {
+          const row = document.createElement('div');
+          row.className = 'score-row';
+          row.innerHTML = `
+            <span></span>
+            <span>${val} 점</span>
+          `;
+          row.firstElementChild.textContent = nick;
+          scoreList.appendChild(row);
+        });
+      }
+
+      this.showScreen('result');
     });
 
     // 2. 시장 매물 동기화
@@ -194,7 +288,7 @@ class PitTradeMobile extends MobileBaseGame {
   // 거래 수락 교환 처리
   _onAcceptTrade(targetId, count) {
     if (this._selectedCardIds.length !== count) {
-      alert(`⚠️ 상대방이 ${count}장 교환을 원합니다! 내 교환 상자에도 정확히 ${count}장의 동일 상품 카드를 담아야 거래할 수 있습니다.`);
+      this._showToast(`⚠️ 상대방이 ${count}장 교환을 원합니다! (나도 ${count}장 선택해야 함)`);
       return;
     }
 
@@ -212,10 +306,12 @@ class PitTradeMobile extends MobileBaseGame {
     if (isSelected) {
       const idx = this._selectedCardIds.indexOf(cardIndex);
       this._selectedCardIds.splice(idx, 1);
+      this.sdk.vibrate('light');
     } else {
       // 곰 카드(Bear)는 오직 1장 교환만 가능하며, 일반 상품과 섞어 교환할 수 없습니다.
       if (cardVal === 'bear') {
         this._selectedCardIds = [cardIndex];
+        this.sdk.vibrate('medium');
       } else {
         // 이미 곰 카드가 선택되어 있으면 리셋
         const hasBearSelected = this._selectedCardIds.some(idx => this._hand[idx] === 'bear');
@@ -227,15 +323,18 @@ class PitTradeMobile extends MobileBaseGame {
         const currentTypes = this._selectedCardIds.map(idx => this._hand[idx]).filter(c => c !== 'bull');
         
         if (currentTypes.length > 0 && cardVal !== 'bull' && cardVal !== currentTypes[0]) {
-          // 다른 종류 카드 선택 시 기존 선택 해제하고 새로운 카드 선택
+          // 다른 종류 카드 선택 시 경고 토스트 노출 후 신규 카드 선택
+          this._showToast('⚠️ 같은 상품(또는 조커🐂)만 함께 거래할 수 있습니다!');
           this._selectedCardIds = [cardIndex];
+          this.sdk.vibrate('light');
         } else {
           // 최대 4장 제한 가드
           if (this._selectedCardIds.length >= 4) {
-            alert('⚠️ 한 번에 교환할 수 있는 카드는 최대 4장입니다.');
+            this._showToast('⚠️ 한 번에 교환할 수 있는 카드는 최대 4장입니다!');
             return;
           }
           this._selectedCardIds.push(cardIndex);
+          this.sdk.vibrate('light');
         }
       }
     }

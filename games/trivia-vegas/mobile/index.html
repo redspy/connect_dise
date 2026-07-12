@@ -28,10 +28,12 @@
           <!-- 닉네임 입력 -->
           <div id="join-form" class="join-form hidden">
             <input type="text" id="nickname-input" placeholder="닉네임 입력" maxlength="8">
+            <div id="join-error-msg" class="inline-error hidden" style="color: #ff3c3c; font-size: 0.85rem; margin-top: 4px;"></div>
             <button id="btn-join" class="sm-btn primary-btn">참가하기</button>
           </div>
 
           <button id="btn-ready" class="sm-btn primary-btn hidden">준비하기</button>
+          <button id="btn-show-rules-lobby" class="sm-btn secondary-btn" style="margin-top: 10px; width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 12px; padding: 12px 0; font-weight: bold; cursor: pointer;">📖 게임 룰 가이드</button>
         </div>
       </div>
 
@@ -59,7 +61,7 @@
             <button class="num-btn" data-key="7">7</button>
             <button class="num-btn" data-key="8">8</button>
             <button class="num-btn" data-key="9">9</button>
-            <button class="num-btn" data-key=".">.</button>
+            <button class="num-btn info-btn" id="btn-show-rules-pad" data-key="rules" style="font-size: 0.95rem;">📖 룰</button>
             <button class="num-btn" data-key="0">0</button>
             <button class="num-btn back-btn" data-key="back">⌫</button>
           </div>
@@ -112,6 +114,29 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- 4. 룰 설명 모달 팝업 -->
+  <div id="rules-modal" class="modal-overlay hidden">
+    <div class="modal-content card-bg">
+      <span id="close-rules-btn" class="close-btn">&times;</span>
+      <h2>🎲 TRIVIA VEGAS 규칙</h2>
+      <div class="rules-container" style="text-align: left; margin: 15px 0; color: #ccc; line-height: 1.6; font-size: 0.9rem; display: flex; flex-direction: column; gap: 12px;">
+        <div class="rule-item" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <strong style="color: var(--neon-gold); font-size: 1rem;">1. 숫자 추정</strong><br>
+          질문이 공개되면 예상하는 정답을 숫자로 제출합니다. (소수점 없이 정수로 제출)
+        </div>
+        <div class="rule-item" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <strong style="color: var(--neon-gold); font-size: 1rem;">2. 정답에 베팅</strong><br>
+          정렬된 답변들 중 <strong style="color: #ff5555;">'정답을 초과하지 않고 가장 가까운 답'</strong>에 베팅하세요! (초과하면 탈락)
+        </div>
+        <div class="rule-item">
+          <strong style="color: var(--neon-gold); font-size: 1rem;">3. Banker (정답 이하 없음)</strong><br>
+          모든 플레이어의 답이 정답보다 크다고 생각되면 5배 고배당인 '정답 이하 없음' 슬롯에 베팅하세요!
+        </div>
+      </div>
+      <button id="close-rules-confirm" class="sm-btn primary-btn" style="margin-top: 10px; width: 100%;">확인</button>
+    </div>
   </div>
 
   <script type="module" src="./main.js"></script>

@@ -413,3 +413,85 @@ body {
   color: #64748b;
   margin-top: 15px;
 }
+
+/* Quick Guide styling for onboarding */
+.quick-guide-panel {
+  margin-top: 15px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 14px;
+  max-width: 320px;
+  text-align: left;
+}
+
+.quick-guide-panel h3 {
+  font-size: 13px;
+  color: #fbbf24;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guide-slides {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide-slide {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.guide-num {
+  background: #1e293b;
+  border: 1px solid #475569;
+  color: #fbbf24;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.guide-slide p {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.guide-slide p strong {
+  color: #f1f5f9;
+}
+
+/* Toast Message styling */
+.toast-alert {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #ef4444;
+  color: #f87171;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  pointer-events: none;
+  transition: opacity 0.2s;
+  text-align: center;
+  white-space: nowrap;
+}
+.toast-alert.info {
+  border-color: #3b82f6;
+  color: #93c5fd;
+}

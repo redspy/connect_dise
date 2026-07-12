@@ -28,6 +28,29 @@
         <div class="spinner"></div>
         <p class="status-msg">다른 플레이어가 조인할 때까지<br>대기 중입니다...</p>
         <button id="btn-ready" class="btn-action btn-ready-toggle">준비 완료</button>
+
+        <!-- 퀵 온보딩 가이드 추가 -->
+        <div class="quick-guide-panel">
+          <h3>💡 3초 만에 배우는 거래 규칙</h3>
+          <div class="guide-slides">
+            <div class="guide-slide">
+              <span class="guide-num">1</span>
+              <p><strong>동일 상품만</strong> 모아서 시장에 올릴 수 있습니다. (황소🐂는 어떤 상품과도 함께 섞을 수 있는 조커 카드입니다)</p>
+            </div>
+            <div class="guide-slide">
+              <span class="guide-num">2</span>
+              <p>상대 매물을 터치해 거래할 때는 <strong>내가 올린 장수와 상대가 원하는 장수가 정확히 일치</strong>해야 합니다.</p>
+            </div>
+            <div class="guide-slide">
+              <span class="guide-num">3</span>
+              <p>곰🐻 카드는 <strong>감점 50점</strong>을 줍니다. 곰은 오직 <strong>단독 1장</strong>으로만 시장을 통해 빠르게 남에게 떠넘겨야 합니다!</p>
+            </div>
+            <div class="guide-slide">
+              <span class="guide-num">4</span>
+              <p>한 상품(또는 조커 포함)을 <strong>8장 이상 독점</strong>하면 즉시 상단의 <strong>종 울리기🔔</strong> 버튼을 눌러 승리하세요!</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -95,6 +118,8 @@
       </div>
     </div>
   </div>
+  <!-- Toast 알림 레이어 추가 -->
+  <div id="toast-message" class="toast-alert hidden"></div>
 
   <!-- Platform SDK -->
   <script type="module" src="/platform/client/MobileSDK.js"></script>

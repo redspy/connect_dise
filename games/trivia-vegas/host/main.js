@@ -2,19 +2,113 @@ import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { TriviaVegasDemoSimulator } from './DemoSimulator.js';
 
+// Web Audio API 기반의 카지노 신디사이저 사운드 효과
+class SoundEffects {
+  static getCtx() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    return this.ctx;
+  }
+
+  static playChip() {
+    try {
+      const ctx = this.getCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(900, now);
+      osc.frequency.exponentialRampToValueAtTime(1600, now + 0.05);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch (e) {}
+  }
+
+  static playTick() {
+    try {
+      const ctx = this.getCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(400, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } catch (e) {}
+  }
+
+  static playWin() {
+    try {
+      const ctx = this.getCtx();
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.06, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.3);
+      });
+    } catch (e) {}
+  }
+
+  static playJackpot() {
+    try {
+      const ctx = this.getCtx();
+      const now = ctx.currentTime;
+      for (let i = 0; i < 8; i++) {
+        const delay = i * 0.12;
+        const freq = 600 + Math.random() * 800;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + delay);
+        gain.gain.setValueAtTime(0.08, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.22);
+      }
+    } catch (e) {}
+  }
+}
+
 export class TriviaVegasGame extends HostBaseGame {
   constructor(sdk) {
     super(sdk, { overlayClass: 'tv-overlay', qrContainerId: 'qr-box' });
 
-    // 기본 데이터셋 (상식 숫자 퀴즈)
+    // 풍부해진 상식 숫자 퀴즈 질문 팩 (카테고리, 단위, 난이도 포함)
     this._triviaList = [
-      { question: '자이언트 판다가 하루에 먹는 대나무의 평균 무게는 몇 kg일까요?', answer: 15 },
-      { question: '에펠탑의 실제 정밀 높이는 몇 미터일까요? (안테나 포함)', answer: 330 },
-      { question: '라이트 형제가 최초의 동력 비행을 성공한 연도는 몇 년도일까요?', answer: 1903 },
-      { question: '달의 평균 표면 온도는 영하 몇 도(°C)일까요?', answer: 130 },
-      { question: '모나리자 그림의 세로 정밀 길이는 몇 cm일까요?', answer: 77 },
-      { question: '세계에서 가장 깊은 마리아나 해구의 깊이는 몇 미터일까요?', answer: 10984 },
-      { question: '세계 최초의 상업용 여객기 보잉 707이 첫 비행을 한 연도는?', answer: 1957 }
+      { question: '자이언트 판다가 하루에 먹는 대나무의 평균 무게는 몇 kg일까요?', answer: 15, unit: 'kg', category: '동물/자연', difficulty: '보통' },
+      { question: '에펠탑의 실제 정밀 높이는 몇 미터일까요? (안테나 포함)', answer: 330, unit: 'm', category: '상식/건축', difficulty: '쉬움' },
+      { question: '라이트 형제가 최초의 동력 비행을 성공한 연도는 몇 년도일까요?', answer: 1903, unit: '년도', category: '역사/과학', difficulty: '보통' },
+      { question: '달의 평균 표면 온도는 영하 몇 도(°C)일까요?', answer: 130, unit: '°C', category: '과학/우주', difficulty: '어려움' },
+      { question: '모나리자 그림의 세로 정밀 길이는 몇 cm일까요?', answer: 77, unit: 'cm', category: '예술/문화', difficulty: '보통' },
+      { question: '세계에서 가장 깊은 마리아나 해구의 깊이는 몇 미터일까요?', answer: 10984, unit: 'm', category: '과학/지리', difficulty: '어려움' },
+      { question: '세계 최초의 상업용 여객기 보잉 707이 첫 비행을 한 연도는?', answer: 1957, unit: '년도', category: '역사/교통', difficulty: '어려움' },
+      { question: '조선 왕조의 역대 왕은 총 몇 명일까요?', answer: 27, unit: '명', category: '역사/한국', difficulty: '쉬움' },
+      { question: '지구에서 태양까지의 평균 거리는 약 몇 만 km일까요?', answer: 14960, unit: '만 km', category: '과학/우주', difficulty: '어려움' },
+      { question: '축구 경기장 규격의 국제 표준 터치라인 최소 길이는 몇 m일까요?', answer: 100, unit: 'm', category: '스포츠', difficulty: '보통' },
+      { question: '한국에서 가장 높은 산인 한라산의 높이는 몇 m일까요?', answer: 1947, unit: 'm', category: '지리/한국', difficulty: '쉬움' },
+      { question: '태양계 행성 중 가장 크기가 큰 목성의 자전 주기는 약 몇 시간일까요?', answer: 10, unit: '시간', category: '과학/우주', difficulty: '보통' }
     ];
 
     this._round = 1;
@@ -35,6 +129,7 @@ export class TriviaVegasGame extends HostBaseGame {
 
     this._demoSimulator = new TriviaVegasDemoSimulator(this);
     this._isDemo = false;
+    this._demoAutoTimer = null;
 
     this._wireMessages();
   }
@@ -46,10 +141,16 @@ export class TriviaVegasGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          // 실유저가 있는 경우 시작 가드
+          if (this.players.size > 0 && !confirm('현재 접속해 있는 실제 플레이어가 있습니다. 데모를 시작하시겠습니까? (기존 로비 유저들은 백업 후 복원됩니다)')) {
+            return;
+          }
           this._demoSimulator.startDemo();
           demoPlayBtn.textContent = '⏹️ 데모 중지';
+          this._showDemoBanner(true);
         } else {
           this._demoSimulator.stopDemo();
+          this._showDemoBanner(false);
           this.resetSession();
         }
       };
@@ -76,6 +177,43 @@ export class TriviaVegasGame extends HostBaseGame {
     }
   }
 
+  _showDemoBanner(visible) {
+    let banner = document.getElementById('demo-running-banner');
+    if (visible) {
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'demo-running-banner';
+        banner.style.cssText = 'background: rgba(255, 215, 0, 0.15); border: 1px solid var(--neon-gold); color: var(--neon-gold); padding: 8px 16px; border-radius: 8px; text-align: center; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px; z-index: 20; position: relative; display: flex; justify-content: space-between; align-items: center; gap: 15px;';
+        
+        const textSpan = document.createElement('span');
+        textSpan.textContent = '🤖 데모 플레이 모드 시뮬레이션 가동 중 (시나리오: 표준 베가스 챌린지)';
+        
+        const stopBtn = document.createElement('button');
+        stopBtn.textContent = '⏹️ 데모 중지';
+        stopBtn.style.cssText = 'background: var(--neon-gold); color: #000; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.2s;';
+        stopBtn.onmouseover = () => stopBtn.style.background = '#e6c300';
+        stopBtn.onmouseout = () => stopBtn.style.background = 'var(--neon-gold)';
+        stopBtn.onclick = () => {
+          this._demoSimulator.stopDemo();
+          this._showDemoBanner(false);
+          this.resetSession();
+        };
+        
+        banner.appendChild(textSpan);
+        banner.appendChild(stopBtn);
+        
+        const mainContent = document.querySelector('.tv-main-content');
+        if (mainContent) {
+          mainContent.prepend(banner);
+        }
+      }
+    } else {
+      if (banner) {
+        banner.remove();
+      }
+    }
+  }
+
   onPlayerJoin(player) {
     this._resetIdleTimer();
     this.renderLobbyPlayers(this._playerNicknames);
@@ -97,17 +235,18 @@ export class TriviaVegasGame extends HostBaseGame {
     this.renderLobbyPlayers(this._playerNicknames);
 
     if (this._gameActive) {
-      // 진행중인 상태 복원
+      // 진행중인 상태 상세 복원
+      const currentQ = this._questions[this._round - 1];
       this.sendToPlayer(player.id, 'rejoinState', {
         phase: 'playing',
         roundPhase: this._roundPhase,
         round: this._round,
-        question: this._questions[this._round - 1].question,
+        question: currentQ.question + ` (단위: ${currentQ.unit})`,
         balance: this._playerBalances.get(player.id) || 1000,
         hasSubmitted: this._playerEstimates.has(player.id),
         slots: this._sortedSlots,
         winnerSlotIndex: this._winnerSlotIndex,
-        correctAnswer: this._questions[this._round - 1].answer
+        correctAnswer: currentQ.answer
       });
     } else {
       this.sendToPlayer(player.id, 'lobbyState', { phase: 'lobby' });
@@ -119,7 +258,9 @@ export class TriviaVegasGame extends HostBaseGame {
   }
 
   onReset() {
+    if (this._demoAutoTimer) clearTimeout(this._demoAutoTimer);
     this._demoSimulator.stopDemo();
+    this._showDemoBanner(false);
     this._gameActive = false;
     this._round = 1;
     this._winnerSlotIndex = -1;
@@ -171,6 +312,8 @@ export class TriviaVegasGame extends HostBaseGame {
     this._sortedSlots = [];
     this._winnerSlotIndex = -1;
 
+    const currentQ = this._questions[this._round - 1];
+
     // HUD 및 타이머
     const roundEl = document.getElementById('hud-round');
     const phaseEl = document.getElementById('hud-phase-label');
@@ -179,7 +322,13 @@ export class TriviaVegasGame extends HostBaseGame {
 
     if (roundEl) roundEl.textContent = `${this._round} / ${this._maxRounds}`;
     if (phaseEl) phaseEl.textContent = '추정 답안 작성 중';
-    if (qEl) qEl.textContent = this._questions[this._round - 1].question;
+    if (qEl) {
+      qEl.innerHTML = `
+        <div style="font-size: 0.85rem; color: var(--neon-cyan); text-transform: uppercase; margin-bottom: 6px;">[${currentQ.category}] 난이도: ${currentQ.difficulty}</div>
+        <div>${currentQ.question}</div>
+        <div style="font-size: 0.95rem; color: #8b9bb4; margin-top: 8px;">(정답 단위: ${currentQ.unit})</div>
+      `;
+    }
     if (timerBox) timerBox.style.display = 'none';
 
     // 버튼 초기화
@@ -192,14 +341,14 @@ export class TriviaVegasGame extends HostBaseGame {
 
     this._renderSubmissionGrid();
 
-    // 모바일 지시 전송
+    // 모바일 지시 전송 (단위 함께 전송)
     this.broadcast('newQuestion', {
       round: this._round,
-      question: this._questions[this._round - 1].question
+      question: currentQ.question + ` (단위: ${currentQ.unit})`
     });
 
     if (this._isDemo) {
-      this._demoSimulator.queueBotEstimates(this._questions[this._round - 1].question);
+      this._demoSimulator.queueBotEstimates(currentQ.question);
     }
   }
 
@@ -215,6 +364,56 @@ export class TriviaVegasGame extends HostBaseGame {
     } else {
       document.getElementById('btn-sort-estimates')?.classList.add('hidden');
     }
+  }
+
+  // ─── 데모 시뮬레이터를 위한 안전한 공개 어댑터 메서드 ───────────────────────────────────
+
+  submitEstimateForPlayer(playerId, value) {
+    const player = this.getPlayer(playerId) || { id: playerId };
+    this._playerEstimates.set(playerId, parseFloat(value));
+    this._renderSubmissionGrid();
+    this._checkAllEstimatesSubmitted();
+    SoundEffects.playChip();
+
+    // 데모 자동 자율 진행
+    if (this._isDemo) {
+      const plist = [...this.players.values()];
+      const submittedCount = plist.filter(p => this._playerEstimates.has(p.id)).length;
+      if (submittedCount >= plist.length && plist.length > 0) {
+        if (this._demoAutoTimer) clearTimeout(this._demoAutoTimer);
+        this._demoAutoTimer = setTimeout(() => {
+          this._sortEstimates();
+        }, 1500);
+      }
+    }
+  }
+
+  placeBetForPlayer(playerId, slotIndex, amount) {
+    const player = this.getPlayer(playerId) || { id: playerId };
+    const curBal = this._playerBalances.get(playerId) || 0;
+    const amt = parseInt(amount);
+
+    if (slotIndex < 0 || slotIndex >= this._sortedSlots.length) return;
+    if (curBal < amt) return;
+
+    // 이전 배팅이 있다면 환급 후 덮어쓰기
+    const prevBet = this._playerBets.get(playerId);
+    if (prevBet) {
+      this._playerBalances.set(playerId, curBal + prevBet.amount);
+    }
+
+    const nextBal = this._playerBalances.get(playerId) || 0;
+    this._playerBalances.set(playerId, nextBal - amt);
+    this._playerBets.set(playerId, { slotIndex, amount: amt });
+
+    this._renderBettingTable();
+    SoundEffects.playChip();
+
+    this.sendToPlayer(playerId, 'betUpdate', {
+      balance: this._playerBalances.get(playerId),
+      slotIndex,
+      amount: amt
+    });
   }
 
   // ─── 베팅 테이블 정렬 ──────────────────────────────────────────────────────
@@ -234,11 +433,13 @@ export class TriviaVegasGame extends HostBaseGame {
       const match = uniqueEstimates.find(e => e.value === val);
       if (match) {
         match.creatorNicknames.push(nickname);
+        match.creatorIds.push(p.id);
       } else {
         uniqueEstimates.push({
           value: val,
           creatorNicknames: [nickname],
-          creatorId: p.id
+          creatorIds: [p.id],
+          isBanker: false
         });
       }
     });
@@ -250,6 +451,7 @@ export class TriviaVegasGame extends HostBaseGame {
     const slots = [{
       value: '정답 이하 없음',
       creatorNicknames: ['Banker'],
+      creatorIds: [],
       isBanker: true,
       multiplier: 5
     }];
@@ -262,7 +464,7 @@ export class TriviaVegasGame extends HostBaseGame {
       slots.push({
         value: item.value,
         creatorNicknames: item.creatorNicknames,
-        creatorId: item.creatorId,
+        creatorIds: item.creatorIds,
         isBanker: false,
         multiplier: mult
       });
@@ -290,19 +492,32 @@ export class TriviaVegasGame extends HostBaseGame {
   }
 
   _startBettingTimer() {
-    this._bettingTimeLeft = this._isDemo ? 3 : 20;
+    this._bettingTimeLeft = this._isDemo ? 5 : 20;
     const timerBox = document.getElementById('timer-box');
     const timerEl = document.getElementById('hud-timer');
     const phaseEl = document.getElementById('hud-phase-label');
 
     if (timerBox) timerBox.style.display = 'block';
-    if (timerEl) timerEl.textContent = `${this._bettingTimeLeft}초`;
+    if (timerEl) {
+      timerEl.textContent = `${this._bettingTimeLeft}초`;
+      timerEl.style.color = '';
+      timerEl.style.fontSize = '';
+    }
     if (phaseEl) phaseEl.textContent = '베팅 진행 단계';
 
     if (this._bettingTimer) clearInterval(this._bettingTimer);
     this._bettingTimer = setInterval(() => {
       this._bettingTimeLeft--;
-      if (timerEl) timerEl.textContent = `${this._bettingTimeLeft}초`;
+      if (timerEl) {
+        timerEl.textContent = `${this._bettingTimeLeft}초`;
+        // 카운트다운 마지막 5초에 시각 피드백 및 사운드
+        if (this._bettingTimeLeft <= 5 && this._bettingTimeLeft > 0) {
+          timerEl.style.color = '#ff3c3c';
+          timerEl.style.fontSize = '1.3rem';
+          timerEl.style.transition = 'all 0.1s';
+          SoundEffects.playTick();
+        }
+      }
 
       if (this._bettingTimeLeft <= 0) {
         clearInterval(this._bettingTimer);
@@ -311,10 +526,12 @@ export class TriviaVegasGame extends HostBaseGame {
         
         // 모바일에 베팅 종료 신호
         this.broadcast('bettingTimeOut', {});
+        SoundEffects.playTick();
 
         if (this._isDemo) {
           // 데모 진행시 강제 배당금 정산
-          setTimeout(() => this._resolveBets(), 1000);
+          if (this._demoAutoTimer) clearTimeout(this._demoAutoTimer);
+          this._demoAutoTimer = setTimeout(() => this._resolveBets(), 1500);
         }
       }
     }, 1000);
@@ -336,8 +553,6 @@ export class TriviaVegasGame extends HostBaseGame {
     const answer = questionObj.answer;
 
     // 우승 슬롯 판정
-    // 조건: 정답 이하(<=)인 값 중 가장 큰 값.
-    // 만약 모든 값들이 정답을 초과하면 Banker 슬롯(0번)이 우승.
     let winIdx = 0; // default Banker
     let maxVal = -Infinity;
 
@@ -368,10 +583,10 @@ export class TriviaVegasGame extends HostBaseGame {
       payoutMap.set(p.id, payout);
     });
 
-    // 2. Wits & Wagers 스페셜 정답 보너스: 정확한 우승 추정치를 적어 올린 제작자에게 +$200 지급
-    if (!winSlot.isBanker && winSlot.creatorId) {
+    // 2. Wits & Wagers 스페셜 정답 보너스: 정확한 우승 추정치를 적어 올린 '모든' 제작자에게 공평하게 +$200 지급
+    if (!winSlot.isBanker && winSlot.creatorIds && winSlot.creatorIds.length > 0) {
       plist.forEach(p => {
-        if (p.id === winSlot.creatorId) {
+        if (winSlot.creatorIds.includes(p.id)) {
           const curBal = this._playerBalances.get(p.id) || 0;
           this._playerBalances.set(p.id, curBal + 200);
           payoutMap.set(p.id, (payoutMap.get(p.id) || 0) + 200);
@@ -381,6 +596,7 @@ export class TriviaVegasGame extends HostBaseGame {
 
     // 결과 렌더링 갱신
     this._renderBettingTable();
+    SoundEffects.playWin();
 
     // 모바일에 결과 패킷 브로드캐스트
     const balObj = {};
@@ -402,6 +618,14 @@ export class TriviaVegasGame extends HostBaseGame {
     if (nextBtn) {
       nextBtn.classList.remove('hidden');
       nextBtn.textContent = this._round < this._maxRounds ? '다음 라운드 ➔' : '최종 성적 발표 🏆';
+    }
+
+    // 데모 자율 진행: 정산 완료 후 3.5초 뒤 다음 단계로 자동 진행
+    if (this._isDemo) {
+      if (this._demoAutoTimer) clearTimeout(this._demoAutoTimer);
+      this._demoAutoTimer = setTimeout(() => {
+        this._handleNextRound();
+      }, 3500);
     }
   }
 
@@ -438,7 +662,7 @@ export class TriviaVegasGame extends HostBaseGame {
     const rankingList = document.getElementById('ranking-list');
     if (rankingList) {
       rankingList.innerHTML = ranking.map((item, idx) => `
-        <div class="rank-row">
+        <div class="rank-row" style="animation: fadeInUp 0.4s ease-out both; animation-delay: ${idx * 0.1}s;">
           <div class="rank-num">#${idx + 1}</div>
           <div class="rank-name-box">
             <span class="visual-chip" style="background-color: ${item.color}">${item.nickname[0]}</span>
@@ -450,6 +674,15 @@ export class TriviaVegasGame extends HostBaseGame {
     }
 
     this.setPhase('result');
+    SoundEffects.playJackpot();
+
+    // 데모 자율 진행: 최종 결과 화면 노출 후 6초 뒤 자동 세션 초기화 및 로비 복귀
+    if (this._isDemo) {
+      if (this._demoAutoTimer) clearTimeout(this._demoAutoTimer);
+      this._demoAutoTimer = setTimeout(() => {
+        this.resetSession();
+      }, 6000);
+    }
   }
 
   // ─── 렌더링 헬퍼 ─────────────────────────────────────────────────────────
@@ -478,10 +711,24 @@ export class TriviaVegasGame extends HostBaseGame {
     const table = document.getElementById('betting-table');
     if (!table) return;
 
+    const currentQ = this._questions[this._round - 1];
+    const unitText = currentQ ? currentQ.unit : '';
+
     table.innerHTML = this._sortedSlots.map((slot, idx) => {
       const isWinner = this._winnerSlotIndex === idx;
+      let slotStyle = '';
       let slotClass = 'betting-slot';
       if (isWinner) slotClass += ' winner-slot';
+      
+      // 순차 등장 효과용 딜레이
+      if (this._roundPhase === 'betting') {
+        slotStyle = `animation: fadeInUp 0.3s ease-out both; animation-delay: ${idx * 0.08}s;`;
+      } else if (this._roundPhase === 'resolved') {
+        // 패배 슬롯 딤 효과
+        if (this._winnerSlotIndex !== -1 && !isWinner) {
+          slotClass += ' loser-slot';
+        }
+      }
 
       // 해당 슬롯에 도달한 배팅 칩 렌더링
       const chipsHtml = [];
@@ -496,10 +743,13 @@ export class TriviaVegasGame extends HostBaseGame {
         }
       });
 
+      // Banker와 숫자 구분을 위한 단위 매칭
+      const valText = slot.isBanker ? slot.value : `${slot.value.toLocaleString()} ${unitText}`;
+
       return `
-        <div class="${slotClass}">
+        <div class="${slotClass}" style="${slotStyle}">
           <div class="payout-puck">${slot.multiplier}:1 Payout</div>
-          <div class="slot-value">${slot.value.toLocaleString()}</div>
+          <div class="slot-value">${valText}</div>
           <div class="slot-creator">${slot.creatorNicknames.join(', ')}</div>
           
           <div class="slot-chips-zone">
@@ -528,6 +778,7 @@ export class TriviaVegasGame extends HostBaseGame {
       this._playerEstimates.set(player.id, num);
       this._renderSubmissionGrid();
       this._checkAllEstimatesSubmitted();
+      SoundEffects.playChip();
     });
 
     this.onMessage('placeBet', (player, { slotIndex, amount }) => {
@@ -554,6 +805,7 @@ export class TriviaVegasGame extends HostBaseGame {
       this._playerBets.set(player.id, { slotIndex: idx, amount: amt });
 
       this._renderBettingTable();
+      SoundEffects.playChip();
 
       // 바뀐 보유머니 전송
       this.sendToPlayer(player.id, 'betUpdate', {

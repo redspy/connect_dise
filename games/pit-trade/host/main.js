@@ -22,6 +22,10 @@ class PitTradeHost extends HostBaseGame {
     // 동시성 거래 락 (Transaction Lock)
     this._isTradingLocked = false;
 
+    // 실시간 거래 카운트 (시장 개척자/거래왕 산출용)
+    this._tradeCounts = new Map();
+    this._lastWinnerId = null;
+
     // Web Audio 신시사이저 오디오 컨텍스트
     this._audioCtx = null;
     this._ambientSource = null;
@@ -42,9 +46,26 @@ class PitTradeHost extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (this._isDemo) return;
+        if (this.playerCount > 0) {
+          alert('⚠️ 현재 대기방에 실제 접속한 플레이어가 있어 데모를 시작할 수 없습니다.');
+          return;
+        }
         this._isDemo = true;
         demoPlayBtn.textContent = '🤖 데모 진행 중...';
-        this._demoSimulator.startDemo();
+
+        const demoBadge = document.getElementById('demo-badge');
+        if (demoBadge) demoBadge.classList.remove('hidden');
+
+        const scenarioSelect = document.getElementById('demoScenarioSelect');
+        const scenario = scenarioSelect ? scenarioSelect.value : 'monopoly';
+        this._demoSimulator.startDemo(scenario);
+      };
+    }
+
+    const stopDemoBtn = document.getElementById('btn-stop-demo');
+    if (stopDemoBtn) {
+      stopDemoBtn.onclick = () => {
+        this.resetSession();
       };
     }
 
@@ -54,10 +75,20 @@ class PitTradeHost extends HostBaseGame {
     }
   }
 
+  _syncPlayersList() {
+    if (this._gameActive) return;
+    this._playersList = Array.from(this.players.keys());
+  }
+
   onPlayerJoin(player) {
     this._resetIdleTimer();
-    if (!this._playersList.includes(player.id) && !this._gameActive) {
-      this._playersList.push(player.id);
+    if (this._isDemo && !player.id.startsWith('bot_')) {
+      console.log('[Host] Real player joined during demo. Stopping demo and resetting.');
+      this.resetSession();
+      return;
+    }
+    if (!this._gameActive) {
+      this._syncPlayersList();
       this._scores.set(player.id, this._scores.get(player.id) || 0);
     }
     this._renderLobbyGrid();
@@ -66,35 +97,76 @@ class PitTradeHost extends HostBaseGame {
   onPlayerLeave(playerId) {
     this._renderLobbyGrid();
 
-    if (this._gameActive) {
-      const idx = this._playersList.indexOf(playerId);
-      if (idx !== -1) {
-        this._playersList.splice(idx, 1);
-        this._playerHands.delete(playerId);
-        this._activeTrades.delete(playerId);
+    const idx = this._playersList.indexOf(playerId);
+    if (idx !== -1) {
+      this._playersList.splice(idx, 1);
+      this._playerHands.delete(playerId);
+      this._activeTrades.delete(playerId);
+      this._scores.delete(playerId);
+    }
 
-        if (this._playersList.length < 3 && !this._isDemo) {
-          // 거래 가능 인원 부족 시 강제 종료
-          this._endRound(null, true);
-        } else {
-          this._broadcastTradeState();
-          this._renderHUDStandings();
-        }
+    if (this._gameActive) {
+      if (this._playersList.length < 3) {
+        // 거래 가능 인원 부족 시 강제 종료
+        this._endRound(null, true);
+      } else {
+        this._broadcastTradeState();
+        this._renderHUDStandings();
       }
     }
   }
 
   onPlayerRejoin(player) {
     this._resetIdleTimer();
+    if (!this._playersList.includes(player.id)) {
+      this._playersList.push(player.id);
+    }
     this._renderLobbyGrid();
-    if (this._gameActive) {
-      // 기존 카드 핸드 재전파 (재연결 시 poolCounts 전송 필수 누락 수정)
-      const hand = this._playerHands.get(player.id) || [];
-      this.sendToPlayer(player.id, 'tradeExecuted', { 
-        hand, 
-        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+    this._syncPlayerOnRejoin(player.id);
+  }
+
+  _syncPlayerOnRejoin(playerId) {
+    if (this._phase === 'lobby' || this._phase === 'loading') {
+      this.sendToPlayer(playerId, 'lobbyState', {
+        nickname: this._playerNicknames.get(playerId) || ''
       });
-      this._broadcastTradeState();
+    } else if (this._phase === 'game') {
+      const hand = this._playerHands.get(playerId) || [];
+      const activeTrade = this._activeTrades.get(playerId) || null;
+      this.sendToPlayer(playerId, 'gameState', {
+        hand,
+        poolCounts: this._commodityPoolCounts ? Object.fromEntries(this._commodityPoolCounts) : {},
+        activeTrade
+      });
+      
+      // 소켓 지터/효율성 보정: 전체 브로드캐스트 대신 재접속 유저에게만 개별 전송
+      const state = [];
+      this._activeTrades.forEach((trade, pid) => {
+        state.push({
+          playerId: pid,
+          nickname: this._playerNicknames.get(pid) || 'Player',
+          cardCount: trade.cardCount
+        });
+      });
+      this.sendToPlayer(playerId, 'tradeState', state);
+    } else if (this._phase === 'result') {
+      let bearHolderId = '';
+      this._playerHands.forEach((hand, pid) => {
+        if (hand.includes('bear')) bearHolderId = pid;
+      });
+      const winnerId = this._lastWinnerId || null;
+      const winnerNick = winnerId ? (this._playerNicknames.get(winnerId) || 'Unknown') : '없음';
+      
+      const scoresWithNicks = Array.from(this._scores.entries()).map(([pid, val]) => {
+        return [this._playerNicknames.get(pid) || 'Player', val];
+      });
+
+      this.sendToPlayer(playerId, 'resultState', {
+        winnerId,
+        winnerNick,
+        bearHolderId,
+        scores: scoresWithNicks
+      });
     }
   }
 
@@ -107,11 +179,11 @@ class PitTradeHost extends HostBaseGame {
   onReset() {
     this._gameActive = false;
     this._isDemo = false;
-    this._playersList = [];
     this._playerHands.clear();
     this._activeTrades.clear();
     this._scores.clear();
     this._isTradingLocked = false;
+    this._lastWinnerId = null;
 
     // 데모 시뮬레이터 정지 및 가상 봇 해제
     this._demoSimulator.stopDemo();
@@ -128,9 +200,13 @@ class PitTradeHost extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
 
+    const demoBadge = document.getElementById('demo-badge');
+    if (demoBadge) demoBadge.classList.add('hidden');
+
     const container = document.querySelector('.pp-host-container');
     container?.classList.remove('screen-shake');
 
+    this._syncPlayersList();
     this.setPhase('lobby');
     this._renderLobbyGrid();
   }
@@ -142,7 +218,12 @@ class PitTradeHost extends HostBaseGame {
     this._isTradingLocked = false;
     this._activeTrades.clear();
     this._playerHands.clear();
+    this._tradeCounts.clear();
+    this._lastWinnerId = null;
 
+    if (!this._isDemo) {
+      this._syncPlayersList();
+    }
     const P = this._playersList.length;
 
     // 모든 플레이어의 초기 스코어를 0으로 바인딩
@@ -172,10 +253,15 @@ class PitTradeHost extends HostBaseGame {
     });
 
     // 조커(황소) 및 감점(곰) 카드 주입
-    // 풀의 임의의 카드 2장을 각각 'bull' 및 'bear'로 대체
+    // 풀의 무작위 위치에 있는 카드 2장을 각각 'bull' 및 'bear'로 치환 (밸런스 편향 방지)
     if (cardPool.length >= 2) {
-      cardPool[0] = 'bull';
-      cardPool[1] = 'bear';
+      const idxBull = Math.floor(Math.random() * cardPool.length);
+      let idxBear = Math.floor(Math.random() * cardPool.length);
+      while (idxBear === idxBull) {
+        idxBear = Math.floor(Math.random() * cardPool.length);
+      }
+      cardPool[idxBull] = 'bull';
+      cardPool[idxBear] = 'bear';
     }
 
     // 실제 풀에 주입된 최종 상품별 수량 카운트 (일부 상품은 조커/감점 대체로 7~8장으로 줄어듦)
@@ -268,13 +354,15 @@ class PitTradeHost extends HostBaseGame {
 
   _renderLobbyGrid() {
     const countSpan = document.getElementById('player-count');
-    if (countSpan) countSpan.textContent = this._playersList.length;
+    const displayCount = this._gameActive ? this._playersList.length : this.playerCount;
+    if (countSpan) countSpan.textContent = displayCount;
 
     const grid = document.getElementById('lobby-grid');
     if (!grid) return;
     grid.innerHTML = '';
 
-    this._playersList.forEach(pid => {
+    const pids = this._gameActive ? this._playersList : Array.from(this.players.keys());
+    pids.forEach(pid => {
       const nick = this._playerNicknames.get(pid) || 'Player';
       const isReady = this._isDemo || false;
       const card = document.createElement('div');
@@ -289,6 +377,16 @@ class PitTradeHost extends HostBaseGame {
     if (!grid) return;
     grid.innerHTML = '';
 
+    // 최다 거래 수치 파악
+    let maxTradeCount = 0;
+    let tradeKingId = '';
+    this._tradeCounts.forEach((cnt, pid) => {
+      if (cnt > maxTradeCount) {
+        maxTradeCount = cnt;
+        tradeKingId = pid;
+      }
+    });
+
     this._playersList.forEach(pid => {
       const nick = this._playerNicknames.get(pid) || 'Player';
       const hand = this._playerHands.get(pid) || [];
@@ -296,9 +394,11 @@ class PitTradeHost extends HostBaseGame {
       // 몇 장 모았는지 확인 (조커 포함)
       let counts = {};
       let bullCount = 0;
+      let hasBear = false;
       hand.forEach(c => {
         if (c === 'bull') bullCount++;
-        else if (c !== 'bear') {
+        else if (c === 'bear') hasBear = true;
+        else {
           counts[c] = (counts[c] || 0) + 1;
         }
       });
@@ -315,13 +415,30 @@ class PitTradeHost extends HostBaseGame {
       const target = (this._commodityPoolCounts.get(maxComm) || 9) - 1;
       const isWarning = currentMax >= target - 1;
 
+      // 상태 태그 조립
+      let tags = [];
+      if (isWarning) {
+        tags.push('<span class="hud-tag warning">⚠️ 독점 임박</span>');
+      }
+      if (hasBear) {
+        tags.push('<span class="hud-tag bear">🐻 곰 보관 중</span>');
+      }
+      if (pid === tradeKingId && maxTradeCount > 0) {
+        tags.push('<span class="hud-tag trade-king">🤝 거래왕</span>');
+      }
+
+      const tagsHTML = tags.length > 0 ? `<div class="hud-tags">${tags.join('')}</div>` : '';
+
       const card = document.createElement('div');
       card.className = `player-hud-card ${isWarning ? 'warning-near' : ''}`;
       card.innerHTML = `
-        <span></span>
-        <span>최다 ${currentMax}장</span>
+        <div class="hud-player-info">
+          <span class="hud-player-name"></span>
+          ${tagsHTML}
+        </div>
+        <span class="hud-player-status">최다 ${currentMax}장</span>
       `;
-      card.firstElementChild.textContent = nick;
+      card.querySelector('.hud-player-name').textContent = nick;
       grid.appendChild(card);
     });
   }
@@ -363,6 +480,7 @@ class PitTradeHost extends HostBaseGame {
   _endRound(winnerId, isForced = false) {
     this._gameActive = false;
     this._stopAmbientNoise();
+    this._lastWinnerId = winnerId;
 
     if (this._priceTimer) {
       clearInterval(this._priceTimer);
@@ -373,8 +491,14 @@ class PitTradeHost extends HostBaseGame {
     const bell = document.getElementById('brass-bell');
     bell?.classList.add('bell-ring');
     this._playBellSound();
+
+    // 화면 전체 흔들림 연출로 피날레 극대화
+    const container = document.querySelector('.pp-host-container');
+    container?.classList.add('screen-shake');
+
     setTimeout(() => {
       bell?.classList.remove('bell-ring');
+      container?.classList.remove('screen-shake');
     }, 3000);
 
     // 곰 카드 보유자 판정
@@ -479,126 +603,188 @@ class PitTradeHost extends HostBaseGame {
 
   _wireMessages() {
     this.onMessage('setProfile', (player, { nickname }) => {
-      const name = nickname.trim() || '익명';
-      this.setPlayerName(player.id, name);
-      this._renderLobbyGrid();
+      this.handleSetProfile(player, nickname);
     });
 
     // 1. 거래 등록
     this.onMessage('registerTrade', (player, { cardCount, cardIds }) => {
-      if (!this._gameActive) return;
-
-      // 소유 카드 검증 (보유 개수 충족 검사로 복제/파괴 핵 가드)
-      const hand = this._playerHands.get(player.id) || [];
-      if (!this._hasMatchingCards(hand, cardIds) || cardIds.length !== cardCount) return;
-
-      this._activeTrades.set(player.id, { cardCount, cardIds });
-      this._broadcastTradeState();
-
-      if (this._isDemo) {
-        this._demoSimulator.onMarketChange();
-      }
+      this.handleRegisterTrade(player, cardCount, cardIds);
     });
 
     // 2. 거래 등록 취소
     this.onMessage('cancelTrade', (player) => {
-      if (!this._gameActive) return;
-      this._activeTrades.delete(player.id);
-      this._broadcastTradeState();
+      this.handleCancelTrade(player);
     });
 
     // 3. 거래 매칭 수락
     this.onMessage('executeTrade', (player, { targetPlayerId, cardCount, cardIds }) => {
-      if (!this._gameActive || this._isTradingLocked) return;
-
-      // 자기 자신과의 거래 가드
-      if (player.id === targetPlayerId) return;
-
-      // 동시성 락(Lock) 획득
-      this._isTradingLocked = true;
-
-      const trade = this._activeTrades.get(targetPlayerId);
-      if (!trade || trade.cardCount !== cardCount) {
-        this._isTradingLocked = false;
-        return;
-      }
-
-      // 두 거래 당사자의 핸드 검증
-      const handA = this._playerHands.get(player.id) || [];
-      const handB = this._playerHands.get(targetPlayerId) || [];
-
-      if (!this._hasMatchingCards(handA, cardIds) || !this._hasMatchingCards(handB, trade.cardIds)) {
-        this._isTradingLocked = false;
-        return;
-      }
-
-      // 카드 교환 수행 (단일 트랜잭션 보장)
-      cardIds.forEach(cid => {
-        const idx = handA.indexOf(cid);
-        handA.splice(idx, 1);
-      });
-      trade.cardIds.forEach(cid => {
-        const idx = handB.indexOf(cid);
-        handB.splice(idx, 1);
-      });
-
-      cardIds.forEach(cid => handB.push(cid));
-      trade.cardIds.forEach(cid => handA.push(cid));
-
-      // 거래 등록 소거
-      this._activeTrades.delete(player.id);
-      this._activeTrades.delete(targetPlayerId);
-
-      // 교환받은 유저에게 조커/감점 카드 햅틱 노티 피드백용 전송
-      const hasBearA = trade.cardIds.includes('bear');
-      const hasBearB = cardIds.includes('bear');
-
-      this.sendToPlayer(player.id, 'tradeExecuted', { 
-        hand: handA, 
-        gotBear: hasBearA, 
-        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
-      });
-      this.sendToPlayer(targetPlayerId, 'tradeExecuted', { 
-        hand: handB, 
-        gotBear: hasBearB, 
-        poolCounts: Object.fromEntries(this._commodityPoolCounts) 
-      });
-
-      this._isTradingLocked = false;
-      this._broadcastTradeState();
-      this._renderHUDStandings();
-
-      if (this._isDemo) {
-        this._demoSimulator.onMarketChange();
-      }
+      this.handleExecuteTrade(player, targetPlayerId, cardCount, cardIds);
     });
 
     // 3. 종 울리기 요청
     this.onMessage('ringBell', (player) => {
-      if (!this._gameActive) return;
+      this.handleRingBell(player);
+    });
+  }
 
-      // 독점 여부 최종 재검증
-      const hand = this._playerHands.get(player.id) || [];
-      let counts = {};
-      let bullCount = 0;
-      hand.forEach(c => {
-        if (c === 'bull') bullCount++;
-        else if (c !== 'bear') {
-          counts[c] = (counts[c] || 0) + 1;
-        }
-      });
-      let isCornered = false;
-      Object.keys(counts).forEach(c => {
-        const target = (this._commodityPoolCounts.get(c) || 9) - 1;
-        if (counts[c] + bullCount >= target) {
-          isCornered = true;
-        }
-      });
+  handleSetProfile(player, nickname) {
+    const name = nickname.trim() || '익명';
+    this.setPlayerName(player.id, name);
+    this._renderLobbyGrid();
+  }
 
-      if (isCornered) {
-        this._endRound(player.id);
+  handleRegisterTrade(player, cardCount, cardIds) {
+    if (!this._gameActive) return;
+
+    // 최대 4장 제한 검증
+    if (cardCount > 4 || cardCount < 1 || cardIds.length !== cardCount) return;
+
+    // 소유 카드 검증 (보유 개수 충족 검사로 복제/파괴 핵 가드)
+    const hand = this._playerHands.get(player.id) || [];
+    if (!this._hasMatchingCards(hand, cardIds)) return;
+
+    // 동일 상품 묶음 규칙(또는 황소 조커), 혹은 곰 카드 단독 1장 규칙 검증
+    const hasBear = cardIds.includes('bear');
+    if (hasBear) {
+      if (cardCount !== 1) return; // 곰 카드는 단독 1장 교환만 가능
+    } else {
+      const nonBullCards = cardIds.filter(c => c !== 'bull');
+      if (nonBullCards.length > 0) {
+        const firstType = nonBullCards[0];
+        const allSame = nonBullCards.every(c => c === firstType);
+        if (!allSame) return; // 다른 상품을 섞어 등록 시 가드
+      }
+    }
+
+    this._activeTrades.set(player.id, { cardCount, cardIds });
+    this._broadcastTradeState();
+
+    if (this._isDemo) {
+      this._demoSimulator.onMarketChange();
+    }
+  }
+
+  handleCancelTrade(player) {
+    if (!this._gameActive) return;
+    this._activeTrades.delete(player.id);
+    this._broadcastTradeState();
+  }
+
+  handleExecuteTrade(player, targetPlayerId, cardCount, cardIds) {
+    if (!this._gameActive || this._isTradingLocked) return;
+
+    // 자기 자신과의 거래 가드
+    if (player.id === targetPlayerId) return;
+
+    // 최대 4장 제한 검증
+    if (cardCount > 4 || cardCount < 1 || cardIds.length !== cardCount) return;
+
+    // 동시성 락(Lock) 획득
+    this._isTradingLocked = true;
+
+    const trade = this._activeTrades.get(targetPlayerId);
+    if (!trade || trade.cardCount !== cardCount) {
+      this._isTradingLocked = false;
+      return;
+    }
+
+    // 두 거래 당사자의 핸드 검증
+    const handA = this._playerHands.get(player.id) || [];
+    const handB = this._playerHands.get(targetPlayerId) || [];
+
+    if (!this._hasMatchingCards(handA, cardIds) || !this._hasMatchingCards(handB, trade.cardIds)) {
+      this._isTradingLocked = false;
+      return;
+    }
+
+    // 수락자 카드 규칙 재검증 (동일 종류 혹은 곰 단독)
+    const hasBearA = cardIds.includes('bear');
+    if (hasBearA) {
+      if (cardCount !== 1) {
+        this._isTradingLocked = false;
+        return;
+      }
+    } else {
+      const nonBullCardsA = cardIds.filter(c => c !== 'bull');
+      if (nonBullCardsA.length > 0) {
+        const firstTypeA = nonBullCardsA[0];
+        const allSameA = nonBullCardsA.every(c => c === firstTypeA);
+        if (!allSameA) {
+          this._isTradingLocked = false;
+          return;
+        }
+      }
+    }
+
+    // 카드 교환 수행 (단일 트랜잭션 보장)
+    cardIds.forEach(cid => {
+      const idx = handA.indexOf(cid);
+      handA.splice(idx, 1);
+    });
+    trade.cardIds.forEach(cid => {
+      const idx = handB.indexOf(cid);
+      handB.splice(idx, 1);
+    });
+
+    cardIds.forEach(cid => handB.push(cid));
+    trade.cardIds.forEach(cid => handA.push(cid));
+
+    // 거래 등록 소거
+    this._activeTrades.delete(player.id);
+    this._activeTrades.delete(targetPlayerId);
+
+    // 교환받은 유저에게 조커/감점 카드 햅틱 노티 피드백용 전송
+    const hasBearReceivedA = trade.cardIds.includes('bear');
+    const hasBearReceivedB = cardIds.includes('bear');
+
+    // 실시간 거래 카운트 누적
+    this._tradeCounts.set(player.id, (this._tradeCounts.get(player.id) || 0) + 1);
+    this._tradeCounts.set(targetPlayerId, (this._tradeCounts.get(targetPlayerId) || 0) + 1);
+
+    this.sendToPlayer(player.id, 'tradeExecuted', { 
+      hand: handA, 
+      gotBear: hasBearReceivedA, 
+      poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+    });
+    this.sendToPlayer(targetPlayerId, 'tradeExecuted', { 
+      hand: handB, 
+      gotBear: hasBearReceivedB, 
+      poolCounts: Object.fromEntries(this._commodityPoolCounts) 
+    });
+
+    this._isTradingLocked = false;
+    this._broadcastTradeState();
+    this._renderHUDStandings();
+
+    if (this._isDemo) {
+      this._demoSimulator.onMarketChange();
+    }
+  }
+
+  handleRingBell(player) {
+    if (!this._gameActive) return;
+
+    // 독점 여부 최종 재검증
+    const hand = this._playerHands.get(player.id) || [];
+    let counts = {};
+    let bullCount = 0;
+    hand.forEach(c => {
+      if (c === 'bull') bullCount++;
+      else if (c !== 'bear') {
+        counts[c] = (counts[c] || 0) + 1;
       }
     });
+    let isCornered = false;
+    Object.keys(counts).forEach(c => {
+      const target = (this._commodityPoolCounts.get(c) || 9) - 1;
+      if (counts[c] + bullCount >= target) {
+        isCornered = true;
+      }
+    });
+
+    if (isCornered) {
+      this._endRound(player.id);
+    }
   }
 
   // ─── Web Audio API 합성 오디오 ───

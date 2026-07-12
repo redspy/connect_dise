@@ -459,3 +459,106 @@ body.host-board {
   0% { transform: scale(0.8); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* Demo status banner in header */
+.demo-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #f87171;
+  animation: pulse-glow-badge 2s infinite;
+}
+
+@keyframes pulse-glow-badge {
+  0%, 100% { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+}
+
+.btn-stop-demo {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-stop-demo:hover {
+  background: #dc2626;
+}
+
+/* Screen shake animation for bell ring */
+.screen-shake {
+  animation: shake-effect 0.5s ease-in-out infinite;
+}
+
+@keyframes shake-effect {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-3px, 2px) rotate(-1deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  60% { transform: translate(-2px, -2px) rotate(0deg); }
+  80% { transform: translate(2px, 1px) rotate(1deg); }
+}
+
+/* HUD Player standing tag styles */
+.hud-player-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hud-player-name {
+  font-size: 14px;
+  color: #f1f5f9;
+}
+
+.hud-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hud-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.hud-tag.warning {
+  background: rgba(251, 191, 36, 0.2);
+  border: 1px solid #fbbf24;
+  color: #fbbd23;
+}
+
+.hud-tag.bear {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #f87171;
+}
+
+.hud-tag.trade-king {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
+  color: #60a5fa;
+}
+
+.player-hud-card {
+  align-items: flex-start !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+.hud-player-status {
+  align-self: flex-end;
+  color: #10b981;
+  font-size: 13px;
+}

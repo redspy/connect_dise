@@ -3,6 +3,7 @@ export class TriviaVegasDemoSimulator {
     this.game = game;
     this.isDemo = false;
     this.timeouts = [];
+    this.snapshot = null;
 
     // 가상 봇 전용 고정 답안 사전
     this.estimateSets = {
@@ -12,7 +13,12 @@ export class TriviaVegasDemoSimulator {
       '달의 평균 표면 온도는 영하 몇 도(°C)일까요?': { bot_alpha: 100, bot_beta: 120, bot_gamma: 150 },
       '모나리자 그림의 세로 정밀 길이는 몇 cm일까요?': { bot_alpha: 60, bot_beta: 75, bot_gamma: 90 },
       '세계에서 가장 깊은 마리아나 해구의 깊이는 몇 미터일까요?': { bot_alpha: 8000, bot_beta: 10000, bot_gamma: 12000 },
-      '세계 최초의 상업용 여객기 보잉 707이 첫 비행을 한 연도는?': { bot_alpha: 1950, bot_beta: 1955, bot_gamma: 1960 }
+      '세계 최초의 상업용 여객기 보잉 707이 첫 비행을 한 연도는?': { bot_alpha: 1950, bot_beta: 1955, bot_gamma: 1960 },
+      '조선 왕조의 역대 왕은 총 몇 명일까요?': { bot_alpha: 25, bot_beta: 27, bot_gamma: 30 },
+      '지구에서 태양까지의 평균 거리는 약 몇 만 km일까요?': { bot_alpha: 12000, bot_beta: 14000, bot_gamma: 16000 },
+      '축구 경기장 규격의 국제 표준 터치라인 최소 길이는 몇 m일까요?': { bot_alpha: 90, bot_beta: 105, bot_gamma: 110 },
+      '한국에서 가장 높은 산인 한라산의 높이는 몇 m일까요?': { bot_alpha: 1800, bot_beta: 1900, bot_gamma: 2000 },
+      '태양계 행성 중 가장 크기가 큰 목성의 자전 주기는 약 몇 시간일까요?': { bot_alpha: 8, bot_beta: 9, bot_gamma: 12 }
     };
   }
 
@@ -20,13 +26,24 @@ export class TriviaVegasDemoSimulator {
     this.isDemo = true;
     this.game._isDemo = true;
 
+    // 1. 현재 실제 접속한 플레이어 상태 스냅샷 저장
+    this.snapshot = {
+      players: new Map(this.game.players),
+      sdkPlayers: new Map(this.game.sdk._players),
+      playerNicknames: new Map(this.game._playerNicknames)
+    };
+
     const bots = [
       { id: 'bot_alpha', nickname: '🤖 알파 조종사', color: '#00f3ff' },
       { id: 'bot_beta', nickname: '🤖 베타 조종사', color: '#ff3c3c' },
       { id: 'bot_gamma', nickname: '🤖 감마 조종사', color: '#39ff14' }
     ];
 
+    // 2. 데모용 가상 플레이어 설정
     this.game.players.clear();
+    this.game.sdk._players.clear();
+    this.game._playerNicknames.clear();
+
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
       this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
@@ -40,9 +57,18 @@ export class TriviaVegasDemoSimulator {
     this.isDemo = false;
     this.game._isDemo = false;
     this.clearTimeouts();
+
     this.game.players.clear();
     this.game.sdk._players.clear();
     this.game._playerNicknames.clear();
+
+    // 3. 스냅샷 복구
+    if (this.snapshot) {
+      this.snapshot.players.forEach((val, key) => this.game.players.set(key, val));
+      this.snapshot.sdkPlayers.forEach((val, key) => this.game.sdk._players.set(key, val));
+      this.snapshot.playerNicknames.forEach((val, key) => this.game._playerNicknames.set(key, val));
+      this.snapshot = null;
+    }
   }
 
   queueBotEstimates(question) {
@@ -55,12 +81,9 @@ export class TriviaVegasDemoSimulator {
       const delay = 800 + Math.random() * 1200;
       const tid = setTimeout(() => {
         if (!this.game._gameActive || this.game._roundPhase !== 'estimates') return;
-
-        const botObj = this.game.getPlayer(botId) || { id: botId };
-        const handler = this.game.sdk._messageHandlers.get('submitEstimate');
-        if (handler) {
-          handler(botObj, { value: set[botId] });
-        }
+        
+        // 캡슐화를 깨뜨리던 sdk._messageHandlers 호출 대신 game 레벨의 공개 메서드 호출
+        this.game.submitEstimateForPlayer(botId, set[botId]);
       }, delay);
 
       this.timeouts.push(tid);
@@ -73,21 +96,17 @@ export class TriviaVegasDemoSimulator {
     const bots = ['bot_alpha', 'bot_beta', 'bot_gamma'];
     
     bots.forEach(botId => {
-      // 1.5초 ~ 4초 사이에 각각 베팅 칩 투척
       const delay = 1500 + Math.random() * 2500;
       const tid = setTimeout(() => {
         if (!this.game._gameActive || this.game._roundPhase !== 'betting') return;
 
-        const botObj = this.game.getPlayer(botId) || { id: botId };
         const slotsCount = this.game._sortedSlots.length;
         if (slotsCount === 0) return;
 
-        // 랜덤 베팅 슬롯 인덱스 및 고정 베팅금 $300 설정
         const randomIdx = Math.floor(Math.random() * slotsCount);
-        const handler = this.game.sdk._messageHandlers.get('placeBet');
-        if (handler) {
-          handler(botObj, { slotIndex: randomIdx, amount: 300 });
-        }
+        
+        // game 레벨의 공개 메서드 호출
+        this.game.placeBetForPlayer(botId, randomIdx, 300);
       }, delay);
 
       this.timeouts.push(tid);
