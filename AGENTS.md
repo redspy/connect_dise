@@ -57,9 +57,9 @@
 | 문서                             | 내용                                            |
 | -------------------------------- | ----------------------------------------------- |
 | `docs/architecture.md`           | 전체 구조, 디렉토리, 세션 라이프사이클          |
-| `SDK.md`                         | HostSDK, MobileSDK, BaseGame, 공유 컴포넌트 API |
-| `PROTOCOL.md`                    | Socket.IO 이벤트 프로토콜 (platform/game/p2p)   |
-| `DESIGN.md`                      | 화면 UI 개발 시 지켜야할 가이드                 |
+| `docs/SDK.md`                    | HostSDK, MobileSDK, BaseGame, 공유 컴포넌트 API |
+| `docs/protocol.md`               | Socket.IO 이벤트 프로토콜 (platform/game/p2p)   |
+| `docs/DESIGN.md`                 | 화면 UI 개발 시 지켜야할 가이드                 |
 | `docs/game-development-guide.md` | 새 게임 추가 가이드                             |
 | `docs/games/<game-id>/`          | 게임별 기획/구현 문서                           |
 
@@ -142,6 +142,10 @@ class MyMobileGame extends MobileBaseGame {
 - **공통 `.hidden` CSS 클래스 정의**: 호스트 및 모바일 개별 CSS 파일에 `.hidden { display: none !important; }` 스타일을 상시 포함하여, `classList.toggle('hidden')`이나 `showScreen()`을 통한 화면 전환 시 레이아웃 겹침이나 화면 노출 오류가 생기지 않도록 방지해야 합니다.
 - **호스트 메인 컨테이너 z-index 및 포지셔닝 필수 지정**: 호스트 화면의 카지노 Felt 백그라운드(`body.host-board::before`, `::after`)는 `z-index: 0` 및 `1`로 렌더링되므로, 호스트 콘텐츠 메인 컨테이너(예: `.pp-host-container` 등)가 배경 뒤로 숨겨지거나 가려져 투명화되는 버그를 피하기 위해 호스트 스타일시트에 반드시 **`position: relative; z-index: 10;`**을 정의해야 합니다.
 - **호스트 화면 데모 모드 구현 필수**: 모든 게임 개발 시, 여러 기기에서 동시 접속하지 않고도 게임의 핵심 루프와 연출을 한눈에 검증할 수 있는 **데모 시뮬레이션 모드(Attract Mode)**를 반드시 함께 개발해야 합니다. 호스트 로비 화면에 "🤖 데모 플레이 실행" 버튼과 중단 배너를 구현하고, 별도 `DemoSimulator.js` 파일을 생성하여 가상 봇 입장, 준비 완료, 라운드 진행 및 결과 도출 시뮬레이션을 차례대로 구동한 뒤 원상태로 복구(onReset)되도록 구현해야 합니다.
+- **데모 시뮬레이터의 `stopDemo()`류는 "비활성 상태 호출"에 안전(no-op)해야 함**: `onReset()`이 안전망 차원에서 `stopDemo()`를 무조건 호출하는 패턴을 쓴다면, 그 함수 내부에서 다시 `resetSession()`류를 호출할 경우 반드시 (a) 데모가 실제로 활성 상태일 때만 진행하는 가드, (b) 리셋 요청 자체를 다시 트리거할지 여부를 파라미터로 분리 — 이 두 가지를 함께 갖춰야 합니다. 안 그러면 `onReset ↔ stopDemo ↔ resetSession`이 서로를 반복 호출하는 무한루프에 빠질 수 있습니다(dobble에서 재대결 1회로 reset 이벤트가 37,000회 이상 폭주한 사례로 실측 확인됨).
+- **데모 봇 등 타이머 기반 반복 행동은 "행위자 단위 재스케줄"로 구현**: 아무 봇이나 행동할 때마다 전체 타이머를 `clearAll` 후 일괄 재예약하면, 가장 느린 봇/에이전트가 더 빠른 상대 때문에 영원히 차례를 못 받는 "타이머 기아" 버그가 생깁니다. 각 봇은 자기 자신의 타이머만 재예약해야 합니다.
+- **가변 참가자 수(min~maxPlayers)에 따라 커지는 목록 컨테이너는 항상 `max-height` + `overflow-y: auto`를 갖출 것**: 결과 랭킹, 점수판 등. 크기도 고정 `vh` 계산식이 아니라 실제 flex 잔여 공간(`max-width`/`max-height` + `aspect-ratio`, 또는 `flex: 1; min-height: 0`)에서 유도되도록 해야 합니다. `registry.js`의 `maxPlayers` 값을 실제로 채워 눈으로 확인하지 않으면 정적 코드 리뷰만으로는 이런 겹침/짤림 버그를 절대 못 잡습니다 — 반드시 실제 브라우저로 인원 스트레스 테스트를 해야 합니다.
+- **커스텀 프리픽스 클래스(`.xx-lobby-panel` 등)로 로비를 직접 구현하지 말 것**: `docs/DESIGN.md`가 강제하는 공통 `<game-lobby>` 컴포넌트가 이미 그 역할을 전담하므로, 게임별 커스텀 로비 CSS는 높은 확률로 죽은 코드가 됩니다.
 
 ## 메시지 전송
 
@@ -247,7 +251,7 @@ node server/index.js
 2.  **2단계: 실제 병렬 CLI 분석 기동 (Parallel Multi-CLI Analysis)**
     *   버그 원인분석은 정답이 있는 검증 작업이므로 **가상 페르소나로 대체하지 않고**, [docs/agents/roles.md](file:///Users/soul/Source/connect_dise/docs/agents/roles.md) §0/§3에 정의된 3개의 독립 CLI 프로세스(Claude CLI, Codex CLI, Antigravity CLI `agy`)를 Bash 서브프로세스로 직접 기동해 원인 파악을 개별 수행합니다.
     *   구현을 진행 중인 이 세션과 컨텍스트가 섞이지 않도록, 검증용 Claude 호출은 반드시 별도 `--session-id`로 실행합니다(자기검증 편향 방지).
-    *   UI/레이아웃성 버그는 `browser_subagent`로 스크린샷을 캡처한 뒤 `agy -p`(Antigravity CLI)에 첨부해 `DESIGN.md` 가이드라인과의 편차를 대조합니다.
+    *   UI/레이아웃성 버그는 `browser_subagent`로 스크린샷을 캡처한 뒤 `agy -p`(Antigravity CLI)에 첨부해 `docs/DESIGN.md` 가이드라인과의 편차를 대조합니다.
 3.  **3단계: 분석 결과 취합 및 다각도 해결 설계 (Aggregation & Multi-perspective Design)**
     *   각 CLI가 반환한 개별 리포트(stdout/JSON)를 한곳에 합쳐 종합하고, 서로 다른 모델이 제시한 수정 설계안의 장단점을 대조 형태로 도출합니다.
 4.  **4단계: 최종 수정 방향 확정 및 구현**

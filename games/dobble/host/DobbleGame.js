@@ -29,6 +29,8 @@ export class DobbleGame extends HostBaseGame {
     this._gameStarted = false;
     this._readyCount = 0;
     this._flashTimer = null;
+    this._endGameTimer = null;
+    this._roundLockTimer = null;
     this._demoSimulator = new DemoSimulator(this);
     this._isDemo = false;
 
@@ -136,9 +138,16 @@ export class DobbleGame extends HostBaseGame {
   }
 
   onReset() {
-    this._demoSimulator.stopDemo();
+    // onReset()은 이미 resetSession()의 결과로 실행되는 콜백이므로 emitReset=false —
+    // 데모가 실행 중이었다면 정리만 하고, 다시 resetSession()을 트리거하지 않는다
+    // (안 그러면 onReset↔stopDemo↔resetSession 무한 재귀에 빠짐. DemoSimulator.stopDemo 참고).
+    this._demoSimulator.stopDemo(false);
     clearTimeout(this._flashTimer);
     this._flashTimer = null;
+    clearTimeout(this._endGameTimer);
+    this._endGameTimer = null;
+    clearTimeout(this._roundLockTimer);
+    this._roundLockTimer = null;
     const flash = document.getElementById('round-flash');
     if (flash) flash.classList.add('hidden');
     for (const t of this._freezeTimers.values()) clearTimeout(t);
@@ -315,17 +324,19 @@ export class DobbleGame extends HostBaseGame {
     this._renderScoreCards();
     this._showRoundFlash(id, newScore);
 
-    // 🤖 데모 모드일 때 다음 탭 예약 갱신
-    if (this._isDemo && this._gameStarted) {
-      this._demoSimulator.scheduleNextTaps();
-    }
+    // 데모 모드의 다음 탭 예약은 DemoSimulator가 봇 자신의 타이머 콜백 안에서
+    // 스스로 재예약함(_scheduleBotTap 참고) — 여기서 전원을 다시 스케줄하면 아직
+    // 대기 중인 다른 봇의 타이머까지 매번 취소·재시작되어 느린 봇이 영원히 못
+    // 움직이는 "타이머 기아" 버그가 재발하므로 호출하지 않는다.
 
     // 승리 체크
     if (newScore >= this._winScore) {
-      setTimeout(() => this._endGame(), HIGHLIGHT_MS);
+      clearTimeout(this._endGameTimer);
+      this._endGameTimer = setTimeout(() => this._endGame(), HIGHLIGHT_MS);
     }
 
-    setTimeout(() => { this._roundLock = false; }, LOCK_MS);
+    clearTimeout(this._roundLockTimer);
+    this._roundLockTimer = setTimeout(() => { this._roundLock = false; }, LOCK_MS);
   }
 
   _applyFreeze(id) {

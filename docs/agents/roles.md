@@ -118,13 +118,14 @@
   codex review --base main   # diff 기반 2차 코드 리뷰
   ```
   - `npm run review:docs` / `npm run review:write`로 등록됨.
+  - **운영 주의**: `codex exec`를 `run_in_background`(또는 nohup 등)로 백그라운드 실행할 때 stdin을 명시적으로 `< /dev/null`로 리다이렉트하지 않으면 "Reading additional input from stdin..."에서 무한 대기함(2026-08-19 실측, 10분+ 행). 헤드리스 배경 실행 시 항상 `< /dev/null`을 붙일 것.
 
 ### 🌌 Antigravity CLI (`agy`) — Visual Parity Reviewer
-- **주요 역할**: 호스트/모바일 화면 스크린샷을 `DESIGN.md`의 카지노 felt 가이드라인·색상 hex·간격 규칙과 픽셀 단위로 대조하는 **멀티모달 비전 심사관**. 사람이 눈으로 보는 대신, 실제 Gemini 모델의 이미지 인식 강점을 색상/레이아웃 오프셋/아이콘 모양 판정에 활용함.
+- **주요 역할**: 호스트/모바일 화면 스크린샷을 `docs/DESIGN.md`의 카지노 felt 가이드라인·색상 hex·간격 규칙과 픽셀 단위로 대조하는 **멀티모달 비전 심사관**. 사람이 눈으로 보는 대신, 실제 Gemini 모델의 이미지 인식 강점을 색상/레이아웃 오프셋/아이콘 모양 판정에 활용함.
 - **업무 범위**: `browser_subagent`가 캡처한 스크린샷을 입력받아 디자인 가이드 위반(여백, 폰트, 명도 대비, z-index로 인한 가려짐 등) 리포트 생성.
 - **실행**:
   ```bash
-  agy -p "이 스크린샷을 DESIGN.md의 카지노 felt 가이드라인과 대조해 색상 hex/여백/타이포/레이어링 편차를 지적" \
+  agy -p "이 스크린샷을 docs/DESIGN.md의 카지노 felt 가이드라인과 대조해 색상 hex/여백/타이포/레이어링 편차를 지적" \
     --model gemini-3.1-pro-high
   ```
   - 이미지 경로를 헤드리스로 읽으려면 `~/.gemini/antigravity-cli/settings.json`의 `permissions.allow`에 `read_file(<스크린샷 디렉토리>)`가 등록돼 있어야 함(디렉토리 단위 등록, 글롭 `/**` 불가).

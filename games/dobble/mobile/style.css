@@ -35,6 +35,7 @@ body.db-mobile {
   justify-content: center;
   padding: 20px;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .db-screen.hidden,

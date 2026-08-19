@@ -112,8 +112,13 @@ body.host-board {
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 8px;
-  /* 화면 너비와 높이 모두 고려해 카드 크기 결정 */
-  width: min(min(74vw, 900px), calc(2 * (100vh - 200px)));
+  /* 너비/높이를 고정 vh 계산식 대신 flex 부모(.db-center-area)의 실제 남은 공간에 맞춰 자동 산정.
+     score-cards가 플레이어 수(최대 6명, 2행 래핑 포함)에 따라 높이를 가변적으로 차지해도
+     중앙 카드가 항상 남은 공간 안에서 aspect-ratio(4:2)를 유지한 채 줄어들도록 함. */
+  width: auto;
+  height: auto;
+  max-width: min(74vw, 900px);
+  max-height: 100%;
   aspect-ratio: 4 / 2;
   box-sizing: border-box;
 }
@@ -326,74 +331,11 @@ body.host-board {
   display: none;
 }
 
-/* ── 로비 패널 ───────────────────────────────────────────────────────── */
-
-.db-lobby-panel {
-  background: var(--db-panel);
-  border: 1px solid var(--db-border);
-  border-radius: 24px;
-  padding: 28px 36px;
-  width: min(860px, 92vw);
-  max-height: 92vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.db-lobby-top {
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-}
-
-.db-lobby-title {
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: var(--db-gold);
-  letter-spacing: 3px;
-  margin-bottom: 4px;
-}
-
-.db-lobby-sub {
-  font-size: 0.88rem;
-  color: var(--db-sub);
-  margin-bottom: 20px;
-}
-
-/* ── 로비 본문 2컬럼 ─────────────────────────────────────────────────── */
-
-.db-lobby-body {
-  display: flex;
-  gap: 20px;
-  width: 100%;
-  margin-bottom: 20px;
-}
-
-.db-lobby-qr-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.db-qr-url {
-  font-size: 0.66rem;
-  color: var(--db-sub);
-  word-break: break-all;
-  max-width: 160px;
-  text-align: center;
-  line-height: 1.4;
-}
-
-.db-lobby-settings-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+/* ── 로비 설정 위젯 ──────────────────────────────────────────────────────
+   호스트 로비 레이아웃 자체(패널/QR컬럼/참가자 목록 등)는 DESIGN.md 규정대로
+   공통 <game-lobby> 컴포넌트(platform/client/shared/LobbyPanel.js, .lobby-panel/
+   .lobby-player-card/.lp-name 등)가 전담 렌더링함. 아래는 그 안에 슬롯으로 꽂히는
+   dobble 전용 설정 위젯(심볼모드/목표점수/규칙)에 대한 스타일만 남긴 것. ─────── */
 
 .db-setting-group {
   display: flex;
@@ -457,54 +399,6 @@ body.host-board {
   color: var(--db-gold);
 }
 
-/* ── 로비 참가자 ─────────────────────────────────────────────────────── */
-
-.db-lobby-players-title {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--db-sub);
-  margin-bottom: 10px;
-  align-self: flex-start;
-}
-
-.db-lobby-players {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  min-height: 48px;
-  width: 100%;
-  margin-bottom: 14px;
-}
-
-.db-lobby-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--db-panel2);
-  border: 1px solid var(--db-border);
-  border-radius: 10px;
-  padding: 8px 14px;
-}
-
-.db-lobby-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.db-lobby-name {
-  font-size: 0.87rem;
-  color: var(--db-text);
-}
-
-.db-ready-status {
-  font-size: 0.86rem;
-  color: var(--db-sub);
-  margin-bottom: 12px;
-}
-
 .db-btn-start {
   background: var(--db-gold);
   color: #000;
@@ -536,6 +430,9 @@ body.host-board {
   padding: 40px 52px;
   text-align: center;
   width: min(480px, 90vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .db-result-title {
@@ -604,20 +501,6 @@ body.host-board {
     height: auto !important;
     padding: 10px !important;
     gap: 8px !important;
-  }
-  .db-lobby-panel {
-    padding: 16px !important;
-    max-height: none !important;
-  }
-  .db-lobby-body {
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-  .db-lobby-qr-col {
-    width: 100% !important;
-  }
-  .db-lobby-settings-col {
-    width: 100% !important;
   }
   .db-select {
     max-width: none !important;
