@@ -23,6 +23,8 @@ class DixitGame extends HostBaseGame {
     this._boardCards     = [];  // 투표용 셔플 배열
     this._gameStarted    = false;
     this._readyCount     = 0;
+    this._lastScoringCase = null; // 복기(재접속)를 위해 마지막 판정 저장
+    this._lastDeltas      = null; // 복기(재접속)를 위해 마지막 라운드 획득 점수(누적 아님) 저장
 
     this._phaseTimeLimit    = 120;  // seconds (기본 2분)
     this._phaseTimerTimeout = null;
@@ -373,6 +375,7 @@ class DixitGame extends HostBaseGame {
     );
 
     this._lastScoringCase = scoringCase; // 복기를 위해 마지막 판정 저장
+    this._lastDeltas      = deltas;      // 복기를 위해 마지막 라운드 획득 점수(누적 totals와 다름) 저장
 
     for (const [id, delta] of Object.entries(deltas)) {
       this._scores.set(id, (this._scores.get(id) ?? 0) + delta);
@@ -860,7 +863,10 @@ class DixitGame extends HostBaseGame {
       storyCardId:        this.phase === 'round-result' ? storyCardId : null,
       phaseTimerRemaining: this._getPhaseTimerRemaining(),
       roundResultData:    this.phase === 'round-result' ? {
-        deltas:             Object.fromEntries(this._scores),
+        // 버그 수정(2026-08-19): this._scores(누적 총점)를 deltas로 잘못 보내고 있었음 —
+        // 재접속 시 "이번 라운드 획득 점수"가 누적 총점으로 표시되는 원인이었음(mobile에서는
+        // 결국 안 쓰고 0으로 하드코딩하는 별도 버그와 겹쳐 있었음, 둘 다 수정).
+        deltas:             this._lastDeltas || {},
         cardOwnerMap:       Object.fromEntries(this._submissions.map(s => [s.cardId, s.playerId])),
         votesOnCard:        this._buildVotesOnCardMap(),
         storytellerCardId:  storyCardId,

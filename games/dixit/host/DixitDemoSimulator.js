@@ -96,7 +96,12 @@ export class DixitDemoSimulator {
     }
 
     // QR 블러 가드
-    const qrWrap = document.querySelector('.qr-container');
+    // 버그 수정(2026-08-19): 이 게임은 <game-lobby> 공통 컴포넌트(LobbyPanel.js)를 쓰는데
+    // 그 QR 실제 클래스는 .lobby-qr-box임(.qr-container는 구버전 수동 QR 패턴 잔재로
+    // 이 DOM에 존재하지 않아 항상 null — "데모 중 신규 접속 불가" 블러 가드가 조용히
+    // 무력화돼 있었음). 같은 dead selector가 dobble 등 <game-lobby>를 쓰는 다른 게임의
+    // DemoSimulator.js에도 있을 수 있음 — games/dixit 범위 밖이라 여기서는 고치지 않음.
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = 'blur(8px)';
       qrWrap.style.pointerEvents = 'none';
@@ -135,7 +140,12 @@ export class DixitDemoSimulator {
 
     const overlay = document.getElementById('demoQROverlay');
     overlay?.parentNode?.removeChild(overlay);
-    const qrWrap = document.querySelector('.qr-container');
+    // 버그 수정(2026-08-19): 이 게임은 <game-lobby> 공통 컴포넌트(LobbyPanel.js)를 쓰는데
+    // 그 QR 실제 클래스는 .lobby-qr-box임(.qr-container는 구버전 수동 QR 패턴 잔재로
+    // 이 DOM에 존재하지 않아 항상 null — "데모 중 신규 접속 불가" 블러 가드가 조용히
+    // 무력화돼 있었음). 같은 dead selector가 dobble 등 <game-lobby>를 쓰는 다른 게임의
+    // DemoSimulator.js에도 있을 수 있음 — games/dixit 범위 밖이라 여기서는 고치지 않음.
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = '';
       qrWrap.style.pointerEvents = '';
@@ -148,7 +158,12 @@ export class DixitDemoSimulator {
 
     this._isDemoRunning = false;
     this.game._isDemo = false;
-    
+
+    // 버그 수정(2026-08-19): 데모 진행 중이던 라운드의 phaseTimer(setInterval/setTimeout +
+    // 화면 좌하단 배지)를 정리하지 않으면, 데모 중단 후 로비로 돌아가도 직전 라운드의
+    // 카운트다운 배지("0:42" 등)가 그대로 화면에 남아있는 겹침 버그가 있었음.
+    this.game._clearPhaseTimer();
+
     // 상태 복원
     this.restoreSnapshot();
     this.logQA("데모 시뮬레이터를 정지하고 기존 세션 스냅샷을 복원했습니다.");
@@ -177,14 +192,45 @@ export class DixitDemoSimulator {
 
   restoreSnapshot() {
     if (!this._snapshot) return;
-    
+
+    // 버그 수정(2026-08-19): this.game.players는 HostBaseGame의 getter-only
+    // 접근자(내부 필드는 this.game._players)라 직접 대입하면 strict mode에서
+    // "Cannot set property players of #<HostBaseGame> which has only a getter"
+    // TypeError가 던져져 아래 복원 로직 전체가 실행되지 않고 데모 중단이 항상
+    // 크래시했음(눈치10단 검수에서 발견된 동일 패턴). 내부 필드에 직접 대입하도록 수정.
+    //
+    // 추가로, 스냅샷 촬영 이후(데모 도중) 실제로 입장한 플레이어는 스냅샷에 없으므로
+    // 스냅샷으로 통째 교체하면 사라짐 — 봇 id를 제외한 "새로 입장한 플레이어"는
+    // 복원 후 다시 얹어준다. _players/_scores만 챙기고 _profiles/_readyPlayers를
+    // 빠뜨리면 _buildPlayerList()가 프로필 없는 플레이어를 걸러내(main.js) 로비
+    // 목록에서 안 보이고 준비 상태도 사라지는 "유령 플레이어"가 되므로 4개 맵 전부
+    // 동일하게 처리한다(Claude CLI 리뷰로 발견된 잔여 결함, 2026-08-19).
+    const BOT_IDS = new Set(['bot_amy', 'bot_bob', 'bot_charles']);
+    const joinedDuringDemo = [...this.game._players]
+      .filter(([id]) => !BOT_IDS.has(id) && !this._snapshot.players.has(id))
+      .map(([id, p]) => ({
+        id, player: p,
+        profile: this.game._profiles.get(id),
+        ready:   this.game._readyPlayers.has(id),
+      }));
+
     this.game._profiles      = new Map(this._snapshot.profiles);
     this.game._scores        = new Map(this._snapshot.scores);
     this.game._hands         = new Map(this._snapshot.hands);
     this.game._readyPlayers  = new Set(this._snapshot.readyPlayers);
-    this.game.players        = new Map(this._snapshot.players);
+    this.game._players       = new Map(this._snapshot.players);
+    for (const { id, player, profile, ready } of joinedDuringDemo) {
+      this.game._players.set(id, player);
+      this.game._scores.set(id, 0);
+      if (profile) this.game._profiles.set(id, profile);
+      if (ready) this.game._readyPlayers.add(id);
+    }
     this.game._gameStarted    = this._snapshot.gameStarted;
-    this.game._readyCount     = this._snapshot.readyCount;
+    // _readyCount는 스냅샷 값이 아니라 방금 합쳐진 _readyPlayers 기준으로 재계산한다 —
+    // 데모 도중 실제 플레이어가 '준비하기'를 눌러 플랫폼 SDK가 이미 readyCount를
+    // 올려놓은 뒤라, 스냅샷(데모 시작 전 값, 보통 0)으로 덮어쓰면 "0/1명 준비완료"처럼
+    // 방금 준비를 누른 플레이어의 상태가 되돌아가 버림.
+    this.game._readyCount     = this.game._readyPlayers.size;
     this.game._deck          = this._snapshot.deck;
     this.game._round          = this._snapshot.round;
     this.game._storytellerIdx = this._snapshot.storytellerIdx;

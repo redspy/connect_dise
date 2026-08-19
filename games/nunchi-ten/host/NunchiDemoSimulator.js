@@ -51,7 +51,10 @@ export class NunchiDemoSimulator {
     this.game.updateLobbyReady(this.game.playerCount);
 
     // QR 블러 및 안내 오버레이 노출
-    const qrWrap = document.querySelector('.qr-container');
+    // dead-selector 수정(2026-08-19, dixit 검수에서 발견된 크로스게임 패턴): <game-lobby>
+    // 공통 컴포넌트의 실제 QR 클래스는 .lobby-qr-box임(.qr-container는 이 DOM에 없어
+    // 항상 null — 블러 가드가 조용히 무력화돼 있었음).
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = 'blur(8px)';
       qrWrap.style.pointerEvents = 'none';
@@ -120,7 +123,7 @@ export class NunchiDemoSimulator {
     // 2. UI 정리
     const overlay = document.getElementById('demoQROverlay');
     overlay?.parentNode?.removeChild(overlay);
-    const qrWrap = document.querySelector('.qr-container');
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = '';
       qrWrap.style.pointerEvents = '';

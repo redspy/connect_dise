@@ -552,7 +552,11 @@ export class DixitMobile extends MobileBaseGame {
         votesOnCard:       roundResultData.votesOnCard,
         scoringCase:       roundResultData.scoringCase
       } : null;
-      this._showRoundResultScreen(0, phase === 'final', resultData);
+      // 버그 수정(2026-08-19): delta를 항상 0으로 하드코딩해서, round-result 화면 도중
+      // 재접속하면 실제로 이번 라운드 3점/2점을 얻었어도 "이번 라운드: 0점"으로 표시됐음.
+      // 서버가 rejoinState.roundResultData.deltas로 실제 라운드 획득 점수를 보내주므로 사용.
+      const myDelta = roundResultData?.deltas?.[this.playerId] ?? 0;
+      this._showRoundResultScreen(myDelta, phase === 'final', resultData);
       return;
     }
   }

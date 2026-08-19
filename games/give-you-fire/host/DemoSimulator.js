@@ -43,7 +43,10 @@ export class DemoSimulator {
     this.game.updateLobbyReady(3);
 
     // 3. QR 및 로비 상단에 데모 중단 배너 UI 표시
-    const qrWrap = document.querySelector('.qr-container') || document.querySelector('game-lobby')?.parentNode;
+    // dead-selector 수정(2026-08-19, dixit 검수에서 발견된 크로스게임 패턴): 기존
+    // '.qr-container' || 'game-lobby'?.parentNode 폴백은 QR박스가 아닌 로비 패널
+    // 전체(설정/규칙 텍스트 포함)를 블러 처리하는 과잉 동작이었음 — .lobby-qr-box로 특정.
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = 'blur(8px)';
       qrWrap.style.pointerEvents = 'none';
@@ -108,7 +111,7 @@ export class DemoSimulator {
     // UI 복구
     const overlay = document.getElementById('demoQROverlay');
     overlay?.parentNode?.removeChild(overlay);
-    const qrWrap = document.querySelector('.qr-container') || document.querySelector('game-lobby')?.parentNode;
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = '';
       qrWrap.style.pointerEvents = '';

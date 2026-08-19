@@ -14,6 +14,15 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* ── 항상 보이는 앱바 컨테이너 ─────────────────────────────────────────────────
+   AGENTS.md 필수 처리 사항: 카지노 Felt 배경(body.host-board::before/::after)이
+   z-index:0/1로 깔리므로, 메인 컨테이너에 position:relative;z-index:10을 명시해야
+   배경 뒤로 숨을 위험이 없음(Codex CLI 리뷰로 누락 발견). */
+#game-board {
+  position: relative;
+  z-index:  10;
+}
+
 /* ── Overlay ───────────────────────────────────────────────────────────────── */
 .dx-overlay {
   position:   fixed;
@@ -231,6 +240,11 @@
   gap:            8px;
   width:          100%;
   max-width:      420px;
+  /* AGENTS.md: 가변 인원(최대 8인) 목록은 자체 max-height+overflow-y:auto 보유 권장.
+     상위 .dx-overlay가 overflow-y:auto라 실제 클리핑은 없었지만(실측 확인) 목록
+     컨테이너 자체에도 방어적으로 부여(Codex CLI 리뷰 지적). */
+  max-height: 40vh;
+  overflow-y: auto;
 }
 .dx-score-row {
   display:     flex;
@@ -253,8 +267,11 @@
   align-items:    center;
   gap:            20px;
   max-width:      500px;
+  max-height:     90vh;
+  overflow-y:     auto;
   margin:         auto;
   padding:        40px;
+  box-sizing:     border-box;
 }
 .dx-ranking-list {
   display:        flex;

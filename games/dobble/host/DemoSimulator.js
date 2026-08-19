@@ -32,7 +32,11 @@ export class DemoSimulator {
     this.game.updateLobbyReady(3);
 
     // QR 블러 가드
-    const qrWrap = document.querySelector('.qr-container');
+    // dead-selector 수정(2026-08-19, dixit 검수에서 발견된 크로스게임 패턴): 이 게임은
+    // <game-lobby> 공통 컴포넌트를 쓰는데 그 QR 실제 클래스는 .lobby-qr-box임
+    // (.qr-container는 구버전 수동 QR 패턴 잔재로 이 DOM에 존재하지 않아 항상 null —
+    // "데모 중 신규 접속 불가" 블러 가드가 조용히 무력화돼 있었음).
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = 'blur(8px)';
       qrWrap.style.pointerEvents = 'none';
@@ -196,7 +200,7 @@ export class DemoSimulator {
 
     const overlay = document.getElementById('demoQROverlay');
     overlay?.parentNode?.removeChild(overlay);
-    const qrWrap = document.querySelector('.qr-container');
+    const qrWrap = document.querySelector('.lobby-qr-box');
     if (qrWrap) {
       qrWrap.style.filter = '';
       qrWrap.style.pointerEvents = '';
