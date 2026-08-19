@@ -61,6 +61,7 @@
 | `docs/protocol.md`               | Socket.IO 이벤트 프로토콜 (platform/game/p2p)   |
 | `docs/DESIGN.md`                 | 화면 UI 개발 시 지켜야할 가이드                 |
 | `docs/game-development-guide.md` | 새 게임 추가 가이드                             |
+| `docs/game-audit-guide.md`       | 기존 게임 전수 검수(워크플로우/반응형/겹침·짤림) 절차 |
 | `docs/games/<game-id>/`          | 게임별 기획/구현 문서                           |
 
 # 게임 개발 규칙
