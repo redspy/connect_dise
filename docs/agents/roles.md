@@ -106,7 +106,7 @@
   git diff | claude -p "아키텍처 결함, 소켓 지터, 메모리 누수 및 SDK 규칙 준수 여부 리뷰" --allowedTools "Read"
   ```
   - 구현을 담당한 세션과 컨텍스트가 섞이지 않도록, 별도 프로세스(새 `--session-id`)로 실행. `npm run review:code`로 등록됨.
-  - `--model claude-fable-5` 플래그로 Fable 5 모델도 헤드리스 호출 가능함(2026-08-19 실측 확인, `claude -p "..." --model claude-fable-5`). 기본 리뷰는 opus/sonnet을 쓰되, 표현력·톤 위주 검토(카피 문구, 데모 시나리오 대사 등)가 필요할 때 대안으로 사용.
+  - `--model claude-fable-5` 플래그로 Fable 5 모델도 헤드리스 호출 가능함(2026-08-19 실측 확인, `claude -p "..." --model claude-fable-5`). 기본 리뷰는 opus/sonnet을 쓰되, 표현력·톤 위주 검토(카피 문구, 데모 시나리오 대사 등) 및 **점수 계산·정산 로직처럼 복잡한 로직 검증이 필요할 때**(사용자 지시, 2026-08-19) 대안/보강으로 사용 — 특히 "표시된 점수가 실제 룰과 맞는지" 같은 게임 규칙 대조는 별도 세션의 fable5로 한 번 더 교차검증하는 것을 권장.
 
 ### 📖 Codex CLI — Specification Sync Reviewer
 - **주요 역할**: 설계 명세의 스펙과 구현 코드 사이의 파라미터 불일치를 감사.
