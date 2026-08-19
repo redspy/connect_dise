@@ -361,8 +361,12 @@ export class NunchiGame extends HostBaseGame {
     });
 
     // 🤖 데모 모드 일 때 가상 봇들의 자동 카드 선택 시뮬레이션
+    // (demoSimulator.schedule()을 거쳐야 stopDemo()의 "모든 예약된 데모 타이머 제거"가
+    // 실제로 이 타이머까지 포함함 — 순수 setTimeout이면 추적 밖이라 stopDemo 직후에도
+    // 발화할 수 있었음. simulateChoices 내부에 state 가드가 있어 크래시는 안 나지만
+    // 트래킹 불일치였음. Claude CLI 리뷰로 발견.)
     if (this._isDemo) {
-      setTimeout(() => {
+      this._demoSimulator.schedule(() => {
         this._demoSimulator.simulateChoices();
       }, 1500 + Math.random() * 1000);
     }
@@ -472,6 +476,13 @@ export class NunchiGame extends HostBaseGame {
     this.broadcast('gameFinished', { rankings: ranked });
     this._renderGameResult(ranked);
     this.setPhase('game_result');
+
+    // 데모가 10라운드까지 자동 진행돼 여기 도달한 경우, 별도 중단 조작 없이도
+    // QR 블러/배너/봇 정리까지 마치고 로비로 복귀시킴 (Claude CLI 리뷰로 발견 —
+    // 이전엔 resetSession() 전까지 데모 UI가 결과 화면 위에 계속 남아있었음).
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+    }
   }
 
   // ─── Rendering ───────────────────────────────────────────────────────────

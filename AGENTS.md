@@ -147,6 +147,7 @@ class MyMobileGame extends MobileBaseGame {
 - **데모 봇 등 타이머 기반 반복 행동은 "행위자 단위 재스케줄"로 구현**: 아무 봇이나 행동할 때마다 전체 타이머를 `clearAll` 후 일괄 재예약하면, 가장 느린 봇/에이전트가 더 빠른 상대 때문에 영원히 차례를 못 받는 "타이머 기아" 버그가 생깁니다. 각 봇은 자기 자신의 타이머만 재예약해야 합니다.
 - **가변 참가자 수(min~maxPlayers)에 따라 커지는 목록 컨테이너는 항상 `max-height` + `overflow-y: auto`를 갖출 것**: 결과 랭킹, 점수판 등. 크기도 고정 `vh` 계산식이 아니라 실제 flex 잔여 공간(`max-width`/`max-height` + `aspect-ratio`, 또는 `flex: 1; min-height: 0`)에서 유도되도록 해야 합니다. `registry.js`의 `maxPlayers` 값을 실제로 채워 눈으로 확인하지 않으면 정적 코드 리뷰만으로는 이런 겹침/짤림 버그를 절대 못 잡습니다 — 반드시 실제 브라우저로 인원 스트레스 테스트를 해야 합니다.
 - **커스텀 프리픽스 클래스(`.xx-lobby-panel` 등)로 로비를 직접 구현하지 말 것**: `docs/DESIGN.md`가 강제하는 공통 `<game-lobby>` 컴포넌트가 이미 그 역할을 전담하므로, 게임별 커스텀 로비 CSS는 높은 확률로 죽은 코드가 됩니다.
+- **데모 스냅샷 복원 시 `HostBaseGame`의 getter-only 프로퍼티(`this.players`, `this.phase`, `this.playerCount` 등)에 직접 대입하지 말 것**: `get players() { return this._players; }`처럼 setter가 없는 접근자라 `this.players = ...` 형태로 대입하면 ES 모듈(항상 strict mode)에서 즉시 `TypeError`가 던져지고, 그 뒤에 이어지는 정리 로직(배너 숨김, 봇 제거, 로비 복원 등)이 전혀 실행되지 않습니다. 스냅샷을 복원하거나 데이터를 갈아끼워야 한다면 내부 필드(`this._players` 등)를 직접 `.clear()`/`.set()`하거나, 필요한 항목만 골라서 추가·삭제해야 합니다 — 특히 데모 도중 실제 플레이어가 join한 경우 봇 시작 이전 스냅샷으로 통째로 덮어쓰면 그 실제 플레이어까지 함께 사라지므로, 가급적 "전체 교체"보다 "봇 id만 골라 추가/제거"하는 방식을 우선 고려해야 합니다(눈치10단 검수에서 실측 확인된 Critical 버그).
 
 ## 메시지 전송
 

@@ -1,3 +1,10 @@
+const BOT_DEFS = [
+  { id: 'bot_amy', nickname: '🤖 에이미 봇', color: '#EF4444', avatarId: 3 },
+  { id: 'bot_bob', nickname: '🤖 밥 봇', color: '#10B981', avatarId: 5 },
+  { id: 'bot_charles', nickname: '🤖 찰리 봇', color: '#3B82F6', avatarId: 8 },
+];
+const BOT_IDS = BOT_DEFS.map(b => b.id);
+
 export class NunchiDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -23,36 +30,25 @@ export class NunchiDemoSimulator {
     this.state = 'running';
     this.game._isDemo = true;
 
-    // 1. 현재 로비 상태 스냅샷 저장
+    // 1. 게임 시작/재개용 스칼라 상태만 스냅샷 저장 (players/profiles/data는 저장하지
+    // 않음 — 통째로 복원하면 데모 도중 실제로 join한 플레이어까지 지워지는 문제가
+    // 있었음. 봇은 아래에서 기존 맵에 추가만 하고, 종료 시 봇 id만 제거한다).
     this.snapshot = {
-      players: new Map(this.game.players),
-      profiles: new Map(this.game._profiles),
-      data: new Map(this.game._data),
       readyCount: this.game._readyCount,
       gameStarted: this.game._gameStarted,
-      phase: this.game.phase
+      phase: this.game.phase,
     };
 
-    // 2. 가상 봇 3명 등록
-    const bots = [
-      { id: 'bot_amy', nickname: '🤖 에이미 봇', color: '#EF4444', avatarId: 3 },
-      { id: 'bot_bob', nickname: '🤖 밥 봇', color: '#10B981', avatarId: 5 },
-      { id: 'bot_charles', nickname: '🤖 찰리 봇', color: '#3B82F6', avatarId: 8 }
-    ];
-
-    // 기존 데이터 초기화 (데모용)
-    this.game.players.clear();
-    this.game._profiles.clear();
-    this.game._data.clear();
-
-    bots.forEach(b => {
+    // 2. 가상 봇 3명을 기존 맵에 "추가"(clear 안 함 — 로비에 이미 대기 중인 실제
+    // 플레이어가 있어도 지워지지 않도록).
+    BOT_DEFS.forEach(b => {
       this.game._profiles.set(b.id, { nickname: b.nickname, avatarId: b.avatarId });
-      this.game.players.set(b.id, { id: b.id, color: b.color });
+      this.game._players.set(b.id, { id: b.id, color: b.color });
       this.game._initPlayerData(b.id);
     });
 
     this.game.renderLobbyPlayers(this.game._getLobbyProfiles());
-    this.game.updateLobbyReady(3);
+    this.game.updateLobbyReady(this.game.playerCount);
 
     // QR 블러 및 안내 오버레이 노출
     const qrWrap = document.querySelector('.qr-container');
@@ -99,8 +95,7 @@ export class NunchiDemoSimulator {
   simulateChoices() {
     if (this.state !== 'running' || this.game.phase !== 'round_input') return;
 
-    const bots = ['bot_amy', 'bot_bob', 'bot_charles'];
-    bots.forEach(botId => {
+    BOT_IDS.forEach(botId => {
       const data = this.game._data.get(botId);
       if (!data || data.remainingCards.length === 0) return;
 
@@ -136,31 +131,30 @@ export class NunchiDemoSimulator {
       demoBanner.classList.add('hidden');
     }
 
-    // 3. 스냅샷 복원
+    // 3. 봇 엔트리만 제거 — 데모 도중 실제 플레이어가 join했다면(onPlayerJoin→
+    // stopDemo 경로) this.game._players/_profiles/_data에 이미 정상 추가돼 있으므로
+    // 그대로 보존해야 한다. (과거엔 시작 시점 스냅샷으로 맵을 통째로 덮어써서, 데모
+    // 도중 합류한 실제 플레이어가 로비 UI에서 유령처럼 사라지는 버그가 있었음 —
+    // Claude CLI 리뷰로 발견.)
     this.game._isDemo = false;
+    for (const id of BOT_IDS) {
+      this.game._players.delete(id);
+      this.game._profiles.delete(id);
+      this.game._data.delete(id);
+    }
+
     if (this.snapshot) {
-      this.game.players = this.snapshot.players;
-      this.game._profiles = this.snapshot.profiles;
-      this.game._data = this.snapshot.data;
       this.game._readyCount = this.snapshot.readyCount;
       this.game._gameStarted = this.snapshot.gameStarted;
-      
       const prevPhase = this.snapshot.phase;
       this.snapshot = null;
-
-      // 4. 로비 혹은 이전 페이즈 상태 복구
       this.game.setPhase(prevPhase || 'lobby');
-      this.game.renderLobbyPlayers(this.game._getLobbyProfiles());
-      this.game.updateLobbyReady(this.game._readyCount);
     } else {
-      this.game.players.clear();
-      this.game._profiles.clear();
-      this.game._data.clear();
       this.game._readyCount = 0;
       this.game._gameStarted = false;
       this.game.setPhase('lobby');
-      this.game.renderLobbyPlayers(this.game._getLobbyProfiles());
-      this.game.updateLobbyReady(0);
     }
+    this.game.renderLobbyPlayers(this.game._getLobbyProfiles());
+    this.game.updateLobbyReady(this.game._readyCount);
   }
 }
