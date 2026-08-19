@@ -277,6 +277,7 @@ body.db-mobile {
   -webkit-tap-highlight-color: transparent;
   padding: 6px;
   box-sizing: border-box;
+  container-type: inline-size;
 }
 
 .db-symbol-cell:active {
@@ -306,7 +307,10 @@ body.db-mobile {
 }
 
 .db-symbol-text-m {
-  font-size: clamp(2rem, 10vw, 3.6rem);
+  /* 호스트(.db-symbol-text)와 동일한 이유로 vw 대신 셀(.db-symbol-cell) 기준 cqw로
+     교체 — 고정 vw 계산은 셀이 커지는 조건(플레이어 적음/가로모드)에서 글자가
+     상대적으로 작게 남는 문제가 있었음. */
+  font-size: clamp(2rem, 62cqw, 6rem);
   font-weight: 700;
   color: var(--db-text);
   line-height: 1;

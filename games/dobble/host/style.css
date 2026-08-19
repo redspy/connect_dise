@@ -212,6 +212,7 @@ body.host-board {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .db-symbol-img {
@@ -221,7 +222,10 @@ body.host-board {
 }
 
 .db-symbol-text {
-  font-size: clamp(1.2rem, 2.8vw, 2.4rem);
+  /* 이미지 모드(.db-symbol-img)는 셀을 100% 채우는데, 텍스트 모드는 고정 vw 기반
+     clamp라 큰 카드(최대 900px)에서 셀 대비 글자가 20%도 못 채우고 작게 뜨는 문제가
+     있었음. 컨테이너(.db-symbol-inner, 셀의 92%) 기준 cqw로 셀 크기에 실제 비례하게 수정. */
+  font-size: clamp(1.5rem, 62cqw, 6.5rem);
   font-weight: 700;
   color: var(--db-text);
   line-height: 1;
