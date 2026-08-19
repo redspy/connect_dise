@@ -105,6 +105,13 @@ export class RelayDemoSimulator {
     banner.appendChild(stopBtn);
     document.body.appendChild(banner);
 
+    // 배너가 position:fixed라 문서 흐름을 차지하지 않아, 각 페이즈(.view)의 헤더/제목이
+    // 배너 밑에 깔려 가려지는 버그가 실측 확인됨(예: 결과 화면 제목 "릴레이 결과 발표").
+    // 실제 렌더 높이를 측정해 CSS 변수로 넘겨 .view의 상단 여백을 그만큼 밀어낸다.
+    requestAnimationFrame(() => {
+      document.documentElement.style.setProperty('--rd-demo-banner-h', `${banner.offsetHeight}px`);
+    });
+
     // 로비의 데모 실행 버튼 텍스트 변경
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
@@ -253,6 +260,11 @@ export class RelayDemoSimulator {
   }
 
   stopDemo() {
+    // 비활성 상태 호출에도 안전(no-op)해야 함(AGENTS.md 필수 처리 사항) — 이미 크래시는
+    // 안 났지만(getter 대입 없음) 불필요하게 플레이어 리스트 브로드캐스트 등을 매번
+    // 실행하고 있었음(Codex CLI 리뷰로 발견). onReset()이 데모 여부와 무관하게 항상
+    // stopDemo()를 호출하는 안전망 패턴이라 이 가드가 있어야 그 호출들이 진짜 no-op가 됨.
+    if (!this.game._isDemo) return;
     this.demoTimeouts.forEach(t => clearTimeout(t));
     this.demoTimeouts = [];
     this.demoIntervals.forEach(i => clearInterval(i));
@@ -270,6 +282,7 @@ export class RelayDemoSimulator {
     // 데모 진행 중 배너 제거
     const banner = document.getElementById('demoBanner');
     banner?.parentNode?.removeChild(banner);
+    document.documentElement.style.removeProperty('--rd-demo-banner-h');
 
     // 가상 봇 제거
     const bots = ['bot_amy', 'bot_bob', 'bot_charles'];

@@ -59,13 +59,20 @@ export class RelayDrawingMobile extends MobileBaseGame {
     document.getElementById('readyStatus')?.classList.add('hidden');
     document.body.classList.remove('rd-mobile-share-active');
 
+    // 닉네임을 아직 한 번도 제출하지 않은 상태(=setup 화면에서 대기 중)에서 리셋을
+    // 맞으면 무조건 waiting으로 보내던 게 버그였음 — 프로필을 낸 적 없는 채로
+    // "대기 중" 화면만 보여서 오작동처럼 보임(예: 데모 도중 막 접속한 신규 플레이어가
+    // onPlayerJoin의 자동 데모중단→resetSession()에 걸리는 경우 실측 확인). 저장된
+    // 닉네임이 있을 때만 재제출 후 waiting, 없으면 실제 상태 그대로 setup을 보여준다.
     const nickname = localStorage.getItem('rd_nickname');
     if (nickname) {
       document.getElementById('myNameDisplay').textContent = nickname;
       const avatar = localStorage.getItem('rd_avatar') || document.getElementById('profileCanvas')?.toDataURL('image/jpeg', 0.5);
       this.sendToHost('setProfile', { nickname, avatar });
+      this.showScreen('waiting');
+    } else {
+      this.showScreen('setup');
     }
-    this.showScreen('waiting');
   }
 
   // ─── UI 초기화 ────────────────────────────────────────────────────────────

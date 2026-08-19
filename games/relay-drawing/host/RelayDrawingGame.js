@@ -87,6 +87,8 @@ export class RelayDrawingGame extends HostBaseGame {
     this._timeLimitText   = 0;
     this._timerInterval   = null;
     this._forceEndTimeout = null;
+    this._finishRoundTimeout = null;
+    this._introInterval   = null;
     this._readyPlayers    = new Set(); // 준비 완료한 플레이어 ID
     this._currentStoryIndex = 0;
     this._presentationTimeouts = [];
@@ -142,7 +144,13 @@ export class RelayDrawingGame extends HostBaseGame {
 
   onPlayerJoin(player) {
     if (this._isDemo) {
-      // 데모 실행 도중 난입 가드
+      // 실제 플레이어 접속 시 자동 중단 (project convention — dobble/nunchi-ten과 동일).
+      // 과거엔 여기서 그냥 return만 해서 데모는 계속 돌고, 실제 플레이어는 this.players에는
+      // 들어가 있지만 봇 전용으로 나가는 roundAssignments 브로드캐스트에 휩쓸려 draw/word
+      // 화면으로 넘어가 버린 뒤, 데모가 끝나 resetSession()이 실행돼도 그 화면에 고립되는
+      // 버그가 실측 확인됨. 반드시 데모부터 멈추고 세션을 리셋해 정상 로비로 복귀시켜야 함.
+      this._demoSimulator.stopDemo();
+      this.resetSession();
       return;
     }
     // 스냅샷 초기화
@@ -238,6 +246,14 @@ export class RelayDrawingGame extends HostBaseGame {
     clearInterval(this._timerInterval);
     clearTimeout(this._forceEndTimeout);
     this._forceEndTimeout = null;
+    clearTimeout(this._finishRoundTimeout);
+    this._finishRoundTimeout = null;
+    clearInterval(this._introInterval);
+    this._introInterval = null;
+    // 결과 발표 도중(suspense/step/다음 이야기 타이머) 리셋되면 이미 비운
+    // _storyChains/storySteps를 대상으로 뒤늦게 실행돼 상태가 꼬이던 버그 수정
+    // (Claude CLI 리뷰로 발견).
+    this._clearPresentationTimeouts();
     this._updateLobbyPlayers();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
@@ -442,12 +458,18 @@ export class RelayDrawingGame extends HostBaseGame {
     const countEl = document.getElementById('introCountdown');
     if (countEl) countEl.textContent = count;
 
-    const interval = setInterval(() => {
+    // 로컬 변수라 추적 불가능했던 게 버그였음(Codex CLI 리뷰로 발견) — 카운트다운
+    // 도중 리셋(플레이어 이탈, 데모 중 실플레이어 난입 등)되면 이 인터벌이 계속 돌다가
+    // 이미 리셋된 세션에 대고 _startRound(1)을 실행할 수 있었음. onReset()에서
+    // 취소할 수 있도록 인스턴스 필드에 저장한다.
+    clearInterval(this._introInterval);
+    this._introInterval = setInterval(() => {
       count--;
       if (count > 0) {
         if (countEl) countEl.textContent = count;
       } else {
-        clearInterval(interval);
+        clearInterval(this._introInterval);
+        this._introInterval = null;
         this._startRound(1);
       }
     }, 1000);
@@ -497,15 +519,28 @@ export class RelayDrawingGame extends HostBaseGame {
 
     this._setupGameStatusGrid(isDrawTurn);
 
-    // 플레이어별 개별 할당 생성
+    // 플레이어별 개별 할당 생성.
+    // 활성 인원보다 체인 수가 많으면(중도 퇴장 등) 두 체인이 같은 holder로 배정되는
+    // 경우가 구조적으로 불가피할 수 있음 — 이때 뒤에 처리되는 체인이 앞 체인의
+    // assignments를 조용히 덮어써서 그 체인이 그 라운드에 통째로 유실되던 버그가
+    // 있었음(Claude CLI 리뷰로 발견). onPlayerLeave()와 동일한 방식으로 패스 스텝을
+    // 넣어 스토리 유실 없이 다음 라운드에 계속 회전하도록 처리한다.
     const assignments = {};
     this._storyChains.forEach(chain => {
       const lastStep = chain.steps[chain.steps.length - 1];
-      assignments[chain.currentHolderId] = {
-        turnType: roundNumber === 1 ? 'draw' : (isDrawTurn ? 'draw' : 'word'),
-        timeLimit,
-        content: roundNumber === 1 ? chain.initialPrompt : lastStep.content,
-      };
+      const turnType = roundNumber === 1 ? 'draw' : (isDrawTurn ? 'draw' : 'word');
+      const content  = roundNumber === 1 ? chain.initialPrompt : lastStep.content;
+
+      if (assignments[chain.currentHolderId]) {
+        chain.steps.push({
+          type: turnType,
+          content: turnType === 'draw' ? this._createBlankCanvas() : '(이번 라운드 패스)',
+          authorId: 'system_pass',
+          roundNumber,
+        });
+        return;
+      }
+      assignments[chain.currentHolderId] = { turnType, timeLimit, content };
     });
 
     // 제출 상태 초기화
@@ -680,35 +715,61 @@ export class RelayDrawingGame extends HostBaseGame {
   }
 
   _finishRound() {
+    // 이 타이머가 어디에도 저장 안 돼 취소 불가능했던 게 버그였음(Claude CLI 리뷰로
+    // 발견) — 예약 직후 마지막 플레이어 이탈 등으로 세션이 리셋돼도 1.5~2초 뒤
+    // 그대로 발화해서 이미 리셋된 세션에 대고 _startRound/_startResultPresentation을
+    // 실행해 막 재접속한 플레이어의 화면이 갑자기 튀는 문제가 있었음. onReset()에서
+    // 추적·취소할 수 있도록 핸들을 저장한다.
+    clearTimeout(this._finishRoundTimeout);
     if (this._currentRound >= this._totalRounds) {
       audioManager.playSFX('https://actions.google.com/static/audio/test/Celebration-Fanfare.mp3');
-      setTimeout(() => this._startResultPresentation(), 1500);
+      this._finishRoundTimeout = setTimeout(() => this._startResultPresentation(), 1500);
     } else {
       this._rotateStoryChains();
-      setTimeout(() => this._startRound(this._currentRound + 1), 2000);
+      this._finishRoundTimeout = setTimeout(() => this._startRound(this._currentRound + 1), 2000);
     }
   }
 
-  _findNextActivePlayer(currentHolderId) {
-    const activePlayerIds = Array.from(this.players.keys());
-    if (activePlayerIds.length === 0) return null;
-
-    const idx = activePlayerIds.indexOf(currentHolderId);
-    if (idx !== -1) {
-      return activePlayerIds[(idx + 1) % activePlayerIds.length];
-    }
-    return activePlayerIds[0];
-  }
-
+  // 이탈한 홀더의 체인을 전부 activePlayerIds[0]으로 몰아주던 구버전 로직은, 마침
+  // 자연 회전으로도 index 0에 도달하는 다른 체인과 항상 충돌해 그 체인이 조용히
+  // 사라지는 버그가 있었음(Claude CLI 리뷰로 발견). 아래에서 충돌 회피 로직을 직접 구현.
   _rotateStoryChains() {
     const activePlayerIds = Array.from(this.players.keys());
     if (activePlayerIds.length === 0) return;
 
     const holdingMap = {};
+    const naturalTargets = new Set();
+    const orphanChainIndices = [];
+
+    // 1차: 홀더가 여전히 활성 상태인 체인 → 정상 다음 순번으로 자연 배정
     for (let i = 0; i < this._storyChains.length; i++) {
       const chain = this._storyChains[i];
-      holdingMap[i] = this._findNextActivePlayer(chain.currentHolderId);
+      const idx = activePlayerIds.indexOf(chain.currentHolderId);
+      if (idx !== -1) {
+        const target = activePlayerIds[(idx + 1) % activePlayerIds.length];
+        holdingMap[i] = target;
+        naturalTargets.add(target);
+      } else {
+        orphanChainIndices.push(i);
+      }
     }
+
+    // 2차: 홀더가 이탈한(고아) 체인 → 아직 자연 배정되지 않은 활성 플레이어부터
+    // 라운드로빈으로 우선 배정해서 충돌을 최대한 피하고, 활성 인원보다 체인 수가
+    // 많아 불가피할 때만 충돌을 허용한다(그 경우는 _startRound에서 패스 스텝으로 처리).
+    let cursor = 0;
+    for (const i of orphanChainIndices) {
+      let target = null;
+      for (let tries = 0; tries < activePlayerIds.length; tries++) {
+        const candidate = activePlayerIds[cursor % activePlayerIds.length];
+        cursor++;
+        if (!naturalTargets.has(candidate)) { target = candidate; break; }
+      }
+      if (!target) target = activePlayerIds[cursor % activePlayerIds.length];
+      holdingMap[i] = target;
+      naturalTargets.add(target);
+    }
+
     for (let i = 0; i < this._storyChains.length; i++) {
       this._storyChains[i].currentHolderId = holdingMap[i];
     }
@@ -813,13 +874,18 @@ export class RelayDrawingGame extends HostBaseGame {
     let avatarHtml = '';
     if (authorAvatar) {
       avatarHtml = `<img src="${authorAvatar}" class="author-avatar">`;
-    } else if (step.authorId !== 'system') {
+    } else if (step.authorId !== 'system' && step.authorId !== 'system_pass') {
       avatarHtml = `<div class="author-avatar-placeholder"></div>`;
     }
 
+    let label;
+    if (step.authorId === 'system') label = '시작 단어';
+    else if (step.authorId === 'system_pass') label = '이번 라운드 패스'; // 활성 인원<체인 수라 홀더 배정 충돌로 패스된 스텝
+    else label = `${authorName}의 ${step.type === 'word' ? '단어' : '그림'}`;
+
     authorEl.innerHTML = `
       ${avatarHtml}
-      <span>${step.authorId === 'system' ? '시작 단어' : `${authorName}의 ${step.type === 'word' ? '단어' : '그림'}`}</span>
+      <span>${label}</span>
     `;
     el.appendChild(authorEl);
 

@@ -36,9 +36,12 @@
 
 .view {
   width: 100%;
-  min-height: 100%;
   height: auto !important;
   padding: 1.5rem;
+  /* 데모 배너(#demoBanner, position:fixed)가 떠 있는 동안 헤더/제목이 배너 밑에 깔려
+     가려지는 버그 실측 확인 — RelayDemoSimulator가 배너 실측 높이를 이 변수로 넘겨줌.
+     배너가 없을 때는 0px라 평소 레이아웃에 영향 없음. */
+  padding-top: calc(1.5rem + var(--rd-demo-banner-h, 0px));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -644,6 +647,10 @@ h2 {
 @media (max-width: 1024px) {
   .view {
     padding: 1rem !important;
+    /* 위 shorthand !important가 데모 배너 오프셋(padding-top)까지 덮어써서 좁은
+       화면에서는 배너 겹침 수정이 무력화되던 문제 — Claude CLI 리뷰로 발견.
+       longhand로 다시 !important를 걸어 좁은 화면에서도 배너 높이만큼 밀리게 함. */
+    padding-top: calc(1rem + var(--rd-demo-banner-h, 0px)) !important;
   }
   .lobby-content {
     flex-direction: column !important;
