@@ -12,6 +12,54 @@
     body.dice-host-body {
       overflow: hidden;
     }
+    /* game-appbar must not join body.host-board's flex-row flow (it would
+       squeeze .dice-host-container off-center like the QR corners did) —
+       float it above the felt table instead. */
+    game-appbar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 15;
+      padding: 10px 24px;
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(3px);
+    }
+    /* 데모 배너(position:fixed, DemoSimulator.js)가 텍스트 줄바꿈 등으로
+       예상보다 커져도 상단 QR 코너를 가리지 않도록, 실측 높이를
+       --dice-demo-banner-h로 동기화해 두 top QR의 top 오프셋에 더한다.
+       (position:absolute 자식은 조상의 padding-top으로는 밀리지 않으므로
+       top 값 자체에 calc()로 더해야 함. 평상시 미설정 시 0px.) */
+    #qr-top-left,
+    #qr-top-right {
+      top: calc(60px + var(--dice-demo-banner-h, 0px)) !important;
+    }
+    @media (max-width: 1024px) {
+      body.dice-host-body {
+        overflow-y: auto;
+      }
+      .dice-host-container {
+        /* 데스크톱의 flex 중앙정렬(+ .center-status의 position:absolute;
+           top:50% 트릭)은 정확히 100vh 기준으로 설계돼 있음. 모바일에서
+           height:auto로 풀면 컨테이너 높이가 불확정이라 absolute 카드가
+           엉뚱한 위치에 겹쳐 보임 — 아예 flex를 끄고 일반 블록 흐름으로
+           둬서 (이미 모바일 쿼리가 .center-status를 position:relative로
+           되돌려놓았으므로) QR 그리드 바로 아래에 자연스럽게 이어지게 한다. */
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+      }
+      body.host-board {
+        padding-top: calc(20px + var(--dice-demo-banner-h, 0px)) !important;
+        gap: 16px;
+        /* justify-content:center(기본값)는 콘텐츠가 뷰포트보다 커지면 위/아래로
+           균등하게 넘쳐서 위쪽이 스크롤로 닿지 않는 채 다음 요소와 겹쳐 보이는
+           문제가 있음 — 좁고 짧은 화면(데모 배너 활성 시 특히)에서 재현됨.
+           위에서부터 쌓이고 넘치면 자연스럽게 스크롤되도록 flex-start로 전환. */
+        justify-content: flex-start !important;
+      }
+    }
     .dice-host-container {
       position: relative;
       z-index: 10;
@@ -132,13 +180,15 @@
 
 <body class="host-board dice-host-body">
   <!-- Common App Bar -->
-  <header id="game-appbar"></header>
+  <game-appbar title="주사위 파티 🎲"></game-appbar>
 
   <!-- QR codes dynamically managed -->
-  <div id="qr-top-left" class="qr-container"></div>
-  <div id="qr-top-right" class="qr-container"></div>
-  <div id="qr-bottom-left" class="qr-container"></div>
-  <div id="qr-bottom-right" class="qr-container"></div>
+  <div class="qr-mobile-grid">
+    <div id="qr-top-left" class="qr-container"></div>
+    <div id="qr-top-right" class="qr-container"></div>
+    <div id="qr-bottom-left" class="qr-container"></div>
+    <div id="qr-bottom-right" class="qr-container"></div>
+  </div>
 
   <!-- Main Game Container -->
   <div class="dice-host-container" id="host-main-container">

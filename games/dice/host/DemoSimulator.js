@@ -10,6 +10,7 @@ export class DemoSimulator {
       { id: 'bot_charles', name: '🤖 찰스', color: '#AA66CC' }
     ];
     this.botThrowInterval = null;
+    this.watchMatchResultInterval = null;
     this.isTearingDown = false;
   }
 
@@ -24,6 +25,10 @@ export class DemoSimulator {
       clearInterval(this.botThrowInterval);
       this.botThrowInterval = null;
     }
+    if (this.watchMatchResultInterval) {
+      clearInterval(this.watchMatchResultInterval);
+      this.watchMatchResultInterval = null;
+    }
   }
 
   startDemo() {
@@ -31,6 +36,9 @@ export class DemoSimulator {
     this.isDemo = true;
     this.isTearingDown = false;
     console.log('[Dice Demo] Attract mode started.');
+
+    const demoBtn = document.getElementById('demoPlayBtn');
+    if (demoBtn) demoBtn.textContent = '⏹️ 데모 중지';
 
     // Show floating demo stop banner
     this.showDemoBanner();
@@ -56,6 +64,8 @@ export class DemoSimulator {
         // Send ready update ticks
         const readyT = setTimeout(() => {
           if (!this.isDemo) return;
+          this.game.readyPlayers.add(bot.id);
+          this.game.updateLobbyUI();
           this.host.dispatchEvent(new CustomEvent('readyUpdate', {
             detail: { readyCount: idx + 1, total: this.bots.length }
           }));
@@ -109,9 +119,10 @@ export class DemoSimulator {
     }, 1000);
 
     // Watch for match result and trigger restart
-    const watchMatchResult = setInterval(() => {
+    this.watchMatchResultInterval = setInterval(() => {
       if (!this.isDemo) {
-        clearInterval(watchMatchResult);
+        clearInterval(this.watchMatchResultInterval);
+        this.watchMatchResultInterval = null;
         return;
       }
       if (this.game.phase === 'matchResult' && !this.isTearingDown) {
@@ -141,6 +152,9 @@ export class DemoSimulator {
     this.toggleQRBlur(false);
     this.hideDemoBanner();
     console.log('[Dice Demo] Demo mode stopped. Cleaning up bot structures.');
+
+    const demoBtn = document.getElementById('demoPlayBtn');
+    if (demoBtn) demoBtn.textContent = '🤖 데모 플레이 실행';
 
     // Remove bots from structures and dispatch leaves
     this.bots.forEach(bot => {
@@ -177,12 +191,20 @@ export class DemoSimulator {
           overlay.style.borderRadius = '8px';
           overlay.style.zIndex = '10';
           overlay.textContent = '🤖 데모 중';
-          container.style.position = 'relative';
+          // Only force a positioning context when the container is
+          // static (mobile grid layout). At desktop widths it is already
+          // position:absolute for the 4-corner placement — overriding it
+          // to 'relative' here would pull it into body.host-board's flex
+          // flow and knock it off its corner.
+          if (getComputedStyle(container).position === 'static') {
+            container.style.position = 'relative';
+          }
           container.appendChild(overlay);
         }
       } else {
         container.style.filter = '';
         container.style.pointerEvents = '';
+        container.style.position = '';
         const overlay = container.querySelector('.demo-qr-overlay');
         if (overlay) {
           overlay.parentNode.removeChild(overlay);
@@ -213,14 +235,29 @@ export class DemoSimulator {
       ">데모 중단</button>
     `;
     document.body.appendChild(banner);
-    
+
     document.getElementById('btn-banner-stop-demo').addEventListener('click', () => {
       this.stopDemo();
+    });
+
+    this._syncDemoBannerHeight();
+  }
+
+  // fixed 배너 실제 높이를 CSS 변수로 동기화해 body 콘텐츠(4코너 QR, 모바일
+  // 그리드)가 그 아래로 오프셋되도록 한다. 배너 문구가 좁은 폭에서 줄바꿈돼
+  // 높이가 늘어나도 QR이 가려지지 않는다.
+  _syncDemoBannerHeight() {
+    const banner = document.getElementById('demo-stop-banner');
+    if (!banner) return;
+    requestAnimationFrame(() => {
+      if (!document.getElementById('demo-stop-banner')) return;
+      document.body.style.setProperty('--dice-demo-banner-h', `${banner.offsetHeight}px`);
     });
   }
 
   hideDemoBanner() {
     const banner = document.getElementById('demo-stop-banner');
     if (banner) banner.remove();
+    document.body.style.removeProperty('--dice-demo-banner-h');
   }
 }

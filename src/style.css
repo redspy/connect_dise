@@ -184,6 +184,13 @@ body.host-board::after {
   letter-spacing: 0.5px;
 }
 
+/* QR wrapper: no box of its own on desktop so it doesn't disturb the
+   absolutely-positioned corner layout; becomes a real 2x2 grid on narrow
+   viewports (see mobile responsiveness block below). */
+.qr-mobile-grid {
+  display: contents;
+}
+
 /* QR Code Corners */
 .qr-container {
   position: absolute;
@@ -665,6 +672,8 @@ body.mobile-controller {
    ========================================= */
 @media (max-width: 1024px) {
   body.host-board {
+    display: flex !important;
+    flex-direction: column !important;
     height: auto !important;
     min-height: 100dvh !important;
     overflow-y: auto !important;
@@ -695,10 +704,20 @@ body.mobile-controller {
   .center-status h1 {
     font-size: 1.6rem !important;
   }
-  /* Prevent overlap of QR containers on mobile viewport */
+  /* Prevent overlap of QR containers on mobile viewport: lay them out as a
+     compact 2x2 grid above the lobby card instead of 4 absolute corners. */
+  .qr-mobile-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, auto);
+    justify-content: center;
+    justify-items: center;
+    gap: 10px;
+    width: 100%;
+    margin: 0 auto;
+  }
   .qr-container {
     position: static !important;
-    margin: 10px auto !important;
+    margin: 0 !important;
     width: fit-content !important;
   }
   #dice-box {

@@ -281,6 +281,9 @@ export class HostBaseGame {
 
   _triggerAutoDemo() {
     if (this._phase !== 'lobby') return;
+    // 로비에 실제 플레이어가 이미 있으면(호스트 PC 화면만 60초간 유휴였을 뿐,
+    // 폰으로 닉네임 입력/준비 중일 수 있음) 자동 데모로 끼어들지 않는다.
+    if (this._players.size > 0) return;
     const sim = this._demoSimulator || this.demoSimulator;
     if (sim && typeof sim.startDemo === 'function') {
       console.log('[Platform] Lobby idle for 60s. Auto-starting demo play.');

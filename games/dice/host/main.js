@@ -1,7 +1,6 @@
 import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
-import { AppBar } from '../../../platform/client/shared/AppBar.js';
 import DiceBox from '@3d-dice/dice-box';
 import { DemoSimulator } from './DemoSimulator.js';
 
@@ -20,10 +19,7 @@ class DiceGame extends HostBaseGame {
     this.isDiceReady = false;
 
     // Initialization of components
-    this.appbar = new AppBar('game-appbar', {
-      title: '주사위 파티 🎲',
-      onRestart: () => this.resetSession(),
-    });
+    document.querySelector('game-appbar').onRestart = () => this.resetSession();
 
     this.initDiceBox();
     this.demoSimulator = new DemoSimulator(this);
@@ -59,10 +55,8 @@ class DiceGame extends HostBaseGame {
       demoBtn.addEventListener('click', () => {
         if (!this.demoSimulator.isDemo) {
           this.demoSimulator.startDemo();
-          demoBtn.textContent = '⏹️ 데모 중지';
         } else {
           this.demoSimulator.stopDemo();
-          demoBtn.textContent = '🤖 데모 플레이 실행';
         }
       });
     }
@@ -142,10 +136,10 @@ class DiceGame extends HostBaseGame {
     this.updateLobbyUI();
 
     // If real player joined during demo, stop demo play immediately
-    if (this.demoSimulator.isDemo) {
+    if (this.demoSimulator.isDemo && !player.id.startsWith('bot_')) {
       console.log('[Dice] Real player joined. Stopping active demo.');
       this.demoSimulator.stopDemo();
-    } else {
+    } else if (!this.demoSimulator.isDemo) {
       // Broadcast state to sync joining/rejoining client
       this.broadcastState();
     }

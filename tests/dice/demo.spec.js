@@ -19,10 +19,11 @@ test.describe('Dice — 데모 플레이 E2E 테스트', () => {
 
     // 봇 가상 접속 수 확인
     const playerStatus = host.locator('#player-status');
-    await expect(playerStatus).toHaveText('3 Player(s) connected and ready!', { timeout: 10_000 });
+    await expect(playerStatus).toHaveText('3 / 3 플레이어 준비 완료!', { timeout: 10_000 });
 
-    // 주사위 던지기 시작 상태 확인
-    await expect(playerStatus).toHaveText('Rolling dice!! 🎲', { timeout: 10_000 });
+    // 라운드 소개 페이즈 진입 확인
+    const roundIntro = host.locator('[data-phase="roundIntro"]');
+    await expect(roundIntro).not.toHaveClass(/hidden/, { timeout: 10_000 });
 
     await hostCtx.close();
   });
