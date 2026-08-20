@@ -39,6 +39,10 @@ body.dixit-host {
   display:    flex;
   flex-direction: column;
   padding:    40px;
+  /* .dx-demo-banner(position:fixed)가 떠 있는 동안 카드 영역 상단이 배너에
+     가려지는 버그 실측 확인(DixitDemoSimulator._syncDemoBannerHeight가 이 변수를
+     채움) — 배너 없을 땐 0px라 평소 레이아웃에 영향 없음(2026-08-20). */
+  padding-top: calc(40px + var(--dx-demo-banner-h, 0px));
   box-sizing: border-box;
   animation:  fadeIn 0.4s ease-out;
   overflow-y: auto;

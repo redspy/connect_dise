@@ -93,6 +93,12 @@ export class DixitDemoSimulator {
       }
       const logs = document.getElementById('dx-demo-qa-logs');
       if (logs) logs.innerHTML = '';
+      // 버그 수정(2026-08-20): .dx-demo-banner가 position:fixed라 문서 흐름을 차지하지
+      // 않아, 밑에 깔린 .dx-overlay(스토리텔링/투표 등 각 페이즈 카드 영역)의 상단이
+      // 배너에 가려지는 버그가 실측 확인됨(dobble/relay-drawing과 동일 패턴 —
+      // AGENTS.md 참고). 배너 실측 높이를 CSS 변수로 넘겨 .dx-overlay의 padding-top을
+      // 밀어낸다.
+      this._syncDemoBannerHeight();
     }
 
     // QR 블러 가드
@@ -155,6 +161,7 @@ export class DixitDemoSimulator {
     if (banner) {
       banner.classList.add('hidden');
     }
+    document.documentElement.style.removeProperty('--dx-demo-banner-h');
 
     this._isDemoRunning = false;
     this.game._isDemo = false;
@@ -260,6 +267,17 @@ export class DixitDemoSimulator {
       logEl.appendChild(line);
       logEl.scrollTop = logEl.scrollHeight;
     }
+    // 로그가 쌓이면서 .dx-demo-qa-logs가 max-height(100px)까지 자라나 배너 전체
+    // 높이가 변하므로, 로그 추가 시점마다 오프셋을 다시 맞춘다.
+    this._syncDemoBannerHeight();
+  }
+
+  _syncDemoBannerHeight() {
+    const banner = document.getElementById('dx-demo-banner');
+    if (!banner || banner.classList.contains('hidden')) return;
+    requestAnimationFrame(() => {
+      document.documentElement.style.setProperty('--dx-demo-banner-h', `${banner.offsetHeight}px`);
+    });
   }
 
   onPhaseChange(phase) {
