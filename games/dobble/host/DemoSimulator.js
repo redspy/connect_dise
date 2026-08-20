@@ -106,11 +106,18 @@ export class DemoSimulator {
         this.stopDemo();
       };
     }
+
+    // game-appbar의 '다시하기' 버튼이 이 fixed 배너(95% 불투명)와 같은 상단 위치에
+    // 겹쳐 유령처럼 비쳐 보이는 버그가 있었음(agy 비주얼 검증으로 실측 발견,
+    // 2026-08-20). 데모 중엔 정식 '데모 중단' 버튼이 그 역할을 대신하므로,
+    // 혼동을 주는 appbar 버튼은 데모 동안 숨긴다.
+    document.querySelector('.appbar-btn-restart')?.classList.add('hidden');
   }
 
   removeDemoBanner() {
     const banner = document.getElementById('demoStopBanner');
     banner?.parentNode?.removeChild(banner);
+    document.querySelector('.appbar-btn-restart')?.classList.remove('hidden');
   }
 
   // 데모 시작(또는 데모 재개) 시 3명 전원의 탭 스케줄을 처음 세팅함.

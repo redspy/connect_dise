@@ -17,6 +17,15 @@
   --rd-warning:   #f59e0b;
 }
 
+/* DESIGN.md: 게임마다 고유 강조색을 body에서 오버라이드해야 하는데 이 게임엔
+   그게 빠져 있어서, <game-lobby> 내장 시작 버튼 등이 플랫폼 기본 골드로
+   렌더링되며 이 게임의 실제 색(인디고, --rd-accent)과 어긋나 있었음
+   (agy 비주얼 검증으로 실측 발견, 2026-08-20). */
+body.rd-host {
+  --lobby-accent:     var(--rd-accent);
+  --lobby-accent-dim: rgba(99, 102, 241, 0.15);
+}
+
 .host-body {
   background-color: var(--rd-bg);
   color: var(--rd-text);
@@ -739,7 +748,9 @@ h2 {
 }
 .rd-lobby-tip {
   font-size: 13px;
-  color: var(--rd-warning);
+  /* rd-warning(주황)이 아니라 rd-accent2(인디고)로 — 바로 위 가이드 숫자(.rd-step-num)와
+     같은 강조색 계열로 통일(agy 비주얼 검증으로 실측 발견, 2026-08-20). */
+  color: var(--rd-accent2);
   margin-top: 4px;
   margin-bottom: 20px;
   font-weight: 500;
