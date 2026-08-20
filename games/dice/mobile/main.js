@@ -131,19 +131,25 @@ class DiceMobileGame extends MobileBaseGame {
     });
 
     // Motion gestures
-    this.onMotion(({ acc }) => {
-      if (!acc) return;
-      
-      const magnitude = Math.max(Math.abs(acc.x), Math.abs(acc.y), Math.abs(acc.z));
+    // 버그 수정(2026-08-20): 이전엔 콜백에서 { acc }(중력 포함 원본 가속도)만 꺼내
+    // Math.max(|x|,|y|,|z|)로 자체 계산했는데, 정지 상태에서도 중력(~9.8m/s²)이
+    // 어느 한 축에 그대로 실려서 magnitude가 항상 9.8 안팎 — "가볍게 흔듦" 임계값
+    // 3을 정지 상태에서도 상시 통과해, 실제로 폰이 가만히 있어도 흔들림 애니메이션과
+    // 진동이 끊임없이 발동했음(실측: 합성 devicemotion 이벤트로 x=0,y=0,z=9.8 —
+    // 완전 정지 상태 — 를 흘려도 즉시 shake transform이 적용되는 것 확인).
+    // SensorManager.onMotion이 이미 중력을 뺀 shakeMagnitude(= max(0, |가속도| - 9.8))를
+    // 계산해서 주는데 그걸 안 쓰고 있었던 것 — 이제 그 값을 그대로 사용한다.
+    this.onMotion(({ shakeMagnitude }) => {
+      if (shakeMagnitude == null) return;
 
       // Trigger swing throw on high force
-      if (magnitude > 15) {
-        // Map acceleration magnitude to throw strength scaling
-        const strength = Math.min(2.5, Math.max(0.6, magnitude / 12.0));
+      if (shakeMagnitude > 18) {
+        // Map (중력 제외) 가속도 크기를 던지기 세기로 매핑
+        const strength = Math.min(2.5, Math.max(0.6, shakeMagnitude / 15));
         this.triggerThrow(strength);
-      } 
+      }
       // Gentle shake visual effect and light haptic
-      else if (magnitude > 3) {
+      else if (shakeMagnitude > 6) {
         const visualDice = document.getElementById('visual-dice');
         if (visualDice && !visualDice.classList.contains('throwing')) {
           const now = Date.now();
