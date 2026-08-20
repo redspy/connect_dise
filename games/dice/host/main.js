@@ -100,21 +100,14 @@ class DiceGame extends HostBaseGame {
       sessionInfo.innerHTML = `Session ID<br><strong>${sessionId}</strong>`;
     }
 
-    // Render QR codes in 4 corners
-    const qrContainers = [
-      document.getElementById('qr-top-left'),
-      document.getElementById('qr-top-right'),
-      document.getElementById('qr-bottom-left'),
-      document.getElementById('qr-bottom-right'),
-    ];
-    for (const container of qrContainers) {
-      if (container) {
-        container.innerHTML = '';
-        await renderQR(container, qrUrl, { width: 120 });
-        const text = document.createElement('p');
-        text.textContent = 'Scan to Join';
-        container.appendChild(text);
-      }
+    // Render QR code
+    const qrContainer = document.getElementById('qr-top-right');
+    if (qrContainer) {
+      qrContainer.innerHTML = '';
+      await renderQR(qrContainer, qrUrl, { width: 120 });
+      const text = document.createElement('p');
+      text.textContent = 'Scan to Join';
+      qrContainer.appendChild(text);
     }
 
     this.resetGameData();

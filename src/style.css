@@ -184,14 +184,7 @@ body.host-board::after {
   letter-spacing: 0.5px;
 }
 
-/* QR wrapper: no box of its own on desktop so it doesn't disturb the
-   absolutely-positioned corner layout; becomes a real 2x2 grid on narrow
-   viewports (see mobile responsiveness block below). */
-.qr-mobile-grid {
-  display: contents;
-}
-
-/* QR Code Corners */
+/* QR Code Corner (dice: single top-right QR; rhythm-jam: inline .qr-container) */
 .qr-container {
   position: absolute;
   background: rgba(20, 20, 20, 0.85);
@@ -226,23 +219,8 @@ body.host-board::after {
   opacity: 0.8;
 }
 
-#qr-top-left {
-  top: 60px;
-  left: 60px;
-}
-
 #qr-top-right {
   top: 60px;
-  right: 60px;
-}
-
-#qr-bottom-left {
-  bottom: 60px;
-  left: 60px;
-}
-
-#qr-bottom-right {
-  bottom: 60px;
   right: 60px;
 }
 
@@ -704,17 +682,8 @@ body.mobile-controller {
   .center-status h1 {
     font-size: 1.6rem !important;
   }
-  /* Prevent overlap of QR containers on mobile viewport: lay them out as a
-     compact 2x2 grid above the lobby card instead of 4 absolute corners. */
-  .qr-mobile-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, auto);
-    justify-content: center;
-    justify-items: center;
-    gap: 10px;
-    width: 100%;
-    margin: 0 auto;
-  }
+  /* Drop the QR out of its absolute corner into normal flow above the lobby
+     card on narrow viewports. */
   .qr-container {
     position: static !important;
     margin: 0 !important;

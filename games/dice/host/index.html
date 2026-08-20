@@ -31,7 +31,6 @@
        --dice-demo-banner-h로 동기화해 두 top QR의 top 오프셋에 더한다.
        (position:absolute 자식은 조상의 padding-top으로는 밀리지 않으므로
        top 값 자체에 calc()로 더해야 함. 평상시 미설정 시 0px.) */
-    #qr-top-left,
     #qr-top-right {
       top: calc(60px + var(--dice-demo-banner-h, 0px)) !important;
     }
@@ -51,7 +50,11 @@
         min-height: 0 !important;
       }
       body.host-board {
-        padding-top: calc(20px + var(--dice-demo-banner-h, 0px)) !important;
+        /* game-appbar는 position:absolute; top:0으로 flex 흐름 밖에 떠 있어
+           padding-top으로 안 밀림 — 실측 높이(52px) + 여백만큼 직접 확보해야
+           그 아래로 흘러들어오는 QR/로비 카드가 상단바에 가려지지 않는다
+           (390px 폭에서 padding-top:20px로는 32px 겹침 실측, 2026-08-20). */
+        padding-top: calc(64px + var(--dice-demo-banner-h, 0px)) !important;
         gap: 16px;
         /* justify-content:center(기본값)는 콘텐츠가 뷰포트보다 커지면 위/아래로
            균등하게 넘쳐서 위쪽이 스크롤로 닿지 않는 채 다음 요소와 겹쳐 보이는
@@ -182,13 +185,8 @@
   <!-- Common App Bar -->
   <game-appbar title="주사위 파티 🎲"></game-appbar>
 
-  <!-- QR codes dynamically managed -->
-  <div class="qr-mobile-grid">
-    <div id="qr-top-left" class="qr-container"></div>
-    <div id="qr-top-right" class="qr-container"></div>
-    <div id="qr-bottom-left" class="qr-container"></div>
-    <div id="qr-bottom-right" class="qr-container"></div>
-  </div>
+  <!-- QR code (dynamically managed) -->
+  <div id="qr-top-right" class="qr-container"></div>
 
   <!-- Main Game Container -->
   <div class="dice-host-container" id="host-main-container">
