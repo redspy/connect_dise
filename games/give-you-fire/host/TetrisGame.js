@@ -31,10 +31,12 @@ export class TetrisGame extends HostBaseGame {
     this._gameMode      = 'classic'; // 'classic' | 'quick'
     this._readyCount   = 0;
     this._aliveCount   = 0;
-    this._rankings     = []; // 탈락/종료 순으로 쌓임
     this._gameStartTime = null;
     this._elapsed      = 0;
     this._elapsedTimer = null;
+    this._isDemo       = false;
+    this._countdownTimer   = null;
+    this._countdownOverlay = null;
 
     this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
@@ -75,6 +77,12 @@ export class TetrisGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          // 유휴 자동 데모(HostBaseGame._triggerAutoDemo)는 이미 실제 플레이어가
+          // 있으면 시작하지 않도록 가드돼 있는데(AGENTS.md 필수 처리 사항), 수동
+          // 버튼에는 같은 가드가 없어 로비에 실제 플레이어가 대기 중일 때 눌러도
+          // 봇 3명이 얹혀 섞인 채로 카운트다운이 시작돼버림(claude 헤드리스 리뷰로
+          // 발견) — 같은 원칙을 수동 경로에도 동일 적용.
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
         } else {
           this._demoSimulator.stopDemo();
@@ -86,6 +94,15 @@ export class TetrisGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      // 실제 플레이어 접속 시 자동 중단 (project convention — dobble/nunchi-ten/relay-drawing과 동일).
+      // 데모 시작 시 _startCountdown()이 즉시 _gameStarted=true로 만들어버리므로, 아래
+      // _gameStarted 가드보다 먼저 이 체크가 없으면 데모 중 접속한 실제 플레이어는
+      // 아무 UI 반응 없이 조용히 무시된다(AGENTS.md 필수 처리 사항 참고).
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
     if (this._gameStarted) return;
     this._playerData.set(player.id, { level: 1, lines: 0, board: null, alive: true, rank: null });
     this._renderLobby();
@@ -133,15 +150,8 @@ export class TetrisGame extends HostBaseGame {
         this._aliveCount--;
         const rank = this._aliveCount + 1;
         data.rank = rank;
-        this._rankings.unshift({ id: playerId, rank });
         this._renderPlayerCard(playerId);
         this.broadcast('playerEliminated', { playerId, rank });
-
-        // 생존자 체크 및 게임 종료 여부 확인
-        const alivePlayers = [...this.players.values()].filter(p => {
-          const d = this._playerData.get(p.id);
-          return d && d.alive;
-        });
 
         if (this._aliveCount <= 1) {
           // 남은 생존자를 1위로 설정
@@ -149,7 +159,6 @@ export class TetrisGame extends HostBaseGame {
             if (d.alive) {
               d.alive = false;
               d.rank = 1;
-              this._rankings.unshift({ id, rank: 1 });
             }
           }
           this._endGame();
@@ -176,13 +185,13 @@ export class TetrisGame extends HostBaseGame {
 
   onReset() {
     this._demoSimulator.stopDemo();
+    this._stopCountdown();
     this._profiles.clear();
     this._playerData.clear();
     this._gameStarted   = false;
     this._gameMode      = 'classic';
     this._readyCount    = 0;
     this._aliveCount    = 0;
-    this._rankings      = [];
     this._gameStartTime = null;
     this._stopElapsedTimer();
     this._renderLobby();
@@ -268,7 +277,6 @@ export class TetrisGame extends HostBaseGame {
       this._aliveCount--;
       const rank = this._aliveCount + 1;
       data.rank = rank;
-      this._rankings.unshift({ id: player.id, rank });
       this._renderPlayerCard(player.id);
 
       const playersArr = [...this.players.values()];
@@ -286,18 +294,32 @@ export class TetrisGame extends HostBaseGame {
           if (d.alive) {
             d.alive = false;
             d.rank = 1;
-            this._rankings.unshift({ id, rank: 1 });
           }
         }
         this._endGame();
       }
     });
 
-    // 1인 클리어 (레벨 100 도달)
+    // 1인 클리어 (레벨 100/40 도달 — 다른 플레이어가 아직 생존 중이어도 즉시 경기 종료)
     this.onMessage('soloClear', (player) => {
       const data = this._playerData.get(player.id);
       if (data) { data.alive = false; data.rank = 1; }
-      this._rankings.unshift({ id: player.id, rank: 1 });
+
+      // 아직 탈락하지 않고 생존 중이던 다른 플레이어들은 rank가 null로 남아 있으면
+      // _buildFinalRankings()의 `data.rank ?? 1` 기본값 때문에 전부 공동 1위로 표시되는
+      // 버그가 있었음(멀티플레이에서 한 명이 먼저 레벨 캡을 찍고 나머지가 아직 레이스
+      // 중인, 이 게임의 가장 흔한 승리 시나리오에서 실측 확인). 남은 생존자는 레벨→
+      // 라인 수 내림차순으로 2위부터 순위를 매겨 종료한다.
+      const stillAlive = [...this._playerData.entries()]
+        .filter(([id, d]) => id !== player.id && d.alive)
+        .sort(([, a], [, b]) => (b.level - a.level) || (b.lines - a.lines));
+
+      let nextRank = 2;
+      for (const [id, d] of stillAlive) {
+        d.alive = false;
+        d.rank = nextRank++;
+      }
+
       this._endGame();
     });
 
@@ -326,12 +348,21 @@ export class TetrisGame extends HostBaseGame {
     overlay.className = 'gyf-countdown-overlay';
     overlay.innerHTML = `<div class="gyf-countdown-num">${count}</div>`;
     document.body.appendChild(overlay);
+    this._countdownOverlay = overlay;
 
-    const timer = setInterval(() => {
+    // 인스턴스 필드에 저장해 onReset()에서 반드시 clear — 안 그러면 카운트다운
+    // 도중(전원 퇴장 자동 리셋, 수동 리셋 등) onReset()이 호출돼도 이 인터벌은 계속
+    // 살아서 1~3초 뒤 이미 로비로 돌아온 세션에 _startGame()을 뒤늦게 발화시켜
+    // "리셋했는데 게임이 다시 시작되는" 유령 재시작 버그가 생긴다(codex 정적 리뷰로
+    // 발견, AGENTS.md 필수 처리 사항의 "setTimeout/setInterval 체인은 인스턴스 필드에
+    // 저장하고 onReset()에서 clear" 규칙과 동일 패턴).
+    this._countdownTimer = setInterval(() => {
       count--;
       if (count <= 0) {
-        clearInterval(timer);
+        clearInterval(this._countdownTimer);
+        this._countdownTimer = null;
         overlay.remove();
+        this._countdownOverlay = null;
         this._startGame();
       } else {
         this.broadcast('gameCountdown', { count });
@@ -341,17 +372,31 @@ export class TetrisGame extends HostBaseGame {
     }, 1000);
   }
 
+  _stopCountdown() {
+    if (this._countdownTimer) {
+      clearInterval(this._countdownTimer);
+      this._countdownTimer = null;
+    }
+    if (this._countdownOverlay) {
+      this._countdownOverlay.remove();
+      this._countdownOverlay = null;
+    }
+  }
+
   _startGame() {
     this._gameStarted  = true;
     this._aliveCount   = this.playerCount;
-    this._rankings     = [];
     this._gameStartTime = Date.now();
 
     const startLevel = this._gameMode === 'quick' ? 5 : 1;
 
-    // 모든 플레이어 데이터 초기화
-    for (const [id] of this.players) {
-      this._playerData.set(id, { level: startLevel, lines: 0, board: null, alive: true, rank: null, engineState: null });
+    // 모든 플레이어 데이터 초기화. color는 여기서 스냅샷해 둔다 — 게임 도중
+    // 완전히 퇴장(재접속 유예시간 만료)한 플레이어는 HostBaseGame이 onPlayerLeave
+    // 훅을 부르기도 전에 this.players(_players)에서 이미 삭제해버리므로,
+    // _buildFinalRankings()가 그 시점에 this.players를 다시 조회하면 색상은 물론
+    // 참가 자체가 통째로 사라진다(claude 헤드리스 리뷰로 발견).
+    for (const [id, player] of this.players) {
+      this._playerData.set(id, { level: startLevel, lines: 0, board: null, alive: true, rank: null, engineState: null, color: player.color });
     }
 
     // 대시보드 렌더링
@@ -386,13 +431,18 @@ export class TetrisGame extends HostBaseGame {
   }
 
   _buildFinalRankings() {
-    return [...this.players.values()].map(player => {
-      const profile = this._profiles.get(player.id) ?? {};
-      const data    = this._playerData.get(player.id) ?? {};
+    // this.players(현재 접속 중인 플레이어)가 아니라 _playerData를 순회한다 —
+    // 게임 도중 완전히 퇴장(재접속 유예시간 만료)한 플레이어는 onPlayerLeave 훅이
+    // 불리기 전에 이미 this.players에서 삭제돼 있어, this.players 기준으로 걸러내면
+    // 정상적으로 순위가 매겨진 중도 이탈자가 최종 결과에서 통째로 빠지는 버그가
+    // 있었음(claude 헤드리스 리뷰로 발견). color도 _startGame()에서 미리 스냅샷해
+    // 둔 값을 쓴다 — this.players에는 이미 없을 수 있으므로.
+    return [...this._playerData.entries()].map(([id, data]) => {
+      const profile = this._profiles.get(id) ?? {};
       return {
-        id:       player.id,
+        id,
         nickname: profile.nickname ?? '???',
-        color:    player.color,
+        color:    data.color ?? '#888',
         rank:     data.rank ?? 1,
         level:    data.level ?? 1,
         lines:    data.lines ?? 0,

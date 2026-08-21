@@ -43,6 +43,8 @@ export class TetrisMobile extends MobileBaseGame {
     this._dropTimer  = null;
     this._levelTimer = null;
     this._softTimer  = null;
+    this._resultTimer = null;
+    this._hintTimer  = null;
 
     // 제스처 상태
     this._gestStartX    = 0;
@@ -62,6 +64,10 @@ export class TetrisMobile extends MobileBaseGame {
     this._wireUI();
     this._wireMessages();
     this._prefillNickname();
+
+    // 재대결마다 _startGame()이 다시 호출되므로, 리스너를 그 안에 두면 매 대결마다
+    // 중복 등록되어 누적된다 — 인스턴스 생성 시 단 한 번만 등록.
+    window.addEventListener('resize', () => this._resizeCanvas());
   }
 
   // ─── MobileBaseGame 훅 ────────────────────────────────────────────────────
@@ -71,12 +77,18 @@ export class TetrisMobile extends MobileBaseGame {
   onAllReady() { /* 게임 시작은 호스트가 제어 */ }
 
   onReset() {
-    this._stopAllTimers();
+    // _gameActive를 먼저 false로 내린 뒤 타이머를 정지해야 함 — 순서가 바뀌면
+    // 소프트드롭 도중 리셋이 온 경우 _stopAllTimers()→_stopSoftDrop() 내부의
+    // `if (this._gameActive && this._alive) this._startDropTimer()`가 아직 true인
+    // 이전 라운드 플래그를 보고 새 _dropTimer를 다시 만들어버린다(claude 헤드리스
+    // 리뷰로 발견 — _dropTick()의 !this._engine 가드 덕에 크래시로는 안 이어지지만
+    // "리셋 시 모든 타이머 정지" 불변식이 깨지는 순서 버그).
     this._engine     = null;
     this._level      = 1;
     this._totalLines = 0;
-    this._alive      = true;
     this._gameActive = false;
+    this._alive      = true;
+    this._stopAllTimers();
     if (this._nickname) this._sendProfile();
     else this.showScreen('setup');
   }
@@ -118,9 +130,14 @@ export class TetrisMobile extends MobileBaseGame {
     this.onMessage('gameFinished', ({ rankings }) => {
       this._stopAllTimers();
       this._gameActive = false;
-      // 결과 연출을 위해 2.5초 대기 후 결과 화면 전환
+      // 결과 연출을 위해 2.5초 대기 후 결과 화면 전환.
+      // 인스턴스 필드에 저장해 onReset()에서 clear — 안 그러면 이 2.5초 사이에
+      // 재대결 등으로 onReset()이 호출돼 setup/waiting 화면으로 이미 전환된 뒤에도
+      // 뒤늦게 발화해 result 화면으로 도로 튀는 버그가 생긴다(codex 정적 리뷰로 발견,
+      // AGENTS.md의 "setTimeout 체인은 인스턴스 필드에 저장하고 clear" 규칙과 동일).
       this._showToast('🏆 경기 종료! 최종 결과를 정산합니다...');
-      setTimeout(() => {
+      this._resultTimer = setTimeout(() => {
+        this._resultTimer = null;
         this._showResult(rankings);
       }, 2500);
     });
@@ -473,8 +490,6 @@ export class TetrisMobile extends MobileBaseGame {
       this._bindGestureControls();
       this._showGestureHint();
     });
-
-    window.addEventListener('resize', () => this._resizeCanvas());
   }
 
   // ─── 제스처 힌트 (처음 게임 시작 시 3초간 표시) ─────────────────────────
@@ -484,13 +499,17 @@ export class TetrisMobile extends MobileBaseGame {
     if (!hint) return;
     hint.classList.remove('gyf-hint-hidden');
 
-    // 첫 터치 또는 3초 후 사라짐
+    // 첫 터치 또는 3초 후 사라짐. _hintTimer에 저장해 _stopAllTimers()/onReset()에서
+    // clear — 안 그러면 3초 이내에 재대결이 일어났을 때 이전 라운드 타이머가 뒤늦게
+    // 발화해 새 라운드에서 막 보여준 힌트를 조기에 감춰버린다(claude 헤드리스 리뷰로
+    // 발견).
     const hide = () => {
       hint.classList.add('gyf-hint-hidden');
       hint.removeEventListener('touchstart', hide);
+      this._hintTimer = null;
     };
     hint.addEventListener('touchstart', hide, { once: true, passive: true });
-    setTimeout(hide, 3000);
+    this._hintTimer = setTimeout(hide, 3000);
   }
 
   // ─── 캔버스 크기 조정 ────────────────────────────────────────────────────
@@ -770,6 +789,8 @@ export class TetrisMobile extends MobileBaseGame {
   _stopAllTimers() {
     this._clearTimer('_dropTimer');
     this._clearTimer('_levelTimer');
+    this._clearTimer('_resultTimer');
+    this._clearTimer('_hintTimer');
     this._stopSoftDrop();
   }
 }

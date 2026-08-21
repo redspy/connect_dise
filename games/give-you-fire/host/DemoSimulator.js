@@ -5,6 +5,7 @@ export class DemoSimulator {
     this.demoInterval = null;
     this.demoTimeouts = [];
     this.backupState = null;
+    this.botIds = ['bot_amy', 'bot_bob', 'bot_charles'];
   }
 
   startDemo() {
@@ -12,22 +13,19 @@ export class DemoSimulator {
     this.state = 'running';
     this.game._isDemo = true;
 
-    // 1. 기존 상태 백업
+    // 1. 기존 상태 백업 (봇 id만 골라 제거하는 방식으로 복원하므로, 플레이어 Map
+    // 스냅샷 자체는 더 이상 필요 없음 — 아래 readyCount/aliveCount/phase만 사용)
     this.backupState = {
-      players: new Map(this.game.players),
-      sdkPlayers: new Map(this.game.sdk._players),
-      profiles: new Map(this.game._profiles),
-      playerData: new Map(this.game._playerData),
       readyCount: this.game._readyCount,
       aliveCount: this.game._aliveCount,
       phase: this.game.phase
     };
 
-    // 2. 가상 봇 3명 등록
+    // 2. 가상 봇 3명 등록 (id는 this.botIds와 반드시 일치해야 stopDemo()에서 정리됨)
     const bots = [
-      { id: 'bot_amy', nickname: '🤖 에이미', color: '#EF4444' },
-      { id: 'bot_bob', nickname: '🤖 밥', color: '#10B981' },
-      { id: 'bot_charles', nickname: '🤖 찰리', color: '#3B82F6' }
+      { id: this.botIds[0], nickname: '🤖 에이미', color: '#EF4444' },
+      { id: this.botIds[1], nickname: '🤖 밥', color: '#10B981' },
+      { id: this.botIds[2], nickname: '🤖 찰리', color: '#3B82F6' }
     ];
 
     bots.forEach(b => {
@@ -124,17 +122,29 @@ export class DemoSimulator {
       demoPlayBtn.style.color = '#000000';
     }
 
-    // 백업 상태 복원
+    // 봇만 골라서 제거 — game._players/sdk._players를 백업 스냅샷으로 통째로 교체하지
+    // 않는다. onPlayerJoin()이 데모 중 실제 접속을 감지하면 stopDemo()→resetSession()
+    // 순으로 호출하는데(TetrisGame.js 참고), 그 실제 플레이어는 이 시점에 이미
+    // game._players/sdk._players 둘 다에 봇과 함께 섞여 들어가 있다. 여기서 통째로
+    // 데모 시작 이전 스냅샷(그 실제 플레이어가 join하기 전 상태)으로 되돌리면, 특히
+    // sdk._players가 비면 뒤이은 resetSession()의 'reset' 핸들러(HostBaseGame)가
+    // sdk.getPlayers()로 game._players를 재구성할 때 그 실제 플레이어가 통째로
+    // 증발해버린다(서버·본인 폰은 연결된 채로 착각하는 유령 상태) — AGENTS.md의
+    // "전체 교체보다 골라서 추가/제거" 원칙을 sdk._players에도 동일 적용.
+    this.botIds.forEach(id => {
+      this.game._players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._profiles.delete(id);
+      this.game._playerData.delete(id);
+    });
+
+    // 나머지 상태(준비 인원 수 등)는 데모 시작 전 값으로 복원
     if (this.backupState) {
-      this.game._players = this.backupState.players;
-      this.game.sdk._players = this.backupState.sdkPlayers;
-      this.game._profiles = this.backupState.profiles;
-      this.game._playerData = this.backupState.playerData;
       this.game._readyCount = this.backupState.readyCount;
       this.game._aliveCount = this.backupState.aliveCount;
       this.game._gameStarted = false;
       this.game._stopElapsedTimer();
-      
+
       this.game._renderLobby();
       this.game._updateReadyStatus();
       this.game._broadcastPlayerList();
@@ -175,7 +185,7 @@ export class DemoSimulator {
     }
 
     if (phase === 'playing') {
-      const bots = ['bot_amy', 'bot_bob', 'bot_charles'];
+      const bots = this.botIds;
       const maxLvl = this.game._gameMode === 'quick' ? 40 : 100;
 
       this.demoInterval = setInterval(() => {

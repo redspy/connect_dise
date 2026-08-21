@@ -26,6 +26,14 @@ body.host-board {
   overflow: hidden;
 }
 
+/* <game-lobby> 공통 컴포넌트(시작 버튼/포커스 강조색 등)가 플랫폼 기본 골드
+   (#f59e0b)로 폴백되지 않도록, 게임 고유 파이어 오렌지로 오버라이드 (AGENTS.md 필수
+   처리 사항 — dixit/relay-drawing에서 agy 비주얼 검증으로 실측 발견된 패턴). */
+body.gyf-host {
+  --lobby-accent: var(--gyf-fire);
+  --lobby-accent-dim: rgba(255, 106, 0, 0.15);
+}
+
 /* ─── 오버레이 전환 ──────────────────────────────────────────────── */
 .gyf-overlay {
   position: fixed;
@@ -212,6 +220,11 @@ body.host-board {
 .gyf-btn-secondary:hover { background: var(--gyf-border); }
 
 .gyf-btn-danger-sm {
+  /* .gyf-btn 기본값(flex:1)을 상속하면 justify-content:space-between인
+     .gyf-playing-header의 남는 flex 공간을 전부 차지해 리셋 버튼이 헤더 폭
+     대부분을 뒤덮는 거대한 알약 모양으로 늘어남(1920x1080/1280x400 실측 확인).
+     "sm(작은 버튼)" 의도에 맞게 내용물 크기로 고정. */
+  flex: none;
   background: transparent;
   color: var(--gyf-danger);
   border: 1px solid var(--gyf-danger);
@@ -363,6 +376,8 @@ body.host-board {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 50vh;
+  overflow-y: auto;
 }
 .gyf-rank-row {
   display: flex;
