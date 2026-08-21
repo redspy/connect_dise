@@ -35,6 +35,10 @@
         <input type="checkbox" id="chk-next-piece">
         <span>다음 블록 미리보기 ON</span>
       </label>
+      <label class="gyf-option-row" style="margin-top: 0.6rem;">
+        <input type="checkbox" id="chk-join-as-player">
+        <span>🎮 이 기기로도 함께 참여하기</span>
+      </label>
       <button id="demoPlayBtn" class="primary-btn demo-btn" style="margin-top: 1.2rem; background: linear-gradient(135deg, var(--lobby-accent, #f59e0b), #d97706); color: #000000; border: none; font-weight: bold; padding: 0.8rem 1.6rem; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🤖 데모 플레이 실행</button>
     </game-lobby>
   </div>
@@ -62,6 +66,16 @@
       <div class="gyf-rankings" id="result-rankings"></div>
       <button class="gyf-btn gyf-btn-primary" id="btn-restart-result">다시하기</button>
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       간단대결모드: 호스트 자신의 플레이 화면(진짜 모바일
+       클라이언트 페이지를 iframe으로 그대로 로드 — 서버 입장에서는
+       실제 폰 한 대가 접속한 것과 동일하게 처리됨)
+  ══════════════════════════════════════════ -->
+  <div id="gyf-self-frame-wrap" class="gyf-self-frame-wrap hidden">
+    <button id="gyf-self-frame-close" class="gyf-self-frame-close" title="참여 취소">✕</button>
+    <iframe id="gyf-self-frame" class="gyf-self-frame" title="내 플레이 화면"></iframe>
   </div>
 
   <script type="module" src="./main.js"></script>

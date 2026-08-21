@@ -37,6 +37,7 @@ export class TetrisGame extends HostBaseGame {
     this._isDemo       = false;
     this._countdownTimer   = null;
     this._countdownOverlay = null;
+    this._sessionId    = null; // 간단대결모드 iframe src 조립에 사용
 
     this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
@@ -44,7 +45,31 @@ export class TetrisGame extends HostBaseGame {
 
   // ─── HostBaseGame 훅 ──────────────────────────────────────────────────────
 
-  async onSetup() {
+  async onSetup({ sessionId }) {
+    this._sessionId = sessionId;
+
+    // 간단대결모드: 체크하면 이 기기(호스트) 자신도 실제 모바일 클라이언트
+    // 페이지를 iframe으로 로드해 진짜 플레이어로 참여함 — HostSDK가 QR에
+    // 인코딩하는 것과 동일한 `/mobile/?session=<id>` URL이라, 서버 입장에서는
+    // 물리적으로 다른 폰이 접속한 것과 구분되지 않는다(재접속 유예, 데모 가드,
+    // sendToPlayer/broadcast 등 기존 규칙이 특수 처리 없이 그대로 적용됨).
+    const joinChk = document.getElementById('chk-join-as-player');
+    const frameWrap = document.getElementById('gyf-self-frame-wrap');
+    const frame = document.getElementById('gyf-self-frame');
+    const closeBtn = document.getElementById('gyf-self-frame-close');
+    if (joinChk && frameWrap && frame) {
+      joinChk.addEventListener('change', () => {
+        if (joinChk.checked) this._openSelfFrame();
+        else this._closeSelfFrame();
+      });
+    }
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        if (joinChk) joinChk.checked = false;
+        this._closeSelfFrame();
+      });
+    }
+
     // 미리보기 체크박스
     const chk = document.getElementById('chk-next-piece');
     if (chk) {
@@ -91,6 +116,30 @@ export class TetrisGame extends HostBaseGame {
     }
 
     this.setPhase('lobby');
+  }
+
+  // ─── 간단대결모드 (호스트 자신이 iframe으로 실제 플레이어 참여) ────────────
+
+  _openSelfFrame() {
+    const frameWrap = document.getElementById('gyf-self-frame-wrap');
+    const frame = document.getElementById('gyf-self-frame');
+    if (!frameWrap || !frame || !this._sessionId) return;
+    // HostSDK가 QR에 인코딩하는 것과 동일한 URL 형식(HostSDK.js의 _qrUrl 조립부
+    // 참고) — 이 iframe은 서버 입장에서 진짜 소켓 접속을 하는 진짜 플레이어이므로
+    // 재접속 유예/데모 가드/sendToPlayer 등 기존 규칙이 특수 처리 없이 그대로 적용됨.
+    frame.src = `${location.origin}/games/give-you-fire/mobile/?session=${this._sessionId}`;
+    frameWrap.classList.remove('hidden');
+  }
+
+  _closeSelfFrame() {
+    const frameWrap = document.getElementById('gyf-self-frame-wrap');
+    const frame = document.getElementById('gyf-self-frame');
+    if (!frameWrap || !frame) return;
+    // src를 비워 내부 소켓 연결 자체를 끊는다 — 단순히 wrap을 숨기기만 하면
+    // iframe 내부 소켓은 계속 살아있어 "참여 취소"가 실제로 반영되지 않는다.
+    // 서버는 이후 일반적인 playerDisconnect → 재접속 유예 → leave 경로를 그대로 밟는다.
+    frame.src = 'about:blank';
+    frameWrap.classList.add('hidden');
   }
 
   onPlayerJoin(player) {

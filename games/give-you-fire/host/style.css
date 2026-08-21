@@ -111,10 +111,59 @@ body.gyf-host {
 .gyf-rank-dot    { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .gyf-rank-detail { margin-left: auto; color: var(--gyf-sub); font-size: .8rem; }
 
+/* ─── 간단대결모드: 호스트 자신의 플레이 화면(iframe) ────────────────────── */
+.gyf-self-frame-wrap {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 300px;
+  height: 560px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: #000;
+  border: 3px solid var(--gyf-fire, #ff6a00);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 106, 0, 0.3);
+  z-index: 900; /* .gyf-countdown-overlay(1000)보단 아래, 대시보드보단 위 */
+}
+.gyf-self-frame-wrap.hidden {
+  display: none;
+}
+.gyf-self-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+.gyf-self-frame-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.gyf-self-frame-close:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
 @media (max-width: 1024px) {
   body.host-board {
     height: auto !important;
     overflow-y: auto !important;
+  }
+  .gyf-self-frame-wrap {
+    right: 50%;
+    bottom: 12px;
+    transform: translateX(50%);
+    width: min(320px, 92vw);
+    height: min(560px, 62vh);
   }
   .gyf-playing-header {
     flex-direction: column !important;
