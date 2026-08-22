@@ -252,6 +252,24 @@ export class TetrisGame extends HostBaseGame {
     if (this._isDemo) {
       this._demoSimulator.onPhaseChange(to);
     }
+    this._syncSelfFrameFullscreen(to);
+  }
+
+  /**
+   * 간단대결모드로 호스트 자신도 참여 중이면, 게임이 시작된 순간부터는
+   * 호스트 화면 전체가 클라이언트(iframe) UI가 되어야 함 — 우하단 작은
+   * 패널을 화면 전체로 확대하고, 이제 정보가 중복되는 PC 대시보드는
+   * 감춘다(상대방 현황은 iframe 안의 TetrisMobile이 opponentSnapshot으로
+   * 받는 미니보드 스트립이 대신 보여줌 — _broadcastOpponentSnapshot() 참고).
+   * 로비로 돌아가면(재대결 등) 다시 작은 패널 + 대시보드 동시 노출로 복귀.
+   */
+  _syncSelfFrameFullscreen(phase) {
+    const frameWrap = document.getElementById('gyf-self-frame-wrap');
+    const dashboard = document.getElementById('dashboard-grid');
+    if (!frameWrap || frameWrap.classList.contains('hidden')) return;
+    const shouldFullscreen = phase === 'playing' || phase === 'result';
+    frameWrap.classList.toggle('fullscreen', shouldFullscreen);
+    if (dashboard) dashboard.style.visibility = shouldFullscreen ? 'hidden' : '';
   }
 
   // ─── 메시지 처리 ──────────────────────────────────────────────────────────
@@ -375,6 +393,14 @@ export class TetrisGame extends HostBaseGame {
     // 다시하기 요청
     this.onMessage('requestRematch', () => {
       this.resetSession();
+    });
+
+    // 호스트리스 모드(폰만으로 방 만들기)에서는 <game-lobby>의 "게임 시작"
+    // 버튼이 화면에 안 보이는 헤드리스 iframe 안에 있어 아무도 누를 수 없다
+    // — 방을 만든 폰 자신의 UI(TetrisMobile.js 대기 화면)에서 이 메시지를
+    // 보내 대신 시작을 트리거한다. requestRematch와 동일한 패턴.
+    this.onMessage('requestStart', () => {
+      if (this._canStart()) this._startCountdown();
     });
   }
 
@@ -615,6 +641,33 @@ export class TetrisGame extends HostBaseGame {
         if (cardEl) cardEl.classList.add('gyf-card-dead');
       }
     }
+
+    this._broadcastOpponentSnapshot();
+  }
+
+  /**
+   * 대시보드 미니보드와 동일한 정보를 모든 플레이어에게도 브로드캐스트한다.
+   * 호스트 대시보드가 안 보이는 상황(간단대결모드로 호스트 자신이 전체화면
+   * 클라이언트 UI로 전환됐을 때, 또는 PC/TV 없이 폰끼리만 하는 호스트리스
+   * 모드)에서도 각자 폰 화면에 작은 "상대방 미니보드"로 띄우기 위함
+   * (TetrisMobile.js의 opponentSnapshot 핸들러가 렌더링). 모드 무관하게
+   * 항상 보내며, 받는 쪽에서 자기 자신의 id는 걸러낸다.
+   */
+  _broadcastOpponentSnapshot() {
+    const players = [...this._playerData.entries()].map(([id, data]) => {
+      const player = this.players.get(id);
+      const profile = this._profiles.get(id) ?? {};
+      return {
+        id,
+        nickname: profile.nickname ?? '???',
+        color: data.color ?? player?.color ?? '#888',
+        level: data.level ?? 1,
+        lines: data.lines ?? 0,
+        board: data.board ?? null,
+        alive: data.alive,
+      };
+    });
+    this.broadcast('opponentSnapshot', { players });
   }
 
   // ─── 결과 화면 ───────────────────────────────────────────────────────────

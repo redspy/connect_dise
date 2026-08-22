@@ -6,10 +6,18 @@ import { P2PManager } from './P2PManager.js';
 const RECONNECT_KEY = (sessionId) => `_sdk_reconnect_${sessionId}`;
 
 export class MobileSDK extends EventTarget {
-  constructor() {
+  /**
+   * @param {{ onCreateRoom?: () => void }} [options]
+   *   onCreateRoom: 지정하면 "방에 연결하기" 모달에 "🏠 새 방 만들기" 버튼이
+   *   추가로 노출됨. 세션 없이(?session= 파라미터 없이) 접속한 사용자가 이
+   *   버튼을 눌렀을 때 무엇을 할지는 게임 쪽(callback)에서 결정 — SDK는
+   *   호스트리스 세션 생성 방법을 모름, joinSession()으로 결과만 받는다.
+   */
+  constructor({ onCreateRoom = null } = {}) {
     super();
     const params = new URLSearchParams(window.location.search);
     this._sessionId = params.get('session');
+    this._onCreateRoom = onCreateRoom;
     this._player = null;
     this._socket = io();
     this._messageHandlers = new Map();
@@ -26,11 +34,7 @@ export class MobileSDK extends EventTarget {
 
     socket.on('connect', () => {
       this._emit('connect', {});
-      if (this._sessionId) {
-        // 이전 세션의 stable player ID가 있으면 재연결 시도
-        const reconnectId = sessionStorage.getItem(RECONNECT_KEY(this._sessionId)) || null;
-        socket.emit('platform:joinSession', { sessionId: this._sessionId, reconnectId });
-      }
+      if (this._sessionId) this._doJoinSession(this._sessionId);
     });
 
     socket.on('platform:joined', ({ player, reconnected }) => {
@@ -160,6 +164,22 @@ export class MobileSDK extends EventTarget {
     this._socket.emit('platform:playerReady', { sessionId: this._sessionId });
   }
 
+  /**
+   * 생성자 시점에 ?session= 파라미터가 없어 세션 미확정 상태로 시작한 경우
+   * (예: 이 폰이 스스로 방을 만든 뒤), 사후에 세션을 확정해 참가를 시도한다.
+   * 이미 연결된 소켓을 그대로 재사용 — 페이지 새로고침 없이 즉시 참가.
+   */
+  joinSession(sessionId) {
+    this._sessionId = sessionId;
+    if (this._socket.connected) this._doJoinSession(sessionId);
+  }
+
+  _doJoinSession(sessionId) {
+    // 이전 세션의 stable player ID가 있으면 재연결 시도
+    const reconnectId = sessionStorage.getItem(RECONNECT_KEY(sessionId)) || null;
+    this._socket.emit('platform:joinSession', { sessionId, reconnectId });
+  }
+
   async requestSensors() {
     return await this._sensorManager.requestPermission();
   }
@@ -220,7 +240,12 @@ export class MobileSDK extends EventTarget {
       #_sdk-reconnect-ui {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.85);
+        /* 0.85는 뒤에 있는 게임 자체 화면(닉네임 입력 등 항상 렌더링돼
+           있는 setup 화면)의 밝은 텍스트가 15% 투과로 비쳐 보여 이 모달의
+           문구와 겹쳐 읽히는 문제가 있었음(give-you-fire 호스트리스 모드
+           "방에 연결하기" 진입 화면에서 실측). 뒤 화면을 완전히 가리도록
+           불투명에 가깝게 올림. */
+        background: rgba(4, 6, 12, 0.98);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -450,6 +475,15 @@ export class MobileSDK extends EventTarget {
     qrBtn.innerHTML = '📷 <span>QR 코드 스캔</span>';
     qrBtn.addEventListener('click', () => this.showQRScanner());
     modal.appendChild(qrBtn);
+
+    if (this._onCreateRoom) {
+      const createBtn = document.createElement('button');
+      createBtn.className = '_sdk-qr-btn';
+      createBtn.style.marginTop = '12px';
+      createBtn.innerHTML = '🏠 <span>이 기기로 새 방 만들기</span>';
+      createBtn.addEventListener('click', () => this._onCreateRoom());
+      modal.appendChild(createBtn);
+    }
 
     const homeBtn = document.createElement('button');
     homeBtn.className = '_sdk-home-btn';

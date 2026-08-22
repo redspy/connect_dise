@@ -15,6 +15,7 @@
 import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 import { TetrisEngine, dropInterval, BOARD_COLS } from '../shared/TetrisEngine.js';
 import { renderBoard, renderNextPiece } from '../shared/BoardRenderer.js';
+import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 
 // ─── 제스처 감도 상수 ─────────────────────────────────────────────────────
 const TAP_THRESHOLD      = 15;   // px: 이 이내 움직임은 탭으로 판정
@@ -127,6 +128,13 @@ export class TetrisMobile extends MobileBaseGame {
       this._showToast(`💀 ${nickname} 탈락! (${rank}위)`);
     });
 
+    // 상대방 미니보드 — 호스트 대시보드와 동일한 정보를 폰 화면 구석에도
+    // 작게 표시(호스트 화면이 안 보이는 간단대결모드 전체화면 상태, 또는
+    // PC/TV 자체가 없는 호스트리스 모드에서 상대 현황을 볼 유일한 수단).
+    this.onMessage('opponentSnapshot', ({ players }) => {
+      this._renderOpponentStrip((players || []).filter(p => p.id !== this.playerId));
+    });
+
     this.onMessage('gameFinished', ({ rankings }) => {
       this._stopAllTimers();
       this._gameActive = false;
@@ -204,6 +212,10 @@ export class TetrisMobile extends MobileBaseGame {
 
     document.getElementById('btn-rematch')?.addEventListener('click', () => {
       this.sendToHost('requestRematch', {});
+    });
+
+    document.getElementById('btn-room-start')?.addEventListener('click', () => {
+      this.sendToHost('requestStart', {});
     });
 
     // --- 게임 설정 모달 및 보조 조작 버튼 바인딩 ---
@@ -451,6 +463,32 @@ export class TetrisMobile extends MobileBaseGame {
     this.showScreen('waiting');
     const btn = document.getElementById('btn-ready');
     if (btn) { btn.disabled = false; btn.textContent = '준비하기'; }
+    this._renderRoomQr();
+  }
+
+  /**
+   * 호스트리스 모드(main.js의 createRoomAndJoin())로 이 폰이 방을 직접
+   * 만든 경우에만 호출됨 — 대기 화면에 QR을 띄워 다른 폰들이 스캔해서
+   * 참여할 수 있게 한다(PC/TV 대시보드가 아예 없는 상태이므로 이 QR이
+   * 유일한 초대 수단).
+   */
+  setRoomCreatorQr(qrUrl) {
+    this._roomQrUrl = qrUrl;
+    this._renderRoomQr();
+  }
+
+  _renderRoomQr() {
+    const box = document.getElementById('room-qr-box');
+    const canvas = document.getElementById('room-qr-canvas');
+    if (!box || !canvas || !this._roomQrUrl) return;
+    box.classList.remove('hidden');
+    renderQR(canvas, this._roomQrUrl, { width: 140 });
+
+    // 방을 만든 사람만 시작 버튼을 볼 수 있음 — 다른 참가자는 계속
+    // "호스트가 게임을 시작할 때까지 대기" 문구 그대로 유지.
+    document.getElementById('btn-room-start')?.classList.remove('hidden');
+    const hint = document.getElementById('waiting-hint');
+    if (hint) hint.textContent = '모두 준비되면 아래 버튼으로 게임을 시작하세요';
   }
 
   _renderWaitingPlayers(players) {
@@ -567,6 +605,41 @@ export class TetrisMobile extends MobileBaseGame {
     if (this._showNextPiece) {
       const nextCanvas = document.getElementById('next-piece-canvas');
       if (nextCanvas) renderNextPiece(nextCanvas, this._engine.getNextPieceCells());
+    }
+  }
+
+  // ─── 상대방 미니보드 스트립 ─────────────────────────────────────────────
+
+  _renderOpponentStrip(opponents) {
+    const strip = document.getElementById('opponent-strip');
+    if (!strip) return;
+    if (!opponents.length) {
+      strip.classList.add('hidden');
+      return;
+    }
+    strip.classList.remove('hidden');
+
+    // 기존 카드 재사용(캔버스 매 프레임 재생성 방지), 없는 카드만 새로 생성
+    const nextIds = new Set(opponents.map(o => o.id));
+    for (const el of [...strip.children]) {
+      if (!nextIds.has(el.dataset.oppId)) el.remove();
+    }
+    for (const opp of opponents) {
+      let card = strip.querySelector(`[data-opp-id="${opp.id}"]`);
+      if (!card) {
+        card = document.createElement('div');
+        card.className = 'gyf-opp-card';
+        card.dataset.oppId = opp.id;
+        card.innerHTML = `
+          <span class="gyf-opp-dot" style="background:${opp.color}"></span>
+          <canvas class="gyf-opp-canvas" width="60" height="120"></canvas>
+          <span class="gyf-opp-lvl"></span>
+        `;
+        strip.appendChild(card);
+      }
+      card.classList.toggle('gyf-opp-dead', !opp.alive);
+      card.querySelector('.gyf-opp-lvl').textContent = `Lv.${opp.level}`;
+      renderBoard(card.querySelector('canvas'), opp.board ?? null, { isDead: !opp.alive });
     }
   }
 

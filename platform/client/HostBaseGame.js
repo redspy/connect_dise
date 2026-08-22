@@ -71,6 +71,19 @@ export class HostBaseGame {
         const el = document.getElementById(this._qrContainerId);
         if (el) await renderQR(el, qrUrl, { width: 200 });
       }
+
+      // 이 호스트 페이지가 다른 페이지의 <iframe>으로 숨겨져 실행 중이면(예:
+      // 모바일 페이지가 자기 자신을 방장으로 세션을 만들기 위해 host 페이지를
+      // 화면에 안 보이게 백그라운드로 띄우는 "호스트리스" 패턴), 부모 페이지가
+      // 세션 생성 여부를 알 수 있도록 알려준다. iframe이 아니면
+      // window.parent === window라 완전히 no-op.
+      if (window.parent !== window) {
+        window.parent.postMessage(
+          { type: 'platform:embeddedSessionReady', sessionId, qrUrl },
+          location.origin
+        );
+      }
+
       await this.onSetup({ qrUrl, sessionId });
     });
 

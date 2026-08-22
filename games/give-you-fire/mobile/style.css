@@ -111,6 +111,19 @@ body.mobile-controller {
 }
 .gyf-waiting-nick  { font-size: 1.4rem; font-weight: 800; color: var(--gyf-mint); }
 .gyf-waiting-hint  { color: var(--gyf-sub); font-size: .85rem; text-align: center; margin: 0; }
+.gyf-room-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  background: var(--gyf-panel2);
+  border: 1px solid var(--gyf-border);
+  border-radius: 12px;
+}
+.gyf-room-qr-box.hidden { display: none; }
+.gyf-room-qr-canvas canvas { border-radius: 6px; }
+.gyf-room-qr-hint { color: var(--gyf-sub); font-size: .78rem; margin: 0; }
 .gyf-waiting-players {
   display: flex; flex-wrap: wrap; gap: 8px;
   justify-content: center; min-height: 36px;
@@ -156,6 +169,43 @@ body.mobile-controller {
   font-family: monospace;
   color: var(--gyf-text);
   z-index: 1;
+}
+
+/* ─── 게임 화면: 상대방 미니보드 스트립 ──────────────────────────── */
+.gyf-opp-strip {
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+  overflow-x: auto;
+  background: var(--gyf-panel);
+  border-bottom: 1px solid var(--gyf-border);
+}
+.gyf-opp-strip.hidden { display: none; }
+.gyf-opp-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 34px;
+}
+.gyf-opp-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.gyf-opp-canvas {
+  width: 34px;
+  height: 68px;
+  border-radius: 3px;
+  background: var(--gyf-panel2);
+}
+.gyf-opp-card.gyf-opp-dead .gyf-opp-canvas { opacity: .35; }
+.gyf-opp-lvl {
+  font-size: .62rem;
+  font-family: monospace;
+  color: var(--gyf-sub);
 }
 
 /* ─── 게임 화면: 보드 영역 (제스처 영역) ────────────────────────── */

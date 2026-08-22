@@ -44,9 +44,18 @@
     <div class="gyf-waiting-panel">
       <div class="gyf-mobile-logo">🔥</div>
       <div class="gyf-waiting-nick" id="waiting-nickname">-</div>
-      <p class="gyf-waiting-hint">호스트가 게임을 시작할 때까지 대기하세요</p>
+      <!-- 호스트리스 모드(이 폰으로 방을 만든 경우)에만 표시 — 다른 폰들이
+           이 QR을 스캔해서 참여함 -->
+      <div class="gyf-room-qr-box hidden" id="room-qr-box">
+        <div class="gyf-room-qr-canvas" id="room-qr-canvas"></div>
+        <p class="gyf-room-qr-hint">다른 플레이어에게 이 QR을 보여주세요</p>
+      </div>
+      <p class="gyf-waiting-hint" id="waiting-hint">호스트가 게임을 시작할 때까지 대기하세요</p>
       <div class="gyf-waiting-players" id="waiting-players"></div>
       <button class="gyf-btn gyf-btn-primary" id="btn-ready">준비하기</button>
+      <!-- 호스트리스 모드로 방을 만든 사람에게만 노출 — 숨겨진 host iframe의
+           "게임 시작" 버튼을 대신 누를 방법이 없으므로 여기서 트리거 -->
+      <button class="gyf-btn gyf-btn-primary hidden" id="btn-room-start">🚀 게임 시작</button>
     </div>
   </div>
 
@@ -62,6 +71,11 @@
       <!-- 설정 버튼 -->
       <button class="gyf-settings-btn" id="btn-game-settings">⚙️</button>
     </div>
+
+    <!-- 상대방 미니보드 스트립: 호스트 대시보드가 안 보이는 상황(간단대결모드
+         전체화면 전환, 호스트리스 모드)에서 상대 현황을 보여줌. 상대가 없으면
+         자동으로 숨겨짐 -->
+    <div class="gyf-opp-strip hidden" id="opponent-strip"></div>
 
     <!-- 보드 + 미리보기: 전체 제스처 영역 -->
     <div class="gyf-board-area" id="gesture-area">

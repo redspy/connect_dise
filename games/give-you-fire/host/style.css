@@ -128,6 +128,17 @@ body.gyf-host {
 .gyf-self-frame-wrap.hidden {
   display: none;
 }
+/* 게임 시작 후: 호스트 자신의 화면 전체가 클라이언트 UI가 되어야 함
+   (사용자 요청) — 작은 패널 → 전체화면으로 전환, 대시보드는 JS에서
+   visibility:hidden 처리(TetrisGame.js의 _syncSelfFrameFullscreen). */
+.gyf-self-frame-wrap.fullscreen {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border-width: 0;
+  z-index: 950;
+}
 .gyf-self-frame {
   width: 100%;
   height: 100%;
