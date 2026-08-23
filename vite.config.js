@@ -111,6 +111,8 @@ export default defineConfig({
         wordBombMobile: resolve(__dirname, 'games/word-bomb/mobile/index.html'),
         pitTradeHost:   resolve(__dirname, 'games/pit-trade/host/index.html'),
         pitTradeMobile: resolve(__dirname, 'games/pit-trade/mobile/index.html'),
+        rummikubHost:   resolve(__dirname, 'games/rummikub/host/index.html'),
+        rummikubMobile: resolve(__dirname, 'games/rummikub/mobile/index.html'),
       },
     },
   },

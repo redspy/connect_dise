@@ -220,4 +220,15 @@ export const GAMES = [
     thumbnail: '🔔',
     group: 'multi',
   },
+  {
+    id: 'rummikub',
+    name: '루미큐브',
+    description: '숫자 타일로 그룹과 런을 만들어라! 원작 그대로의 규칙을 담은 타일 전략 게임 🀄',
+    hostPath: '/games/rummikub/host/',
+    mobilePath: '/games/rummikub/mobile/',
+    minPlayers: 2,
+    maxPlayers: 6,
+    thumbnail: '🀄',
+    group: 'multi',
+  },
 ];

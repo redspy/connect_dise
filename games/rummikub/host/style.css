@@ -1,0 +1,195 @@
+/* ================================================================
+   루미큐브 — Host Style
+   접두사: rk-
+================================================================ */
+
+:root {
+  --rk-bg: #0c1f16;
+  --rk-panel: #123324;
+  --rk-panel2: #184330;
+  --rk-border: #2a5c40;
+  --rk-accent: #22c55e;
+  --rk-accent2: #16a34a;
+  --rk-text: #eafff2;
+  --rk-sub: #8fbfa5;
+  --rk-danger: #e5484d;
+  --rk-warn: #eab308;
+}
+
+.hidden { display: none !important; }
+
+body.rk-host {
+  --lobby-accent: var(--rk-accent);
+  --lobby-accent-dim: rgba(34, 197, 94, 0.15);
+}
+
+.rk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+  color: var(--rk-text);
+}
+.rk-overlay[data-phase="lobby"] {
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── 로비 옵션 ─────────────────────────────────────────────────── */
+.rk-lobby-desc-title { font-size: 0.9rem; font-weight: 700; color: var(--rk-accent); margin-bottom: 4px; }
+.rk-lobby-desc-list { font-size: 0.82rem; color: var(--rk-sub); margin: 0 0 10px 0; padding-left: 18px; line-height: 1.5; }
+.rk-option-row { margin-top: 0.7rem; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.rk-option-label { font-size: 0.82rem; color: var(--rk-sub); }
+.rk-option-choices { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85rem; }
+.rk-option-choices label { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.rk-option-hint { font-size: 0.72rem; color: var(--rk-sub); margin: 2px 0 0 0; opacity: 0.8; }
+.rk-demo-btn {
+  margin-top: 1.1rem;
+  background: linear-gradient(135deg, var(--lobby-accent, #22c55e), var(--rk-accent2));
+  color: #06210f; border: none; font-weight: bold; padding: 0.8rem 1.6rem;
+  border-radius: 8px; cursor: pointer; width: 100%;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+}
+
+/* ─── 게임 중 헤더 ──────────────────────────────────────────────── */
+.rk-playing-header {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 20px;
+  background: var(--rk-panel);
+  border-bottom: 1px solid var(--rk-border);
+}
+.rk-turn-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.rk-turn-player-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rk-turn-player-name { font-weight: 800; font-size: 1.05rem; }
+.rk-turn-hint { color: var(--rk-sub); font-size: 0.85rem; }
+.rk-pool-count { font-family: monospace; color: var(--rk-sub); font-size: 0.9rem; }
+.rk-btn { border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; font-size: 0.85rem; }
+.rk-btn-primary { background: linear-gradient(135deg, var(--rk-accent), var(--rk-accent2)); color: #06210f; }
+.rk-btn-danger-sm { flex: none; background: transparent; color: var(--rk-danger); border: 1px solid var(--rk-danger); }
+
+/* 원형 타이머 링 */
+.rk-timer-ring {
+  --rk-pct: 1;
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 800; font-family: monospace;
+  background: conic-gradient(var(--rk-accent) calc(var(--rk-pct) * 360deg), rgba(255,255,255,0.12) 0);
+  transition: background 0.25s linear;
+}
+.rk-timer-ring.rk-timer-danger {
+  background: conic-gradient(var(--rk-danger) calc(var(--rk-pct) * 360deg), rgba(255,255,255,0.12) 0);
+  animation: rk-timer-pulse 0.6s ease-in-out infinite;
+}
+@keyframes rk-timer-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
+/* ─── 플레이어 패널 ─────────────────────────────────────────────── */
+.rk-players-panel {
+  flex-shrink: 0;
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 8px 20px;
+  max-height: 90px; overflow-y: auto;
+}
+.rk-player-card {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--rk-panel2); border: 1px solid var(--rk-border);
+  border-radius: 20px; padding: 5px 12px; font-size: 0.82rem;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+.rk-player-card-active {
+  border-color: var(--rk-accent);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.5);
+  animation: rk-turn-sweep 0.5s ease-out;
+}
+@keyframes rk-turn-sweep { from { box-shadow: 0 0 0 rgba(34,197,94,0); } to { box-shadow: 0 0 12px rgba(34,197,94,0.5); } }
+.rk-player-card-warn { animation: rk-warn-pulse 1.1s ease-in-out infinite; }
+@keyframes rk-warn-pulse { 0%,100% { border-color: var(--rk-border); } 50% { border-color: var(--rk-warn); } }
+.rk-pcard-dot { width: 9px; height: 9px; border-radius: 50%; }
+.rk-pcard-badge { font-size: 0.68rem; color: var(--rk-sub); }
+.rk-pcard-badge-done { color: var(--rk-accent); }
+.rk-pcard-count { font-family: monospace; color: var(--rk-sub); }
+
+/* ─── 보드 ──────────────────────────────────────────────────────── */
+.rk-board {
+  flex: 1; min-height: 0;
+  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px;
+  padding: 16px 20px; overflow-y: auto;
+}
+.rk-meld {
+  display: flex; background: rgba(0,0,0,0.2); border: 2px solid var(--rk-border);
+  border-radius: 8px; padding: 4px; gap: 2px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+.rk-meld-flash {
+  border-color: var(--rk-accent);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.7);
+  animation: rk-meld-pulse 0.5s ease-out;
+}
+@keyframes rk-meld-pulse { 0% { transform: scale(0.94); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+
+.rk-tile {
+  width: 34px; height: 46px; border-radius: 5px;
+  background: linear-gradient(160deg, #fdf6e3, #f3e6c4);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.1rem; font-family: 'Georgia', serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,0,0,0.08);
+  user-select: none;
+}
+.rk-tile-joker { font-size: 1.3rem; }
+.rk-tile-rollback { animation: rk-rollback 0.42s cubic-bezier(0.6,0,0.4,1); }
+@keyframes rk-rollback { 0% { filter: brightness(0.7); } 100% { filter: brightness(1); } }
+
+.rk-vignette {
+  position: fixed; inset: 0; pointer-events: none; z-index: 900;
+  box-shadow: inset 0 0 0 0 rgba(229,72,77,0);
+  transition: box-shadow 0.2s;
+}
+.rk-vignette-flash { box-shadow: inset 0 0 120px 20px rgba(229,72,77,0.55); }
+
+/* ─── 카운트다운 ─────────────────────────────────────────────────── */
+.rk-countdown-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; animation: rk-fade-in 0.2s ease;
+}
+.rk-countdown-num {
+  font-size: 8rem; font-weight: 900; color: var(--rk-accent);
+  text-shadow: 0 0 40px rgba(34,197,94,0.6);
+}
+.rk-countdown-num.rk-countdown-beat { animation: rk-countdown-beat 1s ease-in-out; }
+@keyframes rk-countdown-beat {
+  0% { transform: scale(0.6); opacity: 0; }
+  20% { transform: scale(1.1); opacity: 1; }
+  35% { transform: scale(1); }
+  90% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes rk-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ─── 결과 화면 ─────────────────────────────────────────────────── */
+.rk-overlay[data-phase="result"] { align-items: center; justify-content: center; }
+.rk-result-panel {
+  background: var(--rk-panel); border: 2px solid var(--rk-border); border-radius: 20px;
+  padding: 28px; width: min(480px, 90vw); text-align: center;
+}
+.rk-result-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 16px; color: var(--rk-accent); }
+.rk-result-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; margin-bottom: 16px; }
+.rk-result-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--rk-panel2); border-radius: 8px; text-align: left;
+}
+.rk-result-winner { border: 1px solid var(--rk-accent); box-shadow: 0 0 12px rgba(34,197,94,0.35); }
+.rk-result-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.rk-result-nick { flex: 1; }
+.rk-result-score { font-weight: 800; font-family: monospace; }
+.rk-result-tiles { color: var(--rk-sub); font-size: 0.8rem; }
+
+@media (max-width: 1024px) {
+  body.host-board { height: auto !important; overflow-y: auto !important; }
+  .rk-playing-header { flex-wrap: wrap; }
+  .rk-board { padding: 10px; }
+  .rk-tile { width: 28px; height: 38px; font-size: 0.95rem; }
+}

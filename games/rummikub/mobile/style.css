@@ -1,0 +1,161 @@
+/* ================================================================
+   루미큐브 — Mobile Style (rk-)
+================================================================ */
+
+:root {
+  --rk-bg: #0c1f16;
+  --rk-panel: #123324;
+  --rk-panel2: #184330;
+  --rk-border: #2a5c40;
+  --rk-accent: #22c55e;
+  --rk-accent2: #16a34a;
+  --rk-text: #eafff2;
+  --rk-sub: #8fbfa5;
+  --rk-danger: #e5484d;
+  --rk-warn: #eab308;
+}
+
+.hidden { display: none !important; }
+
+body.mobile-controller {
+  background: var(--rk-bg);
+  color: var(--rk-text);
+  font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+  height: 100dvh;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.rk-screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.rk-screen.hidden { display: none; }
+.rk-screen[data-screen="game"] { justify-content: flex-start; }
+
+.rk-mobile-logo { font-size: 1.6rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px; }
+.rk-logo-accent { color: var(--rk-accent); }
+
+.rk-btn {
+  width: 100%; max-width: 300px; padding: 14px 0; border: none; border-radius: 10px;
+  font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s;
+}
+.rk-btn:active { transform: scale(.96); }
+.rk-btn-primary { background: linear-gradient(135deg, var(--rk-accent2), var(--rk-accent)); color: #06210f; }
+
+.rk-input {
+  width: 100%; max-width: 300px; padding: 13px 16px; background: var(--rk-panel2);
+  border: 1px solid var(--rk-border); border-radius: 10px; color: var(--rk-text);
+  font-size: 1rem; outline: none;
+}
+.rk-input:focus { border-color: var(--rk-accent); }
+
+.rk-setup-panel, .rk-waiting-panel {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 32px 24px; width: 100%; max-width: 360px;
+}
+.rk-setup-hint, .rk-waiting-hint { color: var(--rk-sub); font-size: .88rem; margin: 0; text-align: center; }
+.rk-waiting-nick { font-size: 1.4rem; font-weight: 800; color: var(--rk-accent); }
+.rk-waiting-players { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 36px; max-height: 120px; overflow-y: auto; }
+.rk-wait-player { display: flex; align-items: center; gap: 6px; background: var(--rk-panel2); border: 1px solid var(--rk-border); border-radius: 16px; padding: 5px 12px; font-size: .85rem; }
+.rk-wait-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.rk-room-qr-box {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px;
+  background: var(--rk-panel2); border: 1px solid var(--rk-border); border-radius: 12px;
+}
+.rk-room-qr-hint { color: var(--rk-sub); font-size: .78rem; margin: 0; }
+
+/* ─── 게임 화면 헤더 ─────────────────────────────────────────────── */
+.rk-m-header {
+  width: 100%; flex-shrink: 0; display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--rk-panel); border-bottom: 1px solid var(--rk-border);
+  font-size: .82rem;
+}
+.rk-m-turn-banner { flex: 1; font-weight: 800; }
+.rk-m-turn-banner-mine { color: var(--rk-accent); }
+.rk-m-timer-label { font-family: monospace; font-weight: 800; }
+.rk-m-timer-danger { color: var(--rk-danger); animation: rk-m-timer-pulse .6s ease-in-out infinite; }
+@keyframes rk-m-timer-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
+.rk-m-pool { font-family: monospace; color: var(--rk-sub); }
+
+.rk-m-opponents { width: 100%; flex-shrink: 0; display: flex; gap: 6px; padding: 6px 12px; overflow-x: auto; }
+.rk-m-opp-chip { display: flex; align-items: center; gap: 4px; background: var(--rk-panel2); border-radius: 12px; padding: 3px 8px; font-size: .72rem; white-space: nowrap; }
+.rk-m-opp-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.rk-m-meld-badge {
+  width: calc(100% - 24px); margin: 4px 12px; padding: 6px 10px; text-align: center;
+  background: var(--rk-panel2); border: 1px solid var(--rk-border); border-radius: 8px;
+  font-size: .8rem; font-weight: 700; color: var(--rk-sub); flex-shrink: 0;
+  transition: color .2s, border-color .2s;
+}
+.rk-badge-ready { color: var(--rk-accent); border-color: var(--rk-accent); }
+
+/* ─── 보드 ──────────────────────────────────────────────────────── */
+.rk-m-board-wrap { flex: 1; min-height: 0; width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.rk-m-board { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; }
+.rk-m-meld {
+  display: flex; background: rgba(0,0,0,0.25); border: 2px solid var(--rk-border); border-radius: 6px;
+  padding: 3px; gap: 2px; transition: border-color .25s, box-shadow .25s;
+}
+.rk-m-meld-locked { opacity: .45; filter: grayscale(.6); pointer-events: none; }
+.rk-meld-flash { border-color: var(--rk-accent); box-shadow: 0 0 10px rgba(34,197,94,.6); }
+.rk-m-new-meld-zone {
+  flex-shrink: 0; margin: 6px 8px; padding: 10px; text-align: center;
+  border: 2px dashed var(--rk-border); border-radius: 8px; color: var(--rk-sub); font-size: .82rem;
+}
+
+/* ─── 타일 ──────────────────────────────────────────────────────── */
+.rk-tile {
+  border-radius: 4px; background: linear-gradient(160deg, #fdf6e3, #f3e6c4);
+  display: flex; align-items: center; justify-content: center; font-weight: 900;
+  font-family: 'Georgia', serif; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 0 0 1px rgba(0,0,0,.08);
+  user-select: none; touch-action: none; cursor: grab;
+}
+.rk-tile-sm { width: 26px; height: 36px; font-size: .82rem; }
+.rk-tile-md { width: 30px; height: 42px; font-size: .95rem; }
+.rk-tile-lg { width: 36px; height: 50px; font-size: 1.1rem; }
+.rk-tile-joker { font-size: 1.1em; }
+.rk-tile-selected { outline: 3px solid var(--rk-accent); outline-offset: -3px; transform: translateY(-4px); }
+.rk-tile-reject { animation: rk-tile-reject .5s ease; }
+@keyframes rk-tile-reject { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.rk-tile-ghost { position: fixed; z-index: 5000; pointer-events: none; opacity: .92; box-shadow: 0 8px 20px rgba(0,0,0,.5); transform: scale(1.08); }
+
+/* ─── 손패 트레이 ────────────────────────────────────────────────── */
+.rk-m-hand-wrap { flex-shrink: 0; width: 100%; background: var(--rk-panel); border-top: 1px solid var(--rk-border); padding: 6px 0 8px; }
+.rk-m-hand-tools { display: flex; gap: 8px; padding: 0 10px 6px; }
+.rk-m-sort-btn { flex: none; background: var(--rk-panel2); border: 1px solid var(--rk-border); color: var(--rk-sub); border-radius: 6px; padding: 4px 10px; font-size: .74rem; }
+.rk-m-hand { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 10px; max-height: 30vh; overflow-y: auto; }
+.rk-hand-tile {}
+
+/* ─── 액션 바 ────────────────────────────────────────────────────── */
+.rk-m-action-bar { flex-shrink: 0; width: 100%; display: flex; gap: 8px; padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--rk-panel); }
+.rk-m-action-btn { flex: 1; padding: 12px 0; border-radius: 8px; border: 1px solid var(--rk-border); background: var(--rk-panel2); color: var(--rk-text); font-weight: 700; font-size: .85rem; }
+.rk-m-action-btn-primary { background: linear-gradient(135deg, var(--rk-accent2), var(--rk-accent)); color: #06210f; border: none; }
+
+/* ─── 흔들림/토스트 ──────────────────────────────────────────────── */
+.rk-shake { animation: rk-shake .42s cubic-bezier(0.6,0,0.4,1); }
+@keyframes rk-shake { 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(4px);} 30%,50%,70%{transform:translateX(-8px);} 40%,60%{transform:translateX(8px);} }
+
+.rk-toast-container { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6000; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.rk-toast { background: rgba(10,20,15,.92); border: 1px solid var(--rk-border); color: var(--rk-text); padding: 8px 14px; border-radius: 10px; font-size: .82rem; animation: rk-toast-in .2s ease; }
+.rk-toast-fadeout { opacity: 0; transition: opacity .4s; }
+@keyframes rk-toast-in { from { opacity:0; transform: translateY(-8px);} to { opacity:1; transform: translateY(0);} }
+
+/* ─── 결과 화면 ─────────────────────────────────────────────────── */
+.rk-result-panel { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 24px; width: 100%; max-width: 360px; }
+.rk-result-title { font-size: 1.6rem; font-weight: 900; color: var(--rk-accent); }
+.rk-result-my-score { font-size: 2.2rem; font-weight: 900; }
+.rk-result-list { width: 100%; display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
+.rk-result-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--rk-panel2); border-radius: 8px; font-size: .85rem; }
+.rk-result-me { border: 1px solid var(--rk-accent); }
+.rk-result-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rk-result-score { margin-left: auto; font-weight: 800; font-family: monospace; }
+.rk-result-tiles { color: var(--rk-sub); font-size: .74rem; }
+
+@media (max-width: 360px) {
+  .rk-tile-lg { width: 30px; height: 42px; font-size: .95rem; }
+}

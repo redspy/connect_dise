@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>루미큐브 — Host</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board rk-host">
+
+  <!-- ══════════════════════════════════════════
+       로비 (data-phase="lobby")
+  ══════════════════════════════════════════ -->
+  <div class="rk-overlay" data-phase="lobby">
+    <game-lobby title="루미큐브 🀄" min-players="2">
+      <div class="rk-lobby-desc-title">게임 방법</div>
+      <ul class="rk-lobby-desc-list">
+        <li>같은 숫자 다른 색 3~4장(그룹) 또는 같은 색 연속 숫자 3장 이상(런)을 만드세요</li>
+        <li>첫 착수는 손패에서 낸 타일만으로 <b>기준점 이상</b>이어야 해요</li>
+        <li>손패를 가장 먼저 모두 내면 <b>승리!</b></li>
+      </ul>
+      <div class="rk-option-row">
+        <span class="rk-option-label">턴 제한시간:</span>
+        <div class="rk-option-choices">
+          <label><input type="radio" name="rk-timer" value="30"> 30초</label>
+          <label><input type="radio" name="rk-timer" value="60" checked> 60초</label>
+          <label><input type="radio" name="rk-timer" value="120"> 120초</label>
+          <label><input type="radio" name="rk-timer" value="inf"> 무제한</label>
+        </div>
+      </div>
+      <div class="rk-option-row">
+        <span class="rk-option-label">초기 착수 기준점:</span>
+        <div class="rk-option-choices">
+          <label><input type="radio" name="rk-threshold" value="10"> 10점</label>
+          <label><input type="radio" name="rk-threshold" value="20"> 20점</label>
+          <label><input type="radio" name="rk-threshold" value="30" checked> 30점(원작)</label>
+        </div>
+        <p class="rk-option-hint">10/20점은 원작 공식 룰이 아닌 하우스룰이에요. 원작 그대로 하려면 30점을 선택하세요.</p>
+      </div>
+      <button id="demoPlayBtn" class="primary-btn demo-btn rk-demo-btn">🤖 데모 플레이 실행</button>
+    </game-lobby>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       게임 중 (data-phase="playing")
+  ══════════════════════════════════════════ -->
+  <div class="rk-overlay hidden" data-phase="playing">
+    <div class="rk-playing-header">
+      <div class="rk-turn-info">
+        <div class="rk-timer-ring" id="rk-timer-ring"><span id="rk-timer-label">60</span></div>
+        <span class="rk-turn-player-dot" id="rk-turn-player-dot"></span>
+        <span class="rk-turn-player-name" id="rk-turn-player-name">-</span>
+        <span class="rk-turn-hint">님의 차례</span>
+      </div>
+      <span class="rk-pool-count" id="rk-pool-count">🂠 × 0</span>
+      <button class="rk-btn rk-btn-danger-sm" id="btn-restart-game">리셋</button>
+    </div>
+
+    <div class="rk-players-panel" id="rk-players-panel"></div>
+
+    <div class="rk-vignette" id="rk-vignette"></div>
+    <div class="rk-board" id="rk-board"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       결과 (data-phase="result")
+  ══════════════════════════════════════════ -->
+  <div class="rk-overlay hidden" data-phase="result">
+    <div class="rk-result-panel">
+      <div class="rk-result-title" id="rk-result-title">🏆 결과</div>
+      <div class="rk-result-list" id="rk-result-list"></div>
+      <button class="rk-btn rk-btn-primary" id="btn-restart-result">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

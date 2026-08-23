@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>루미큐브</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-controller">
+  <div class="orientation-guard">
+    <div class="orientation-guard-icon">🔄</div>
+    <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
+    <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
+  </div>
+
+  <!-- 설정 화면 -->
+  <div class="rk-screen" data-screen="setup">
+    <div class="rk-setup-panel">
+      <div class="rk-mobile-logo">🀄 <span class="rk-logo-accent">루미큐브</span></div>
+      <p class="rk-setup-hint">닉네임을 입력하고 참여하세요</p>
+      <input class="rk-input" id="nickname-input" type="text" maxlength="8" placeholder="닉네임 (최대 8자)" autocomplete="off">
+      <button class="rk-btn rk-btn-primary" id="btn-join">참여하기</button>
+    </div>
+  </div>
+
+  <!-- 대기 화면 -->
+  <div class="rk-screen hidden" data-screen="waiting">
+    <div class="rk-waiting-panel">
+      <div class="rk-mobile-logo">🀄</div>
+      <div class="rk-waiting-nick" id="waiting-nickname">-</div>
+      <div class="rk-room-qr-box hidden" id="room-qr-box">
+        <div id="room-qr-canvas"></div>
+        <p class="rk-room-qr-hint">다른 플레이어에게 이 QR을 보여주세요</p>
+      </div>
+      <p class="rk-waiting-hint" id="waiting-hint">호스트가 게임을 시작할 때까지 대기하세요</p>
+      <div class="rk-waiting-players" id="waiting-players"></div>
+      <button class="rk-btn rk-btn-primary" id="btn-ready">준비하기</button>
+      <button class="rk-btn rk-btn-primary hidden" id="btn-room-start">🚀 게임 시작</button>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="rk-screen hidden" data-screen="game">
+    <div class="rk-m-header">
+      <span class="rk-m-turn-banner" id="rk-m-turn-banner">-</span>
+      <span class="rk-m-timer-label" id="rk-m-timer-label">-</span>
+      <span class="rk-m-pool" id="rk-m-pool">🂠 × 0</span>
+    </div>
+    <div class="rk-m-opponents" id="rk-m-opponents"></div>
+    <div class="rk-m-meld-badge hidden" id="rk-m-meld-badge"></div>
+
+    <div class="rk-m-board-wrap">
+      <div class="rk-m-board" id="rk-m-board"></div>
+      <div class="rk-m-new-meld-zone" id="rk-m-new-meld-zone">+ 새 세트</div>
+    </div>
+
+    <div class="rk-m-hand-wrap">
+      <div class="rk-m-hand-tools">
+        <button class="rk-m-sort-btn" id="rk-m-sort-color">색순</button>
+        <button class="rk-m-sort-btn" id="rk-m-sort-num">숫자순</button>
+      </div>
+      <div class="rk-m-hand" id="rk-m-hand"></div>
+    </div>
+
+    <div class="rk-m-action-bar hidden" id="rk-m-action-bar">
+      <button class="rk-m-action-btn" id="rk-m-btn-reset-turn">처음부터</button>
+      <button class="rk-m-action-btn" id="rk-m-btn-draw">뽑기</button>
+      <button class="rk-m-action-btn rk-m-action-btn-primary" id="rk-m-btn-end-turn">턴 종료</button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="rk-screen hidden" data-screen="result">
+    <div class="rk-result-panel">
+      <div class="rk-result-title" id="result-title">🏆 결과</div>
+      <div class="rk-result-my-score" id="result-my-score">-</div>
+      <div class="rk-result-list" id="result-ranking-list"></div>
+      <button class="rk-btn rk-btn-primary" id="btn-rematch">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
