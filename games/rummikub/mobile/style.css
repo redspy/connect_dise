@@ -107,6 +107,12 @@ body.mobile-controller {
   flex-shrink: 0; margin: 6px 8px; padding: 10px; text-align: center;
   border: 2px dashed var(--rk-border); border-radius: 8px; color: var(--rk-sub); font-size: .82rem;
 }
+/* 보드는 "내 차례"일 때만 조작 화면에 노출 — 그 외엔 TV로만 확인 가능
+   (사용자 요청: 제출 후/남의 차례엔 폰에서 타일 구성이 사라지게). */
+.rk-m-board-hidden-hint {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  text-align: center; color: var(--rk-sub); font-size: .9rem; line-height: 1.6; padding: 20px;
+}
 
 /* ─── 타일 ──────────────────────────────────────────────────────── */
 .rk-tile {
@@ -120,6 +126,8 @@ body.mobile-controller {
 .rk-tile-lg { width: 36px; height: 50px; font-size: 1.1rem; }
 .rk-tile-joker { font-size: 1.1em; }
 .rk-tile-selected { outline: 3px solid var(--rk-accent); outline-offset: -3px; transform: translateY(-4px); }
+/* 이번 턴에 손패에서 보드로 새로 놓은 내 타일 강조 (사용자 요청) */
+.rk-tile-mine-new { box-shadow: 0 0 0 3px var(--rk-accent), 0 2px 6px rgba(0,0,0,.5); }
 .rk-tile-reject { animation: rk-tile-reject .5s ease; }
 @keyframes rk-tile-reject { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
 .rk-tile-ghost { position: fixed; z-index: 5000; pointer-events: none; opacity: .92; box-shadow: 0 8px 20px rgba(0,0,0,.5); transform: scale(1.08); }
@@ -135,6 +143,11 @@ body.mobile-controller {
 .rk-m-action-bar { flex-shrink: 0; width: 100%; display: flex; gap: 8px; padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--rk-panel); }
 .rk-m-action-btn { flex: 1; padding: 12px 0; border-radius: 8px; border: 1px solid var(--rk-border); background: var(--rk-panel2); color: var(--rk-text); font-weight: 700; font-size: .85rem; }
 .rk-m-action-btn-primary { background: linear-gradient(135deg, var(--rk-accent2), var(--rk-accent)); color: #06210f; border: none; }
+.rk-m-action-btn:disabled,
+.rk-m-action-btn-primary:disabled {
+  opacity: .4; filter: grayscale(.5); background: var(--rk-panel2); color: var(--rk-sub);
+  box-shadow: none; cursor: not-allowed;
+}
 
 /* ─── 흔들림/토스트 ──────────────────────────────────────────────── */
 .rk-shake { animation: rk-shake .42s cubic-bezier(0.6,0,0.4,1); }

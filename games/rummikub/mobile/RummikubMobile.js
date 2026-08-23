@@ -11,6 +11,7 @@ import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 import { renderTile } from '../shared/TileRenderer.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import { flipTween } from '../shared/motion.js';
+import { validateBoard } from '../shared/RummikubEngine.js';
 
 const DRAG_THRESHOLD_PX = 10;
 
@@ -26,6 +27,7 @@ export class RummikubMobile extends MobileBaseGame {
     this._board = [];      // 마지막으로 커밋된(권위) 보드
     this._workBoard = [];  // 내 턴 동안의 작업본(opAck 성공분만 반영)
     this._newMeldIdsThisTurn = new Set(); // 이번 턴에 새로 만든 세트(초기 착수 미완료 시에도 잠금 예외)
+    this._placedFromHandThisTurn = new Set(); // 이번 턴에 손패→보드로 놓인 타일(강조 표시 + 제출 가능 조건, 호스트 로직과 동일하게 유지)
     this._myTurn = false;
     this._initialMeldDone = false;
     this._initialMeldThreshold = 30;
@@ -56,6 +58,8 @@ export class RummikubMobile extends MobileBaseGame {
     this._board = [];
     this._workBoard = [];
     this._selection = null;
+    this._newMeldIdsThisTurn = new Set();
+    this._placedFromHandThisTurn = new Set();
     this._stopTimerTick();
     if (this._nickname) this._sendProfile();
     else this.showScreen('setup');
@@ -90,6 +94,7 @@ export class RummikubMobile extends MobileBaseGame {
       this._renderPoolCount();
       this._selection = null;
       this._newMeldIdsThisTurn = new Set();
+      this._placedFromHandThisTurn = new Set();
       if (this._myTurn) {
         this._workBoard = this._board.map(m => ({ meldId: m.meldId, tiles: [...m.tiles] }));
         this._handSnapshotAtTurnStart = [...this._hand];
@@ -219,11 +224,13 @@ export class RummikubMobile extends MobileBaseGame {
       this._workBoard = this._board.map(m => ({ meldId: m.meldId, tiles: [...m.tiles] }));
       this._hand = [...(this._handSnapshotAtTurnStart || this._hand)];
       this._newMeldIdsThisTurn = new Set();
+      this._placedFromHandThisTurn = new Set();
       this._selection = null;
       this._pendingOps.clear();
       this._renderBoard();
       this._renderHand();
       this._renderMeldBadge();
+      this._updateEndTurnButtonState();
       this._showToast('↺ 이번 턴을 처음부터 다시 시작해요');
     });
 
@@ -233,8 +240,8 @@ export class RummikubMobile extends MobileBaseGame {
     });
 
     document.getElementById('rk-m-btn-end-turn')?.addEventListener('click', () => {
-      if (!this._myTurn) return;
-      if (!confirm('이대로 턴을 종료할까요?')) return;
+      if (!this._myTurn || !this._canEndTurn()) return;
+      if (!confirm('이대로 제출할까요?')) return;
       this.sendToHost('endTurn', {});
     });
 
@@ -330,10 +337,16 @@ export class RummikubMobile extends MobileBaseGame {
   // ─── 보드 ────────────────────────────────────────────────────────────────
 
   _renderBoard(opts = {}) {
+    // 보드는 "내 차례"일 때만 폰 화면에 노출 — 그 외(남의 차례/제출 직후)엔
+    // TV 화면에서만 확인 가능하게 숨긴다(사용자 요청).
+    document.getElementById('rk-m-board-wrap')?.classList.toggle('hidden', !this._myTurn);
+    document.getElementById('rk-m-board-hidden-hint')?.classList.toggle('hidden', this._myTurn);
+    if (!this._myTurn) return;
+
     const container = document.getElementById('rk-m-board');
     if (!container) return;
     container.innerHTML = '';
-    const board = this._myTurn ? this._workBoard : this._board;
+    const board = this._workBoard;
     for (const meld of board) {
       const meldEl = document.createElement('div');
       meldEl.className = 'rk-m-meld';
@@ -342,6 +355,8 @@ export class RummikubMobile extends MobileBaseGame {
       meld.tiles.forEach((tileId, idx) => {
         const el = renderTile(tileId, { size: 'sm' });
         if (this._selection?.tileId === tileId && this._selection?.zone === 'meld') el.classList.add('rk-tile-selected');
+        // 이번 턴에 내 손패에서 새로 놓은 타일 강조 표시(사용자 요청)
+        if (this._placedFromHandThisTurn.has(tileId)) el.classList.add('rk-tile-mine-new');
         this._bindTilePointer(el, { zone: 'meld', meldId: meld.meldId });
         el.addEventListener('contextmenu', (e) => e.preventDefault());
         this._bindLongPress(el, () => this._onTileLongPress(tileId, meld, idx));
@@ -416,6 +431,29 @@ export class RummikubMobile extends MobileBaseGame {
     const bar = document.getElementById('rk-m-action-bar');
     if (!bar) return;
     bar.classList.toggle('hidden', !this._myTurn);
+    this._updateEndTurnButtonState();
+  }
+
+  /**
+   * "제출(턴 종료)" 가능 조건 — 사용자 요청 2가지를 모두 만족해야 함:
+   *  1. 현재 작업 중인 보드(workBoard)의 모든 세트가 유효(그룹/런)해야 함.
+   *  2. 이번 턴에 내 손패에서 보드로 최소 1장 이상 놓아야 함(보드만 재배치
+   *     하고 아무것도 안 낸 채로는 제출 불가).
+   * 호스트의 §10 커밋 검증과 반드시 같은 판정을 내려야(그래야 "제출
+   * 가능"으로 보이는데 서버가 거부하는 혼란이 없음) shared/RummikubEngine.js
+   * 의 동일한 validateBoard()를 그대로 재사용한다.
+   */
+  _canEndTurn() {
+    if (!this._myTurn) return false;
+    if (this._placedFromHandThisTurn.size === 0) return false;
+    return validateBoard(this._workBoard).valid;
+  }
+
+  _updateEndTurnButtonState() {
+    const btn = document.getElementById('rk-m-btn-end-turn');
+    if (!btn) return;
+    const can = this._canEndTurn();
+    btn.disabled = !can;
   }
 
   _startTimerTick() {
@@ -617,18 +655,22 @@ export class RummikubMobile extends MobileBaseGame {
     }
     if (to.zone === 'hand') {
       this._hand.push(tileId);
+      this._placedFromHandThisTurn.delete(tileId);
     } else if (to.zone === 'newMeld') {
       this._workBoard.push({ meldId: newMeldId, tiles: [tileId] });
       this._newMeldIdsThisTurn.add(newMeldId);
+      if (from.zone === 'hand') this._placedFromHandThisTurn.add(tileId);
     } else {
       const meld = this._workBoard.find(m => m.meldId === to.meldId);
       if (meld) {
         const idx = Math.max(0, Math.min(to.index ?? meld.tiles.length, meld.tiles.length));
         meld.tiles.splice(idx, 0, tileId);
+        if (from.zone === 'hand') this._placedFromHandThisTurn.add(tileId);
       }
     }
     if (onAck) onAck(newMeldId);
     this._renderHand();
+    this._updateEndTurnButtonState();
   }
 
   _flashReject(tileId) {
