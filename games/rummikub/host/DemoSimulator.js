@@ -69,6 +69,13 @@ export class DemoSimulator {
     this.game._isDemo = false;
     this.demoTimeouts.forEach(t => clearTimeout(t));
     this.demoTimeouts = [];
+    // 3-2-1 카운트다운이 도는 도중("게임 시작!" 클릭 직후 ~3초 안)에
+    // 데모를 중단하면, 이 시점의 카운트다운 setInterval은 stopDemo()와
+    // 무관하게 계속 돌다가 시간이 다 되면 _startGame()을 호출한다 — 그런데
+    // 봇은 이미 아래에서 제거되므로, 순수 봇 데모(실플레이어 0명)였다면
+    // playerIds가 빈 배열인 채로 게임이 시작돼(_turnOrder[0]=undefined)
+    // 곧바로 오류로 이어진다(codex 헤드리스 리뷰로 발견, 2026-08-24).
+    this.game._stopCountdown();
 
     document.getElementById('demoQROverlay')?.remove();
     const qrWrap = document.querySelector('.lobby-qr-box');
@@ -93,7 +100,7 @@ export class DemoSimulator {
     if (this.backupState) {
       this.game._readyCount = this.backupState.readyCount;
       this.game._gameStarted = false;
-      clearInterval(this.game._turnTimer);
+      clearTimeout(this.game._turnTimer);
       this.game._renderLobby();
       this.game._updateReadyStatus();
       this.game._broadcastPlayerList();

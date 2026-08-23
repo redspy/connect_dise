@@ -7,6 +7,7 @@ import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import {
   createDeck, shuffle, dealHands, tileSetModeForPlayerCount,
   validateBoard, sumOfMelds, flattenBoard, scoreHand, parseTileId,
+  getJokerValue, isValidJokerReplacement,
 } from '../shared/RummikubEngine.js';
 import { renderTile } from '../shared/TileRenderer.js';
 import { withStagger, STAGGER_MS, meldJitter, seededRandom, DRAW_FLY_MS } from '../shared/motion.js';
@@ -42,6 +43,7 @@ export class RummikubGame extends HostBaseGame {
     this._board = [];
     this._nextMeldId = 1;
     this._noChangeStreak = 0;
+    this._lastResult = null;
 
     // 턴 임시 영역
     this._snapshot = null;
@@ -107,7 +109,11 @@ export class RummikubGame extends HostBaseGame {
   }
 
   onPlayerRejoin(player) {
-    if (!this._gameStarted) return;
+    // _endGame()이 _gameStarted를 false로 되돌리기 때문에, 결과 화면이
+    // 떠 있는 동안 새로고침/재접속하면 이 가드에 걸려 아무 것도 못 받고
+    // "waiting" 화면에 얼어붙어 있었다(codex 헤드리스 리뷰로 발견,
+    // 2026-08-24). 결과 표시 중에도 재동기화를 허용한다.
+    if (!this._gameStarted && this.phase !== 'result') return;
     const hand = this._hands.get(player.id);
     if (!hand) return;
     this.sendToPlayer(player.id, 'stateSync', this._buildStateSyncPayload(player.id));
@@ -160,6 +166,7 @@ export class RummikubGame extends HostBaseGame {
     this._demoSimulator.stopDemo();
     this._stopCountdown();
     clearTimeout(this._turnTimer);
+    clearInterval(this._timerTickInterval);
     this._profiles.clear();
     this._gameStarted = false;
     this._readyCount = 0;
@@ -172,6 +179,7 @@ export class RummikubGame extends HostBaseGame {
     this._turnNo = 0;
     this._currentTurnPlayerId = null;
     this._noChangeStreak = 0;
+    this._lastResult = null;
     document.getElementById('rk-pool-pile')?.replaceChildren();
     this._renderLobby();
     this.updateLobbyReady(0);
@@ -229,7 +237,8 @@ export class RummikubGame extends HostBaseGame {
     });
 
     this.onMessage('requestState', (player) => {
-      if (!this._gameStarted || !this._hands.has(player.id)) return;
+      if (!this._gameStarted && this.phase !== 'result') return;
+      if (!this._hands.has(player.id)) return;
       this.sendToPlayer(player.id, 'stateSync', this._buildStateSyncPayload(player.id));
     });
 
@@ -425,6 +434,16 @@ export class RummikubGame extends HostBaseGame {
 
     if (this._opLog.length === 0) { this._doPass(playerId); return; }
 
+    // 손패에서 보드로 한 장도 안 낸 채 보드만 재배치하고 확정하는 것은
+    // 원작 규칙상 애초에 성립하지 않는 턴이다(§6.1 — "내거나 뽑거나 둘 중
+    // 하나"). 모바일 UI는 이미 이 조건으로 제출 버튼을 막아두지만
+    // (RummikubMobile.js의 _canEndTurn), 그건 클라이언트 게이트일 뿐이라
+    // 변조/버그가 있는 클라이언트가 보드 재배치만으로 커밋을 요청하면
+    // 그대로 통과해 교착 카운터가 부당하게 리셋될 수 있었다(codex
+    // 헤드리스 리뷰로 발견 — 호스트가 권위 있는 검증을 전혀 안 하고
+    // 있었음, 2026-08-24). opLog가 비어있을 때와 동일하게 패스로 처리.
+    if (this._placedFromHandThisTurn.size === 0) { this._doPass(playerId); return; }
+
     // 1. 타일 보존
     const provAll = [...flattenBoard(prov.board), ...prov.hand].sort().join(',');
     const snapAll = [...flattenBoard(snap.board), ...snap.hand].sort().join(',');
@@ -448,6 +467,29 @@ export class RummikubGame extends HostBaseGame {
     const jokersAtEnd = flattenBoard(prov.board).filter(id => id[0] === 'j');
     const stranded = jokersAtStart.filter(j => !jokersAtEnd.includes(j));
     if (stranded.length > 0) { this._failTurn(playerId, '조커를 다시 보드에 사용해야 해요'); return; }
+
+    // 6. 조커 대체 정당성 검사 (§7.2-1) — "보드 위 세트의 조커를 손패로
+    // 가져오려면(회수) 그 자리를 조커가 대신하던 것과 동일한 숫자·색의
+    // 실물로 채워야 한다"는 원작 룰이 지금까지 전혀 강제되지 않고 있었다
+    // (getJokerValue/isValidJokerReplacement가 정의만 되고 어디서도
+    // 호출되지 않는 죽은 코드였음 — codex 헤드리스 리뷰로 발견, 2026-08-23).
+    // 턴 시작(snap)과 종료(prov) 두 스냅샷 모두 이미 유효한 보드임이
+    // 보장된 시점에서만 비교하므로(턴 중간의 일시적 무효 상태를 건드리지
+    // 않음), 조커가 원래 있던 세트(meldId)가 종료 시점까지 "그대로 살아
+    // 있는데 조커만 빠진" 경우에만 적용한다. 세트 자체가 완전히 해체·재편된
+    // 경우는 원작이 허용하는 일반 재배열(§6.2)로 보고 검사 대상에서 뺀다
+    // (원래 그 세트가 사라졌으니 "조커의 옛 자리"라는 개념 자체가 없음).
+    for (const jokerId of jokersAtStart) {
+      const startMeld = snap.board.find(m => m.tiles.includes(jokerId));
+      if (!startMeld) continue;
+      const endMeld = prov.board.find(m => m.meldId === startMeld.meldId);
+      if (!endMeld || endMeld.tiles.includes(jokerId)) continue; // 해체됐거나 그대로 있음 — 대상 아님
+      const jokerValue = getJokerValue(snap.board, startMeld.meldId, jokerId);
+      const beforeReals = startMeld.tiles.filter(t => t !== jokerId);
+      const newTiles = endMeld.tiles.filter(t => !beforeReals.includes(t));
+      const ok = jokerValue && newTiles.some(t => isValidJokerReplacement(jokerValue, t));
+      if (!ok) { this._failTurn(playerId, '조커가 대신하던 값과 다른 타일로는 회수할 수 없어요'); return; }
+    }
 
     // 성공
     this._board = prov.board;
@@ -506,7 +548,17 @@ export class RummikubGame extends HostBaseGame {
 
   _drawTile() {
     if (this._pool.length === 0) return null;
-    return this._pool.shift();
+    const tile = this._pool.shift();
+    // 더미가 이 뽑기로 방금 바닥났으면 교착 카운터를 0으로 리셋한다.
+    // §8.2 규칙은 "더미 소진 '이후'" 무변경 턴이 한 바퀴 돌아야 교착인데,
+    // _noChangeStreak는 더미가 남아있던 이전 턴들의 패스/실패까지 그대로
+    // 누적해오고 있어서, 더미가 막 바닥난 바로 그 턴에 과거 누적치만으로
+    // 즉시 교착이 선언될 수 있었다(codex 헤드리스 리뷰로 발견, 2026-08-24).
+    // 이 뽑기 자체(방금 더미를 비운 실패/패스 턴)는 리셋 이후 첫 무변경
+    // 턴으로 정상 집계돼야 하므로, 여기서 리셋한 뒤 호출부의
+    // _noChangeStreak++가 그대로 이어져 1이 된다.
+    if (this._pool.length === 0) this._noChangeStreak = 0;
+    return tile;
   }
 
   _advanceTurn() {
@@ -526,44 +578,87 @@ export class RummikubGame extends HostBaseGame {
 
   _endGame(endType, forcedWinnerId = null) {
     clearTimeout(this._turnTimer);
+    // _tickTimerRing()이 매 턴마다 새로 예약하는 250ms 인터벌은 onReset()
+    // 에서만 정리되고 있었다 — 게임 종료 직후 결과 화면이 떠 있는 동안
+    // (다음 리셋/재대결 전까지) 아무도 안 보는 타이머 링을 계속 250ms마다
+    // 갱신하며 낭비됐다(claude 헤드리스 리뷰로 발견, 2026-08-24).
+    clearInterval(this._timerTickInterval);
     this._gameStarted = false;
     const scores = {};
     let winnerIds = [];
 
     if (endType === 'rummikub') {
+      // 승자 total은 "패자 전원의 감점 합계"여야 zero-sum이 맞는다(§8.1
+      // 검산: 전원 점수 합 = 0). 중도 이탈자를 그냥 건너뛰면 그 사람의
+      // meta.leftScore(음수)만 결과에 남고 승자 쪽에는 상응하는 가산이
+      // 전혀 없어 zero-sum이 깨졌다(claude 헤드리스 리뷰로 발견,
+      // 2026-08-24) — 이탈자의 손패 감점도 total에 반드시 포함해야 함.
       let total = 0;
       for (const [pid, meta] of this._playerMeta) {
-        if (meta.left || pid === forcedWinnerId) continue;
-        const s = scoreHand(this._hands.get(pid) || []);
-        scores[pid] = -s;
+        if (pid === forcedWinnerId) continue;
+        const s = meta.left ? -(meta.leftScore ?? 0) : scoreHand(this._hands.get(pid) || []);
+        if (!meta.left) scores[pid] = -s;
         total += s;
       }
       scores[forcedWinnerId] = total;
       winnerIds = [forcedWinnerId];
     } else if (endType === 'stalemate') {
-      const active = [...this._playerMeta.entries()].filter(([, m]) => !m.left);
-      const sums = active.map(([pid]) => [pid, scoreHand(this._hands.get(pid) || [])]);
-      const minSum = Math.min(...sums.map(([, s]) => s));
-      winnerIds = sums.filter(([, s]) => s === minSum).map(([pid]) => pid);
-      const losers = sums.filter(([, s]) => s !== minSum);
-      const loserTotal = losers.reduce((a, [, s]) => a + s, 0);
-      for (const [pid, s] of losers) scores[pid] = -s;
+      // 이탈자(meta.left)는 애초에 교착 시점에 존재하지 않으므로 "공동
+      // 최저점 승자" 후보에서는 계속 제외하되(존재하지도 않는 사람이
+      // 교착 승자가 될 수는 없음), 위 rummikub 분기와 같은 이유로 그
+      // 손패 감점은 패자 합계(loserTotal)에 반드시 포함해야 zero-sum
+      // 붕괴가 덜하다(claude 헤드리스 리뷰로 발견한 rummikub 분기와 동일
+      // 패턴, 2026-08-24). 단, §8.2 공동 승자 공식 자체가 원작 그대로
+      // 구현돼도 zero-sum이 보장되지 않는 것은 별개 사안(§8.2 자체의
+      // 설계 특성 — plan.md 미변경 원칙에 따라 여기서 고치지 않음).
+      const activeSums = [...this._playerMeta.entries()]
+        .filter(([, m]) => !m.left)
+        .map(([pid]) => [pid, scoreHand(this._hands.get(pid) || [])]);
+      const minSum = Math.min(...activeSums.map(([, s]) => s));
+      winnerIds = activeSums.filter(([, s]) => s === minSum).map(([pid]) => pid);
+      const activeLosers = activeSums.filter(([, s]) => s !== minSum);
+      const leftLosers = [...this._playerMeta.entries()]
+        .filter(([, m]) => m.left)
+        .map(([pid, m]) => [pid, -(m.leftScore ?? 0)]);
+      const loserTotal = [...activeLosers, ...leftLosers].reduce((a, [, s]) => a + s, 0);
+      for (const [pid, s] of activeLosers) scores[pid] = -s;
       const share = winnerIds.length ? Math.floor(loserTotal / winnerIds.length) : 0;
       for (const wid of winnerIds) {
-        const mySum = sums.find(([pid]) => pid === wid)[1];
+        const mySum = activeSums.find(([pid]) => pid === wid)[1];
         scores[wid] = share - mySum;
       }
     } else if (endType === 'forfeit') {
+      // 승자 점수가 항상 0으로 고정돼 있어 이탈자들의 손패 페널티가
+      // 승자에게 전혀 반영되지 않았다(claude 헤드리스 리뷰로 발견,
+      // 2026-08-24) — rummikub 분기와 동일하게 이탈자 전원의 감점 합계를
+      // 승자 credit으로 돌려줘야 zero-sum이 맞는다.
       winnerIds = forcedWinnerId ? [forcedWinnerId] : [];
+      let total = 0;
       for (const [pid, meta] of this._playerMeta) {
-        if (meta.left) { scores[pid] = meta.leftScore ?? 0; continue; }
-        if (pid === forcedWinnerId) { scores[pid] = 0; continue; }
+        if (pid === forcedWinnerId) continue;
+        if (meta.left) total += -(meta.leftScore ?? 0);
       }
+      if (forcedWinnerId) scores[forcedWinnerId] = total;
+    }
+
+    // rummikub/stalemate 종료 분기는 meta.left 플레이어를 애초에 순회에서
+    // 건너뛰어 scores에 아예 항목이 없었다 — 결과 화면은 scores[pid] ?? 0으로
+    // 표시하므로, 이탈 시점에 정확히 계산해둔 meta.leftScore(onPlayerLeave
+    // 참고)가 무시되고 이탈자가 전부 0점으로 보였다(codex 헤드리스 리뷰로
+    // 발견, 2026-08-24). forfeit 분기는 이미 자체적으로 처리하므로
+    // 여기서는 아직 채워지지 않은 것만 보완.
+    for (const [pid, meta] of this._playerMeta) {
+      if (meta.left && !(pid in scores)) scores[pid] = meta.leftScore ?? 0;
     }
 
     const revealedHands = {};
     for (const [pid] of this._playerMeta) revealedHands[pid] = this._hands.get(pid) || [];
 
+    // 결과 화면 중 재접속(onPlayerRejoin/requestState)이 stateSync로 이
+    // 결과를 다시 보낼 수 있도록 캐싱 — 재접속 시 결과 화면이 재구성되지
+    // 않고 "waiting"에 멈춰 있던 문제와 짝을 이루는 수정(codex 헤드리스
+    // 리뷰로 발견, 2026-08-24).
+    this._lastResult = { endType, winnerIds, scores, revealedHands };
     this.broadcast('gameFinished', { endType, winnerIds, scores, revealedHands });
     this._renderResult(endType, winnerIds, scores, revealedHands);
     this.setPhase('result');
@@ -592,6 +687,7 @@ export class RummikubGame extends HostBaseGame {
       handCounts: this._handCounts(),
       initialMeldFlags: this._initialMeldFlags(),
       phase: this.phase,
+      result: this._lastResult || null,
     };
   }
 

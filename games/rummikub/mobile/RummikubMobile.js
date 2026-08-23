@@ -11,7 +11,7 @@ import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 import { renderTile } from '../shared/TileRenderer.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import { flipTween } from '../shared/motion.js';
-import { validateBoard } from '../shared/RummikubEngine.js';
+import { validateBoard, sumOfMelds } from '../shared/RummikubEngine.js';
 
 const DRAG_THRESHOLD_PX = 10;
 
@@ -28,6 +28,7 @@ export class RummikubMobile extends MobileBaseGame {
     this._workBoard = [];  // 내 턴 동안의 작업본(opAck 성공분만 반영)
     this._newMeldIdsThisTurn = new Set(); // 이번 턴에 새로 만든 세트(초기 착수 미완료 시에도 잠금 예외)
     this._placedFromHandThisTurn = new Set(); // 이번 턴에 손패→보드로 놓인 타일(강조 표시 + 제출 가능 조건, 호스트 로직과 동일하게 유지)
+    this._jokerRetrievalTarget = null; // 조커 회수 진행 중 상태 — 턴 시작/리셋 시 반드시 함께 정리
     this._myTurn = false;
     this._initialMeldDone = false;
     this._initialMeldThreshold = 30;
@@ -60,7 +61,20 @@ export class RummikubMobile extends MobileBaseGame {
     this._selection = null;
     this._newMeldIdsThisTurn = new Set();
     this._placedFromHandThisTurn = new Set();
+    this._jokerRetrievalTarget = null;
+    // "다시 시작" 버튼 핸들러는 이미 클리어하지만, 게임 종료 직후 즉시
+    // 재대결(rematch)로 세션이 리셋되는 경로에는 미처리로 남아 있었다 —
+    // 그 시점에 아직 응답이 안 온 opAck 콜백이 계속 Map에 붙어 있으면
+    // 다음 판과 무관한 참조가 새 상태 위에서 굴러다니게 된다.
+    this._pendingOps.clear();
     this._stopTimerTick();
+    // gameFinished 수신 시 예약한 2초 지연 결과화면 전환 타이머(_resultTimer)를
+    // 여기서도 반드시 clear해야 함 — 안 그러면 게임 종료 직후 2초 이내에
+    // 재시작이 들어왔을 때(호스트가 바로 resetSession) waiting 화면으로
+    // 전환된 뒤에도 뒤늦게 발화해 지난 판 결과 화면이 다시 튀어나온다
+    // (claude 헤드리스 리뷰로 발견, AGENTS.md의 "setTimeout 체인은 인스턴스
+    // 필드에 저장하고 onReset()에서 clear" 규칙과 동일 패턴, 2026-08-24).
+    if (this._resultTimer) { clearTimeout(this._resultTimer); this._resultTimer = null; }
     if (this._nickname) this._sendProfile();
     else this.showScreen('setup');
   }
@@ -95,6 +109,7 @@ export class RummikubMobile extends MobileBaseGame {
       this._selection = null;
       this._newMeldIdsThisTurn = new Set();
       this._placedFromHandThisTurn = new Set();
+      this._jokerRetrievalTarget = null;
       if (this._myTurn) {
         this._workBoard = this._board.map(m => ({ meldId: m.meldId, tiles: [...m.tiles] }));
         this._handSnapshotAtTurnStart = [...this._hand];
@@ -176,7 +191,16 @@ export class RummikubMobile extends MobileBaseGame {
         this._renderPoolCount();
         this._startTimerTick();
       } else if (data.phase === 'result') {
-        this.showScreen('waiting');
+        // 결과 화면 도중 재접속하면 예전엔 그냥 "waiting"에 멈춰 있었다 —
+        // 호스트가 _lastResult를 캐싱해 stateSync에 실어 보내므로, 있으면
+        // 곧바로 결과 화면을 재구성한다(codex 헤드리스 리뷰로 발견,
+        // 2026-08-24).
+        if (this._resultTimer) { clearTimeout(this._resultTimer); this._resultTimer = null; }
+        if (data.result) {
+          this._showResult(data.result.endType, data.result.winnerIds, data.result.scores, data.result.revealedHands);
+        } else {
+          this.showScreen('waiting');
+        }
       }
     });
 
@@ -225,6 +249,7 @@ export class RummikubMobile extends MobileBaseGame {
       this._hand = [...(this._handSnapshotAtTurnStart || this._hand)];
       this._newMeldIdsThisTurn = new Set();
       this._placedFromHandThisTurn = new Set();
+      this._jokerRetrievalTarget = null;
       this._selection = null;
       this._pendingOps.clear();
       this._renderBoard();
@@ -382,22 +407,13 @@ export class RummikubMobile extends MobileBaseGame {
   }
 
   _computeNewMeldSum() {
-    // 초기 착수 미완료 상태에서는 workBoard 전체가 이번 턴 새 세트뿐(보드가 잠겨있으므로)
-    const parse = (id) => id[0] === 'j' ? { isJoker: true, num: null } : { isJoker: false, num: parseInt(id.slice(1, 3), 10) };
-    let sum = 0;
-    for (const meld of this._workBoard) {
-      const reals = meld.tiles.map(parse).filter(t => !t.isJoker);
-      if (reals.length === 0) continue;
-      const jokerCount = meld.tiles.length - reals.length;
-      // 그룹 추정(같은 숫자) 우선, 아니면 런으로 간주해 실물 합 + 조커는 실물 평균값으로 근사
-      const sameNum = reals.every(t => t.num === reals[0].num);
-      if (sameNum && meld.tiles.length <= 4) {
-        sum += reals[0].num * meld.tiles.length;
-      } else {
-        sum += reals.reduce((s, t) => s + t.num, 0) + jokerCount * (reals.length ? Math.round(reals.reduce((s, t) => s + t.num, 0) / reals.length) : 0);
-      }
-    }
-    return sum;
+    // 다른 플레이어가 이미 착수를 마쳤다면 내 턴이 와도 workBoard는 기존
+    // 보드 전체를 복제해 시작한다(_workBoard = this._board.map(...)) — 즉
+    // "초기 착수 미완료 = workBoard 전체가 새 세트"라는 이전 가정은
+    // 틀렸었다. 호스트 _commitTurn()과 동일하게 이번 턴에 실제로 새로
+    // 만든 세트(_newMeldIdsThisTurn)만 sumOfMelds()로 계산해야 배지 합계와
+    // 서버 판정이 항상 일치한다(codex 헤드리스 리뷰로 발견, 2026-08-24).
+    return sumOfMelds(this._workBoard, [...this._newMeldIdsThisTurn]);
   }
 
   _renderPoolCount() {
@@ -446,7 +462,13 @@ export class RummikubMobile extends MobileBaseGame {
   _canEndTurn() {
     if (!this._myTurn) return false;
     if (this._placedFromHandThisTurn.size === 0) return false;
-    return validateBoard(this._workBoard).valid;
+    if (!validateBoard(this._workBoard).valid) return false;
+    // 호스트 _commitTurn()의 "4. 초기 착수 검사"와 동일 기준(§5) — 이게
+    // 없으면 임계값 미달 상태에서도 버튼이 활성화됐다가 제출 즉시
+    // 서버에 거부당하는 혼란이 있었다(codex 헤드리스 리뷰로 발견,
+    // 2026-08-24).
+    if (!this._initialMeldDone && this._computeNewMeldSum() < this._initialMeldThreshold) return false;
+    return true;
   }
 
   _updateEndTurnButtonState() {
@@ -561,6 +583,20 @@ export class RummikubMobile extends MobileBaseGame {
 
   _onTileTap(tileId, source) {
     if (!this._myTurn) return;
+    if (this._jokerRetrievalTarget) {
+      if (source.zone === 'hand') {
+        this._completeJokerRetrieval(tileId);
+        return;
+      }
+      // 회수 모드가 켜진 채로 손패가 아닌 보드 타일을 탭하면(예: 다른
+      // 세트를 만지려는 것) 대기 중이던 회수 요청을 취소한다. 그냥
+      // 무시하고 넘어가면 회수 모드가 계속 살아있는 채로 이 탭이 일반
+      // 보드 조작으로 처리되고, 한참 뒤에 무관한 손패 탭이 뜬금없이
+      // 조커 교체로 잘못 처리될 수 있었다(claude 헤드리스 리뷰로 발견,
+      // 2026-08-24).
+      this._jokerRetrievalTarget = null;
+      this._showToast('조커 회수를 취소했어요');
+    }
     if (this._selection?.tileId === tileId) { this._selection = null; this._renderBoard(); this._renderHand(); return; }
     if (this._selection) {
       // 이미 선택된 타일이 있으면 이번 탭한 자리를 목적지로 이동 시도
@@ -593,37 +629,63 @@ export class RummikubMobile extends MobileBaseGame {
   _splitMeldAt(meld, idx) {
     if (!this._myTurn) return;
     const tail = meld.tiles.slice(idx);
-    let firstOfTail = true;
-    let newMeldId = null;
-    for (const tileId of tail) {
-      const dest = firstOfTail ? { zone: 'newMeld' } : { zone: 'meld', meldId: newMeldId, index: 9999 };
-      firstOfTail = false;
-      this._sendMoveTile(tileId, { zone: 'meld', meldId: meld.meldId }, dest, (ackNewMeldId) => {
-        if (ackNewMeldId !== undefined) newMeldId = ackNewMeldId;
-      });
-    }
+    this._sendSplitStep(meld.meldId, tail, 0, null);
+  }
+
+  /**
+   * 세트 분할은 op 여러 건을 순차 전송해야 한다(§9.2 "moveTile 다건").
+   * 원래는 for 루프로 전부 한 번에 보내면서 새로 만들 세트의 meldId를
+   * 첫 op의 opAck(비동기, 네트워크 왕복 후 도착)이 채워주길 기대했는데,
+   * 루프 자체는 동기적으로 전부 즉시 실행되므로 2번째 타일부터는 아직
+   * null인 meldId로 전송돼 호스트가 매번 MELD_NOT_FOUND로 거부했다 —
+   * 3장 이상인 세트를 분할하면(가운데 롱프레스는 항상 꼬리가 2장 이상)
+   * 100% 재현되는 버그였음(claude 헤드리스 리뷰로 발견, 2026-08-24).
+   * onAck 콜백 안에서 다음 타일을 보내는 재귀 체인으로 바꿔 각 op가
+   * 이전 op의 opAck을 받은 뒤에만 전송되도록 수정. 거부된 op가 있으면
+   * 그 자리에서 체인이 멈춘다(부분 분할 상태로 남되, "처음부터" 버튼으로
+   * 복구 가능 — 상태를 더 망가뜨리지 않는 안전한 실패).
+   */
+  _sendSplitStep(sourceMeldId, tail, i, newMeldId) {
+    if (i >= tail.length) return;
+    const tileId = tail[i];
+    const dest = i === 0 ? { zone: 'newMeld' } : { zone: 'meld', meldId: newMeldId, index: 9999 };
+    this._sendMoveTile(tileId, { zone: 'meld', meldId: sourceMeldId }, dest, (ackNewMeldId) => {
+      const resolvedMeldId = i === 0 ? ackNewMeldId : newMeldId;
+      this._sendSplitStep(sourceMeldId, tail, i + 1, resolvedMeldId);
+    });
   }
 
   _startJokerRetrieval(jokerId, meld) {
     this._showToast('🃏 대체할 손패 타일을 탭하세요');
     this._jokerRetrievalTarget = { jokerId, meldId: meld.meldId };
-    document.querySelectorAll('#rk-m-hand .rk-tile').forEach(el => {
-      const once = () => {
-        this._completeJokerRetrieval(el.dataset.tileId);
-        document.querySelectorAll('#rk-m-hand .rk-tile').forEach(t => t.removeEventListener('click', once));
-      };
-      el.addEventListener('click', once, { once: true });
-    });
+    // 손패 타일 각각에 매번 새 리스너를 붙였다 지우는 대신(리스너 참조가
+    // 타일마다 달라서 removeEventListener가 실제로는 하나도 안 지워지던
+    // 버그가 있었음 — claude 헤드리스 리뷰로 발견, 2026-08-24), 이미
+    // 모든 손패 탭을 받는 _onTileTap()에서 _jokerRetrievalTarget 존재
+    // 여부만 확인하는 방식으로 통합. 별도 리스너 등록/해제가 필요 없어짐.
   }
 
   _completeJokerRetrieval(replacementTileId) {
     const target = this._jokerRetrievalTarget;
     this._jokerRetrievalTarget = null;
     if (!target) return;
-    this._sendMoveTile(replacementTileId, { zone: 'hand' }, { zone: 'meld', meldId: target.meldId, index: 9999 });
-    setTimeout(() => {
+    // 대체 타일은 반드시 조커가 있던 그 자리에 끼워 넣어야 한다 — 세트 끝
+    // (index:9999)에 넣고 조커만 빼면, 런(run) 세트에서 순서가
+    // [5,7,6]처럼 뒤섞여 커밋이 영구히 실패하는 버그가 있었음(실측 확인,
+    // 2026-08-24). 완료 시점 기준으로 조커의 현재 위치를 다시 조회해
+    // (탭 사이 다른 조작으로 밀렸을 가능성 대비) 그 인덱스에 삽입한다.
+    const meld = this._workBoard.find(m => m.meldId === target.meldId);
+    const jokerIdx = meld ? meld.tiles.indexOf(target.jokerId) : -1;
+    const insertIndex = jokerIdx >= 0 ? jokerIdx : (meld?.tiles.length ?? 0);
+    // 고정 60ms setTimeout으로 두 번째 op(조커 빼내기)를 쏘던 방식은
+    // _splitMeldAt과 동일한 계열의 비동기 경합 버그였다 — 첫 op의 opAck가
+    // 네트워크 지연 등으로 60ms보다 늦게 오면 workBoard에 대체 타일이 아직
+    // 반영되지 않은 상태로 두 번째 op가 나가 순서가 꼬일 수 있었다.
+    // 여기서도 같은 해법(onAck 콜백 체이닝)을 적용한다(codex 헤드리스
+    // 리뷰로 발견, 2026-08-24).
+    this._sendMoveTile(replacementTileId, { zone: 'hand' }, { zone: 'meld', meldId: target.meldId, index: insertIndex }, () => {
       this._sendMoveTile(target.jokerId, { zone: 'meld', meldId: target.meldId }, { zone: 'hand' });
-    }, 60);
+    });
   }
 
   // ─── op 전송/적용 (비관적: opAck 성공 후에만 반영) ──────────────────────
@@ -684,6 +746,7 @@ export class RummikubMobile extends MobileBaseGame {
       BOARD_LOCKED: '아직 초기 착수 전이라 보드를 만질 수 없어요',
       BOARD_TO_HAND_FORBIDDEN: '보드에서 손패로 가져올 수 없어요', NOT_YOUR_TURN: '내 차례가 아니에요',
       MELD_NOT_FOUND: '세트를 찾을 수 없어요',
+      JOKER_REPLACEMENT_INVALID: '조커가 대신하던 값과 같은 타일로 먼저 채워야 해요',
     };
     return map[reason] || reason;
   }
