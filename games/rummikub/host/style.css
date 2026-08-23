@@ -114,13 +114,14 @@ body.rk-host {
 
 /* ─── 보드 ──────────────────────────────────────────────────────── */
 .rk-board {
-  flex: 1; min-height: 0;
-  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px;
-  padding: 16px 20px; overflow-y: auto;
+  flex: 1; min-height: 0; position: relative;
+  display: flex; flex-wrap: wrap; align-content: flex-start; gap: 18px;
+  padding: 20px 24px; overflow-y: auto; overflow-x: hidden;
 }
 .rk-meld {
   display: flex; background: rgba(0,0,0,0.2); border: 2px solid var(--rk-border);
-  border-radius: 8px; padding: 4px; gap: 2px;
+  border-radius: 8px; padding: 6px; gap: 3px;
+  transform: rotate(var(--rk-jrot, 0deg)) translate(var(--rk-jdx, 0px), var(--rk-jdy, 0px));
   transition: border-color 0.25s, box-shadow 0.25s;
 }
 .rk-meld-flash {
@@ -128,19 +129,45 @@ body.rk-host {
   box-shadow: 0 0 16px rgba(34, 197, 94, 0.7);
   animation: rk-meld-pulse 0.5s ease-out;
 }
-@keyframes rk-meld-pulse { 0% { transform: scale(0.94); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+/* 흔들림 판정(flash) 중에도 흐트러진 회전값(--rk-jrot/--rk-jdx/--rk-jdy)이
+   유지되도록 scale과 같은 transform 안에서 함께 계산 — 안 그러면 pulse
+   애니메이션이 transform 전체를 덮어써서 순간적으로 타일이 반듯해졌다
+   돌아오는 부자연스러움이 생김. */
+@keyframes rk-meld-pulse {
+  0%   { transform: rotate(var(--rk-jrot, 0deg)) translate(var(--rk-jdx, 0px), var(--rk-jdy, 0px)) scale(0.94); }
+  60%  { transform: rotate(var(--rk-jrot, 0deg)) translate(var(--rk-jdx, 0px), var(--rk-jdy, 0px)) scale(1.03); }
+  100% { transform: rotate(var(--rk-jrot, 0deg)) translate(var(--rk-jdx, 0px), var(--rk-jdy, 0px)) scale(1); }
+}
 
 .rk-tile {
-  width: 34px; height: 46px; border-radius: 5px;
+  width: 54px; height: 74px; border-radius: 6px;
   background: linear-gradient(160deg, #fdf6e3, #f3e6c4);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 1.1rem; font-family: 'Georgia', serif;
+  font-weight: 900; font-size: 1.55rem; font-family: 'Georgia', serif;
   box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(0,0,0,0.08);
-  user-select: none;
+  user-select: none; flex-shrink: 0;
 }
-.rk-tile-joker { font-size: 1.3rem; }
+.rk-tile-joker { font-size: 1.9rem; }
 .rk-tile-rollback { animation: rk-rollback 0.42s cubic-bezier(0.6,0,0.4,1); }
 @keyframes rk-rollback { 0% { filter: brightness(0.7); } 100% { filter: brightness(1); } }
+
+/* ─── 더미(pool) 더미 시각화 ────────────────────────────────────── */
+.rk-pool-pile {
+  position: absolute; right: 20px; bottom: 20px;
+  width: 150px; height: 120px; pointer-events: none; z-index: 5;
+}
+.rk-pool-tile {
+  position: absolute; left: 50%; top: 50%;
+  width: 34px; height: 46px; margin: -23px 0 0 -17px; border-radius: 5px;
+  background: repeating-linear-gradient(135deg, #16342a, #16342a 4px, #1d4534 4px, #1d4534 8px);
+  border: 1px solid rgba(234, 255, 242, 0.15);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.rk-pool-tile-flying {
+  position: fixed; z-index: 1200; pointer-events: none;
+  transition: transform var(--rk-draw-fly-ms, 520ms) cubic-bezier(0.3,0,0.7,1),
+              opacity var(--rk-draw-fly-ms, 520ms) ease-in;
+}
 
 .rk-vignette {
   position: fixed; inset: 0; pointer-events: none; z-index: 900;
@@ -191,5 +218,7 @@ body.rk-host {
   body.host-board { height: auto !important; overflow-y: auto !important; }
   .rk-playing-header { flex-wrap: wrap; }
   .rk-board { padding: 10px; }
-  .rk-tile { width: 28px; height: 38px; font-size: 0.95rem; }
+  .rk-tile { width: 40px; height: 55px; font-size: 1.15rem; }
+  .rk-pool-pile { width: 100px; height: 84px; right: 10px; bottom: 10px; }
+  .rk-pool-tile { width: 24px; height: 33px; margin: -16px 0 0 -12px; }
 }

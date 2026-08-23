@@ -9,7 +9,7 @@ import {
   validateBoard, sumOfMelds, flattenBoard, scoreHand, parseTileId,
 } from '../shared/RummikubEngine.js';
 import { renderTile } from '../shared/TileRenderer.js';
-import { withStagger, STAGGER_MS } from '../shared/motion.js';
+import { withStagger, STAGGER_MS, meldJitter, seededRandom, DRAW_FLY_MS } from '../shared/motion.js';
 import { DemoSimulator } from './DemoSimulator.js';
 
 function cloneBoard(board) {
@@ -172,6 +172,7 @@ export class RummikubGame extends HostBaseGame {
     this._turnNo = 0;
     this._currentTurnPlayerId = null;
     this._noChangeStreak = 0;
+    document.getElementById('rk-pool-pile')?.replaceChildren();
     this._renderLobby();
     this.updateLobbyReady(0);
     this.setPhase('lobby');
@@ -309,6 +310,7 @@ export class RummikubGame extends HostBaseGame {
 
     this._renderPlayersPanel();
     this._renderBoard([]);
+    this._renderPoolPile(this._pool.length);
     this.setPhase('playing');
     this._startTurn(this._turnOrder[0]);
   }
@@ -469,6 +471,7 @@ export class RummikubGame extends HostBaseGame {
 
   _failTurn(playerId, reasonText) {
     const drawn = this._drawTile();
+    if (drawn) this._flyTileFromPool(playerId);
     const hand = this._hands.get(playerId) || [];
     if (drawn) hand.push(drawn);
     this._noChangeStreak++;
@@ -486,6 +489,7 @@ export class RummikubGame extends HostBaseGame {
 
   _doPass(playerId) {
     const drawn = this._drawTile();
+    if (drawn) this._flyTileFromPool(playerId);
     const hand = this._hands.get(playerId) || [];
     if (drawn) hand.push(drawn);
     this._noChangeStreak++;
@@ -664,11 +668,22 @@ export class RummikubGame extends HostBaseGame {
       container.querySelectorAll('.rk-tile').forEach(el => prevRects.set(el.dataset.tileId, el.getBoundingClientRect()));
     }
 
-    container.innerHTML = '';
+    // innerHTML='' 대신 .rk-meld만 제거 — #rk-pool-pile(더미 시각화)는
+    // 이 컨테이너의 자식으로 같이 있어서 통째로 지우면 매 커밋/롤백마다
+    // 더미가 사라짐.
+    container.querySelectorAll('.rk-meld').forEach(el => el.remove());
     for (const meld of board) {
       const meldEl = document.createElement('div');
       meldEl.className = 'rk-meld';
       meldEl.dataset.meldId = meld.meldId;
+      // 불규칙하고 다이나믹한 배치: meldId로 결정적 시드를 만들어 회전/세로
+      // 오프셋을 부여 — 재렌더링마다 값이 바뀌지 않고(같은 세트는 항상 같은
+      // 흐트러짐 유지), 매번 Math.random()을 쓰면 커밋할 때마다 안 바뀐
+      // 세트까지 덜컹거려 보이는 문제를 피함.
+      const { rot, dx, dy } = meldJitter(meld.meldId);
+      meldEl.style.setProperty('--rk-jrot', `${rot}deg`);
+      meldEl.style.setProperty('--rk-jdx', `${dx}px`);
+      meldEl.style.setProperty('--rk-jdy', `${dy}px`);
       const tileEls = meld.tiles.map(tid => renderTile(tid, { size: 'md' }));
       tileEls.forEach(el => meldEl.appendChild(el));
       container.appendChild(meldEl);
@@ -697,6 +712,68 @@ export class RummikubGame extends HostBaseGame {
       const flashEl = document.getElementById('rk-vignette');
       if (flashEl) { flashEl.classList.add('rk-vignette-flash'); setTimeout(() => flashEl.classList.remove('rk-vignette-flash'), 220); }
     }
+  }
+
+  /**
+   * 더미(pool)를 흐트러진 뒷면 타일 더미로 시각화한다(사용자 요청).
+   * 실제 개수만큼 다 그리면 DOM이 과도하게 커지므로 최대 POOL_VISUAL_CAP
+   * 개까지만 렌더링 — 정확한 개수는 헤더의 텍스트 카운터가 이미 보여준다.
+   * 게임 시작/리셋 시 1회만 전체 렌더링하고, 이후 뽑기마다는 이 함수를
+   * 다시 부르지 않는다(_flyTileFromPool이 낱장씩 제거하며 개수를 맞춤).
+   */
+  _renderPoolPile(count) {
+    const pile = document.getElementById('rk-pool-pile');
+    if (!pile) return;
+    pile.innerHTML = '';
+    const POOL_VISUAL_CAP = 40;
+    const visible = Math.min(count, POOL_VISUAL_CAP);
+    for (let i = 0; i < visible; i++) {
+      const t = document.createElement('div');
+      t.className = 'rk-pool-tile';
+      const rx = (seededRandom(i * 3.7) - 0.5) * 90;   // -45~45px
+      const ry = (seededRandom(i * 9.1 + 2) - 0.5) * 70; // -35~35px
+      const rot = (seededRandom(i * 5.3 + 4) - 0.5) * 50; // -25~25deg
+      t.style.transform = `translate(${rx}px, ${ry}px) rotate(${rot}deg)`;
+      t.style.zIndex = String(i);
+      pile.appendChild(t);
+    }
+  }
+
+  /**
+   * 더미에서 실제로 한 장을 뽑을 때, 쌓여있는 뒷면 타일 중 하나를 무작위로
+   * 골라 해당 플레이어 패널 쪽으로 날아가는 이펙트를 재생한다(사용자 요청).
+   * 뒷면 타일은 전부 겉보기가 동일하므로 "어떤 실제 타일이 뽑혔는지"와
+   * 무관하게 아무 DOM 조각이나 하나 골라도 됨 — 카드 자체의 정체성은 이미
+   * this._pool.shift()에서 정해져 있고, 여기선 순수 연출만 담당.
+   */
+  _flyTileFromPool(playerId) {
+    const pile = document.getElementById('rk-pool-pile');
+    if (!pile) return;
+    const tiles = [...pile.querySelectorAll('.rk-pool-tile')];
+    if (tiles.length === 0) return;
+    const tile = tiles[Math.floor(Math.random() * tiles.length)];
+    const startRect = tile.getBoundingClientRect();
+    tile.remove();
+
+    const target = document.getElementById(`rk-pcard-${playerId}`);
+    const targetRect = target ? target.getBoundingClientRect() : null;
+    const dx = targetRect ? (targetRect.left + targetRect.width / 2 - startRect.left - startRect.width / 2) : 0;
+    const dy = targetRect ? (targetRect.top + targetRect.height / 2 - startRect.top - startRect.height / 2) : -80;
+
+    const ghost = document.createElement('div');
+    ghost.className = 'rk-pool-tile rk-pool-tile-flying';
+    ghost.style.setProperty('--rk-draw-fly-ms', `${DRAW_FLY_MS}ms`);
+    ghost.style.left = `${startRect.left}px`;
+    ghost.style.top = `${startRect.top}px`;
+    ghost.style.transform = 'translate(0, 0) scale(1) rotate(0deg)';
+    ghost.style.opacity = '1';
+    document.body.appendChild(ghost);
+    void ghost.offsetWidth;
+    requestAnimationFrame(() => {
+      ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.3) rotate(520deg)`;
+      ghost.style.opacity = '0';
+    });
+    setTimeout(() => ghost.remove(), DRAW_FLY_MS + 60);
   }
 
   _renderResult(endType, winnerIds, scores, revealedHands) {
