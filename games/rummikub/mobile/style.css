@@ -150,10 +150,13 @@ body.mobile-controller {
 .rk-m-action-bar { flex-shrink: 0; width: 100%; display: flex; gap: 8px; padding: 8px 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--rk-panel); }
 .rk-m-action-btn { flex: 1; padding: 12px 0; border-radius: 8px; border: 1px solid var(--rk-border); background: var(--rk-panel2); color: var(--rk-text); font-weight: 700; font-size: .85rem; }
 .rk-m-action-btn-primary { background: linear-gradient(135deg, var(--rk-accent2), var(--rk-accent)); color: #06210f; border: none; }
-.rk-m-action-btn:disabled,
-.rk-m-action-btn-primary:disabled {
+/* 네이티브 disabled 속성 대신 클래스로 처리 — 이유는
+   RummikubMobile.js의 _updateEndTurnButtonState() 주석 참고(비관적 반영
+   대기 중에도 "제출" 탭을 예약 접수해야 해서 실제로는 클릭 가능해야 함). */
+.rk-m-action-btn.rk-m-action-btn-disabled,
+.rk-m-action-btn-primary.rk-m-action-btn-disabled {
   opacity: .4; filter: grayscale(.5); background: var(--rk-panel2); color: var(--rk-sub);
-  box-shadow: none; cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* ─── 흔들림/토스트 ──────────────────────────────────────────────── */

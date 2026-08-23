@@ -29,6 +29,7 @@ export class RummikubMobile extends MobileBaseGame {
     this._newMeldIdsThisTurn = new Set(); // 이번 턴에 새로 만든 세트(초기 착수 미완료 시에도 잠금 예외)
     this._placedFromHandThisTurn = new Set(); // 이번 턴에 손패→보드로 놓인 타일(강조 표시 + 제출 가능 조건, 호스트 로직과 동일하게 유지)
     this._jokerRetrievalTarget = null; // 조커 회수 진행 중 상태 — 턴 시작/리셋 시 반드시 함께 정리
+    this._submitQueued = false; // 마지막 조작 opAck 대기 중 제출 버튼을 눌렀을 때의 예약 플래그
     this._myTurn = false;
     this._initialMeldDone = false;
     this._initialMeldThreshold = 30;
@@ -70,6 +71,7 @@ export class RummikubMobile extends MobileBaseGame {
     this._newMeldIdsThisTurn = new Set();
     this._placedFromHandThisTurn = new Set();
     this._jokerRetrievalTarget = null;
+    this._submitQueued = false;
     // "다시 시작" 버튼 핸들러는 이미 클리어하지만, 게임 종료 직후 즉시
     // 재대결(rematch)로 세션이 리셋되는 경로에는 미처리로 남아 있었다 —
     // 그 시점에 아직 응답이 안 온 opAck 콜백이 계속 Map에 붙어 있으면
@@ -118,6 +120,7 @@ export class RummikubMobile extends MobileBaseGame {
       this._newMeldIdsThisTurn = new Set();
       this._placedFromHandThisTurn = new Set();
       this._jokerRetrievalTarget = null;
+      this._submitQueued = false;
       if (this._myTurn) {
         this._workBoard = this._board.map(m => ({ meldId: m.meldId, tiles: [...m.tiles] }));
         this._handSnapshotAtTurnStart = [...this._hand];
@@ -263,6 +266,7 @@ export class RummikubMobile extends MobileBaseGame {
       this._newMeldIdsThisTurn = new Set();
       this._placedFromHandThisTurn = new Set();
       this._jokerRetrievalTarget = null;
+      this._submitQueued = false;
       this._selection = null;
       this._pendingOps.clear();
       this._renderBoard();
@@ -278,9 +282,15 @@ export class RummikubMobile extends MobileBaseGame {
     });
 
     document.getElementById('rk-m-btn-end-turn')?.addEventListener('click', () => {
-      if (!this._myTurn || !this._canEndTurn()) return;
-      if (!confirm('이대로 제출할까요?')) return;
-      this.sendToHost('endTurn', {});
+      if (!this._myTurn) return;
+      if (this._canEndTurn()) { this._confirmAndEndTurn(); return; }
+      // 아직 조건이 안 맞아 보이지만, 방금 놓은 마지막 타일의 opAck
+      // 응답을 기다리는 중일 수 있다 — 응답이 와서 실제로 제출 가능해
+      // 지면 _updateEndTurnButtonState()가 자동으로 제출해준다.
+      if (this._pendingOps.size > 0) {
+        this._submitQueued = true;
+        this._showToast('⏳ 처리 중이에요 — 완료되면 자동으로 제출돼요');
+      }
     });
 
     document.getElementById('rk-m-new-meld-zone')?.addEventListener('click', () => this._onZoneTap({ zone: 'newMeld' }));
@@ -488,7 +498,30 @@ export class RummikubMobile extends MobileBaseGame {
     const btn = document.getElementById('rk-m-btn-end-turn');
     if (!btn) return;
     const can = this._canEndTurn();
-    btn.disabled = !can;
+    // 네이티브 disabled 속성은 물론 aria-disabled도 걸지 않는다 — 겉보기엔
+    // 비활성처럼 보여도 실제로는 클릭을 받아 "대기 중 예약 제출"
+    // (_submitQueued)로 처리해야 하는데, aria-disabled="true"를 걸면
+    // 스크린리더뿐 아니라 Playwright 같은 접근성 인지 자동화 도구도 이
+    // 버튼을 "클릭 불가"로 판단해 실제로 클릭 자체가 막힌다(직접 겪은
+    // 문제 — disabled 속성은 false인데도 Playwright가 "element is not
+    // enabled"로 타임아웃, 2026-08-24). 시각적 회색 처리는 CSS 클래스만으로
+    // 충분하다.
+    btn.classList.toggle('rk-m-action-btn-disabled', !can);
+    // 클라이언트는 "opAck 응답 후에만 로컬 반영"하는 비관적 방식이라,
+    // 조건을 충족시키는 마지막 조작 직후에는 서버 응답이 돌아올 때까지
+    // 아주 짧은 시간(네트워크 왕복) 동안 버튼이 계속 비활성으로 보인다.
+    // 그 틈에 사용자가 누른 제출 의사를 _submitQueued로 기억해뒀다가,
+    // 조건이 실제로 충족되는 즉시 자동으로 제출해 "두 번 눌러야 하는"
+    // 것처럼 보이던 문제를 없앤다(실사용자 리포트로 발견, 2026-08-24).
+    if (this._submitQueued && can) {
+      this._submitQueued = false;
+      this._confirmAndEndTurn();
+    }
+  }
+
+  _confirmAndEndTurn() {
+    if (!confirm('이대로 제출할까요?')) return;
+    this.sendToHost('endTurn', {});
   }
 
   _startTimerTick() {

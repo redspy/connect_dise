@@ -56,6 +56,21 @@ export class RummikubGame extends HostBaseGame {
     this._countdownTimer = null;
     this._countdownOverlay = null;
     this._wakeLock = null; // 게임 진행 중 보드판(TV/PC) 화면이 꺼지지 않게(사용자 요청)
+    this._wantWakeLock = false; // 현재 잠금을 유지해야 하는 의도(재취득 판단용)
+
+    // Wake Lock API는 문서가 백그라운드로 가는 순간(visibilitychange:
+    // hidden) 브라우저가 잠금을 자동으로 풀어버리고, 다시 보여도 알아서
+    // 재취득해주지 않는다 — 진행 중 화면 전환이 단 한 번이라도 있으면
+    // (알림, 다른 창 포커스, OS 화면 잠금/해제 등) 그 뒤로는 아무 보호도
+    // 없이 원래의 절전 정책을 그대로 따라가 다시 잠들어버린다(사용자가
+    // "여전히 절전모드에 들어가는 것 같다"고 실제로 리포트, 2026-08-24).
+    // 게임이 진행 중이라는 의도(_wantWakeLock)가 살아있는 동안은 화면이
+    // 다시 보일 때마다 재취득을 시도한다.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this._wantWakeLock && !this._wakeLock) {
+        this._requestWakeLock();
+      }
+    });
 
     this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
@@ -295,14 +310,21 @@ export class RummikubGame extends HostBaseGame {
    * 브라우저에서는 조용히 무시(기능 저하일 뿐 에러 아님).
    */
   async _requestWakeLock() {
+    this._wantWakeLock = true;
     try {
-      if ('wakeLock' in navigator) this._wakeLock = await navigator.wakeLock.request('screen');
+      if (!('wakeLock' in navigator)) return;
+      this._wakeLock = await navigator.wakeLock.request('screen');
+      // 브라우저가 자체적으로(다른 앱 포커스, OS 화면 잠금 등) 잠금을
+      // 풀었을 때도 알 수 있도록 — visibilitychange 재취득 로직이 이
+      // 시점을 놓치지 않게 참조를 비워둔다.
+      this._wakeLock.addEventListener('release', () => { this._wakeLock = null; });
     } catch (err) {
       console.warn('[Rummikub] Wake Lock 요청 실패:', err);
     }
   }
 
   _releaseWakeLock() {
+    this._wantWakeLock = false;
     this._wakeLock?.release().catch(() => {});
     this._wakeLock = null;
   }
