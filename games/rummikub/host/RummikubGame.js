@@ -55,6 +55,7 @@ export class RummikubGame extends HostBaseGame {
     this._turnTimer = null;
     this._countdownTimer = null;
     this._countdownOverlay = null;
+    this._wakeLock = null; // 게임 진행 중 보드판(TV/PC) 화면이 꺼지지 않게(사용자 요청)
 
     this._demoSimulator = new DemoSimulator(this);
     this._wireGameMessages();
@@ -165,6 +166,7 @@ export class RummikubGame extends HostBaseGame {
   onReset() {
     this._demoSimulator.stopDemo();
     this._stopCountdown();
+    this._releaseWakeLock();
     clearTimeout(this._turnTimer);
     clearInterval(this._timerTickInterval);
     this._profiles.clear();
@@ -286,7 +288,27 @@ export class RummikubGame extends HostBaseGame {
     if (this._countdownOverlay) { this._countdownOverlay.remove(); this._countdownOverlay = null; }
   }
 
+  /**
+   * 보드판(TV/PC) 화면이 게임 진행 중에 절전모드로 꺼지지 않게 함(사용자
+   * 요청) — 이 화면은 모두가 계속 보고 있어야 하는 공용 화면이라, 자동
+   * 화면 꺼짐이 게임을 완전히 중단시킴. Screen Wake Lock API 미지원
+   * 브라우저에서는 조용히 무시(기능 저하일 뿐 에러 아님).
+   */
+  async _requestWakeLock() {
+    try {
+      if ('wakeLock' in navigator) this._wakeLock = await navigator.wakeLock.request('screen');
+    } catch (err) {
+      console.warn('[Rummikub] Wake Lock 요청 실패:', err);
+    }
+  }
+
+  _releaseWakeLock() {
+    this._wakeLock?.release().catch(() => {});
+    this._wakeLock = null;
+  }
+
   _startGame() {
+    this._requestWakeLock();
     const playerIds = [...this.players.keys()];
     this._tileSetMode = tileSetModeForPlayerCount(playerIds.length);
     const deck = shuffle(createDeck(this._tileSetMode));
@@ -688,6 +710,15 @@ export class RummikubGame extends HostBaseGame {
       initialMeldFlags: this._initialMeldFlags(),
       phase: this.phase,
       result: this._lastResult || null,
+      // 재접속 시 이 배열이 없으면 모바일의 _playersList가 빈 채로 남아,
+      // 결과 화면 재구성이 닉네임 "???"·회색 점으로만 뜨는 반쪽짜리
+      // 상태였다(pre-commit 리뷰로 발견, 2026-08-24). playerListUpdated와
+      // 동일한 형태({id,color,nickname})로 실어 보내되, 그쪽은 현재 접속
+      // 중인 사람만 담는 this.players를 쓰는 반면 여기서는 결과 화면에
+      // 중도 이탈자도 나와야 하므로 _playerMeta(이탈자 포함)에서 만든다.
+      players: [...this._playerMeta.entries()].map(([id, meta]) => (
+        { id, color: meta.color, nickname: meta.nickname }
+      )),
     };
   }
 

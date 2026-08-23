@@ -11,7 +11,7 @@ import { MobileBaseGame } from '../../../platform/client/MobileBaseGame.js';
 import { renderTile } from '../shared/TileRenderer.js';
 import { renderQR } from '../../../platform/client/shared/QRDisplay.js';
 import { flipTween } from '../shared/motion.js';
-import { validateBoard, sumOfMelds } from '../shared/RummikubEngine.js';
+import { validateBoard, sumOfMelds, computeAutoSortIndex } from '../shared/RummikubEngine.js';
 
 const DRAG_THRESHOLD_PX = 10;
 
@@ -50,7 +50,15 @@ export class RummikubMobile extends MobileBaseGame {
   // ─── MobileBaseGame 훅 ────────────────────────────────────────────────────
 
   onJoin() { this.showScreen('setup'); }
-  onRejoin() { if (this._nickname) this._sendProfile(); this.sendToHost('requestState', {}); }
+  onRejoin() {
+    // 세트분할/조커회수 같은 다단계 op 체인이 끊긴 상태로 재연결되면, 늦게
+    // 도착하는 옛 opAck이 방금 stateSync로 새로 받은 workBoard 위에서
+    // 뒤늦게 콜백 체인을 이어갈 수 있다(pre-commit 리뷰로 발견, 낮은
+    // 확률이지만 onReset()에 이미 있는 것과 동일하게 정리, 2026-08-24).
+    this._pendingOps.clear();
+    if (this._nickname) this._sendProfile();
+    this.sendToHost('requestState', {});
+  }
   onAllReady() {}
 
   onReset() {
@@ -172,6 +180,11 @@ export class RummikubMobile extends MobileBaseGame {
     });
 
     this.onMessage('stateSync', (data) => {
+      // _showResult()가 닉네임/색상을 _playersList에서 찾으므로(§11.1과
+      // 동일 패턴), 재접속 시 이 목록이 비어 있으면 결과 화면이 전부
+      // "???"·회색 점으로만 뜨는 반쪽짜리 재구성이 된다(pre-commit 리뷰로
+      // 발견, 2026-08-24) — stateSync에 항상 실려오는 players로 갱신.
+      if (data.players) this._playersList = data.players;
       this._board = data.board || [];
       this._workBoard = this._board;
       this._hand = this._reconcileHandOrder(data.hand || []);
@@ -524,7 +537,7 @@ export class RummikubMobile extends MobileBaseGame {
         if (dragging) {
           const p2 = ev.changedTouches ? ev.changedTouches[0] : ev;
           this._clearGhost();
-          const dest = this._resolveDropTarget(p2.clientX, p2.clientY);
+          const dest = this._resolveDropTarget(p2.clientX, p2.clientY, tileId);
           if (dest) this._sendMoveTile(tileId, source, dest);
         } else {
           this._onTileTap(tileId, source);
@@ -557,16 +570,21 @@ export class RummikubMobile extends MobileBaseGame {
   }
   _clearGhost() { document.querySelectorAll('.rk-tile-ghost').forEach(g => g.remove()); }
 
-  _resolveDropTarget(x, y) {
+  /**
+   * @param {number} x @param {number} y
+   * @param {string} [tileId] 드롭 중인 타일 — 있으면 숫자 순서에 맞는 자리를
+   *   자동 계산해서 넣는다(사용자 요청: 정확한 위치를 겨냥할 필요 없이
+   *   세트 아무 데나 놓아도 알아서 정렬됨). §9.2 computeAutoSortIndex 참고.
+   */
+  _resolveDropTarget(x, y, tileId) {
     this._clearGhost();
     const el = document.elementFromPoint(x, y);
     if (!el) return null;
     const meldEl = el.closest('.rk-m-meld');
     if (meldEl) {
-      const rect = meldEl.getBoundingClientRect();
       const meldId = parseInt(meldEl.dataset.meldId, 10);
       const meld = this._workBoard.find(m => m.meldId === meldId);
-      const idx = (x - rect.left) < rect.width / 2 ? 0 : (meld?.tiles.length ?? 0);
+      const idx = tileId && meld ? computeAutoSortIndex(meld.tiles, tileId) : (meld?.tiles.length ?? 0);
       return { zone: 'meld', meldId, index: idx };
     }
     if (el.closest('#rk-m-new-meld-zone')) return { zone: 'newMeld' };
@@ -576,6 +594,12 @@ export class RummikubMobile extends MobileBaseGame {
 
   _onZoneTap(dest) {
     if (!this._selection || !this._myTurn) return;
+    if (dest.zone === 'meld' && dest.index === undefined) {
+      // 탭-탭 모드로 세트를 목적지로 골랐을 때도 드래그와 동일하게 숫자
+      // 순서 자동 정렬을 적용(사용자 요청) — 세트 아무 데나 탭해도 됨.
+      const meld = this._workBoard.find(m => m.meldId === dest.meldId);
+      if (meld) dest = { ...dest, index: computeAutoSortIndex(meld.tiles, this._selection.tileId) };
+    }
     this._sendMoveTile(this._selection.tileId, this._selection, dest);
     this._selection = null;
     this._renderBoard(); this._renderHand();
@@ -599,10 +623,17 @@ export class RummikubMobile extends MobileBaseGame {
     }
     if (this._selection?.tileId === tileId) { this._selection = null; this._renderBoard(); this._renderHand(); return; }
     if (this._selection) {
-      // 이미 선택된 타일이 있으면 이번 탭한 자리를 목적지로 이동 시도
-      const dest = source.zone === 'meld'
-        ? { zone: 'meld', meldId: source.meldId, index: 9999 }
-        : { zone: 'hand' };
+      // 이미 선택된 타일이 있으면 이번 탭한 자리를 목적지로 이동 시도.
+      // 세트 안의 "타일 하나"를 직접 탭한 경우(빈 배경이 아니라)에도
+      // _onZoneTap과 동일하게 숫자 순서 자동 정렬을 적용한다(사용자 요청)
+      // — 이게 빠져 있으면 세트를 꽉 채운 타일 위를 탭했을 때만 정렬이
+      // 안 먹는 사각지대가 생긴다(실측으로 발견, 2026-08-24).
+      let dest = { zone: 'hand' };
+      if (source.zone === 'meld') {
+        const meld = this._workBoard.find(m => m.meldId === source.meldId);
+        const idx = meld ? computeAutoSortIndex(meld.tiles, this._selection.tileId) : meld?.tiles.length ?? 0;
+        dest = { zone: 'meld', meldId: source.meldId, index: idx };
+      }
       this._sendMoveTile(this._selection.tileId, this._selection, dest);
       this._selection = null;
     } else {

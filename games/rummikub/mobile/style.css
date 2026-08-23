@@ -99,7 +99,14 @@ body.mobile-controller {
 .rk-m-board { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; }
 .rk-m-meld {
   display: flex; background: rgba(0,0,0,0.25); border: 2px solid var(--rk-border); border-radius: 6px;
-  padding: 3px; gap: 2px; transition: border-color .25s, box-shadow .25s;
+  padding: 3px 14px; gap: 2px; transition: border-color .25s, box-shadow .25s;
+  /* 타일이 커지면서 런(연속 숫자) 세트 하나가 화면 폭보다 길어지는 경우가
+     흔해짐 — 세트 자체를 가로 스크롤(패닝) 가능하게 해서 잘리는 부분 없이
+     전부 확인할 수 있게 함(사용자 요청). 타일 자체는 touch-action:none으로
+     커스텀 드래그를 쓰므로, 좌우 padding을 넉넉히 둬서 그 여백을 잡고
+     패닝할 수 있게 함. */
+  max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 .rk-m-meld-locked { opacity: .45; filter: grayscale(.6); pointer-events: none; }
 .rk-meld-flash { border-color: var(--rk-accent); box-shadow: 0 0 10px rgba(34,197,94,.6); }
@@ -119,11 +126,11 @@ body.mobile-controller {
   border-radius: 4px; background: linear-gradient(160deg, #fdf6e3, #f3e6c4);
   display: flex; align-items: center; justify-content: center; font-weight: 900;
   font-family: 'Georgia', serif; box-shadow: 0 2px 4px rgba(0,0,0,.4), inset 0 0 0 1px rgba(0,0,0,.08);
-  user-select: none; touch-action: none; cursor: grab;
+  user-select: none; touch-action: none; cursor: grab; flex-shrink: 0;
 }
-.rk-tile-sm { width: 26px; height: 36px; font-size: .82rem; }
-.rk-tile-md { width: 30px; height: 42px; font-size: .95rem; }
-.rk-tile-lg { width: 36px; height: 50px; font-size: 1.1rem; }
+.rk-tile-sm { width: 40px; height: 55px; font-size: 1.2rem; }
+.rk-tile-md { width: 46px; height: 63px; font-size: 1.35rem; }
+.rk-tile-lg { width: 52px; height: 72px; font-size: 1.5rem; }
 .rk-tile-joker { font-size: 1.1em; }
 .rk-tile-selected { outline: 3px solid var(--rk-accent); outline-offset: -3px; transform: translateY(-4px); }
 /* 이번 턴에 손패에서 보드로 새로 놓은 내 타일 강조 (사용자 요청) */
@@ -170,5 +177,5 @@ body.mobile-controller {
 .rk-result-tiles { color: var(--rk-sub); font-size: .74rem; }
 
 @media (max-width: 360px) {
-  .rk-tile-lg { width: 30px; height: 42px; font-size: .95rem; }
+  .rk-tile-lg { width: 44px; height: 61px; font-size: 1.3rem; }
 }

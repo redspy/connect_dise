@@ -184,3 +184,38 @@ export function isValidJokerReplacement(jokerValue, replacementTileId) {
   if (jokerValue.color !== null) return repl.color === jokerValue.color;
   return (jokerValue.candidates || []).includes(repl.color);
 }
+
+/**
+ * 세트에 새 타일을 놓을 때 숫자 순서를 자동으로 맞춰 넣을 삽입 인덱스를
+ * 계산한다(사용자 요청 — 드래그로 정확한 위치를 겨냥할 필요 없이 세트
+ * 아무 데나 놓으면 알아서 오름차순 자리로 들어감).
+ *
+ * 그룹(같은 숫자, 다른 색)은 배열 순서가 유효성 판정과 무관하므로(§3.1)
+ * 정렬할 필요가 없어 항상 끝에 추가한다. 런은 배열 위치로 값이 확정되므로
+ * (§3.2~3.3) 실물 타일들 사이에서 숫자 크기에 맞는 자리를 찾는다. 조커는
+ * 그 자체로 확정된 숫자가 없으므로 정렬 비교에서 제외(원래 있던 자리를
+ * 건드리지 않고 지나침)하고 실물 타일만 기준으로 삼는다 — 완벽한 자동
+ * 배치는 아니지만(조커가 껴 있는 복잡한 gap은 사용자가 수동 조정), 가장
+ * 흔한 "숫자 타일을 순서에 맞게 놓는" 경우는 그대로 해결된다.
+ *
+ * @param {string[]} meldTiles 대상 세트의 현재 타일 배열
+ * @param {string} newTileId 새로 넣을 타일 ID
+ * @returns {number} 삽입할 인덱스
+ */
+export function computeAutoSortIndex(meldTiles, newTileId) {
+  const t = parseTileId(newTileId);
+  if (t.isJoker) return meldTiles.length;
+
+  const reals = meldTiles.map((id, i) => ({ ...parseTileId(id), i })).filter(x => !x.isJoker);
+  // 그룹으로 보이면(실물 2장 이상이 전부 같은 숫자) 순서 무관 — 끝에 추가.
+  // 실물이 1장 이하면 "같은 숫자"가 트리비얼하게 항상 참이 돼(원소가
+  // 하나뿐인 배열은 자기 자신과 항상 같음) 그룹으로 오판, 정렬을 건너뛰고
+  // 늘 끝에 붙이는 버그가 있었다(실측 확인 — 첫 타일 11 위에 9를 놓아도
+  // [11,9]로 안 바뀜, 2026-08-24). reals.length > 1일 때만 그룹으로 간주.
+  if (reals.length > 1 && reals.every(r => r.num === reals[0].num)) return meldTiles.length;
+
+  for (const r of reals) {
+    if (t.num < r.num) return r.i;
+  }
+  return meldTiles.length;
+}
