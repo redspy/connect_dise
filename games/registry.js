@@ -231,4 +231,15 @@ export const GAMES = [
     thumbnail: '🀄',
     group: 'multi',
   },
+  {
+    id: 'davinci-code',
+    name: '다빈치 코드',
+    description: '상대의 뒷면 타일 숫자를 추리하라! 틀리면 내 타일이 공개되는 원작 그대로의 추리 게임 🀫',
+    hostPath: '/games/davinci-code/host/',
+    mobilePath: '/games/davinci-code/mobile/',
+    minPlayers: 2,
+    maxPlayers: 4,
+    thumbnail: '🀫',
+    group: 'multi',
+  },
 ];

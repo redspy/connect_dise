@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>다빈치 코드</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="mobile-controller">
+  <div class="orientation-guard">
+    <div class="orientation-guard-icon">🔄</div>
+    <div class="orientation-guard-title">기기를 세로로 돌려주세요</div>
+    <div class="orientation-guard-desc">이 게임은 세로 모드에서만 플레이가 가능합니다.</div>
+  </div>
+
+  <!-- 설정 화면 -->
+  <div class="dv-screen" data-screen="setup">
+    <div class="dv-setup-panel">
+      <div class="dv-mobile-logo">🀫 <span class="dv-logo-accent">다빈치 코드</span></div>
+      <p class="dv-setup-hint">닉네임을 입력하고 참여하세요</p>
+      <input class="dv-input" id="nickname-input" type="text" maxlength="8" placeholder="닉네임 (최대 8자)" autocomplete="off">
+      <button class="dv-btn dv-btn-primary" id="btn-join">참여하기</button>
+    </div>
+  </div>
+
+  <!-- 대기 화면 -->
+  <div class="dv-screen hidden" data-screen="waiting">
+    <div class="dv-waiting-panel">
+      <div class="dv-mobile-logo">🀫</div>
+      <div class="dv-waiting-nick" id="waiting-nickname">-</div>
+      <div class="dv-room-qr-box hidden" id="room-qr-box">
+        <div id="room-qr-canvas"></div>
+        <p class="dv-room-qr-hint">다른 플레이어에게 이 QR을 보여주세요</p>
+      </div>
+      <p class="dv-waiting-hint" id="waiting-hint">호스트가 게임을 시작할 때까지 대기하세요</p>
+      <div class="dv-waiting-players" id="waiting-players"></div>
+      <button class="dv-btn dv-btn-primary" id="btn-ready">준비하기</button>
+      <button class="dv-btn dv-btn-primary hidden" id="btn-room-start">🚀 게임 시작</button>
+    </div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div class="dv-screen hidden" data-screen="game">
+    <div class="dv-m-header">
+      <span class="dv-m-turn-banner" id="dv-m-turn-banner">-</span>
+      <span class="dv-m-timer-label" id="dv-m-timer-label">-</span>
+      <span class="dv-m-pool">⬛<span id="dv-m-pool-black">0</span> ⬜<span id="dv-m-pool-white">0</span></span>
+    </div>
+
+    <!-- 세팅: 색 구성 선택 -->
+    <div class="dv-m-setup-pick hidden" id="dv-m-setup-pick">
+      <p class="dv-m-setup-title">시작 타일 구성을 골라주세요</p>
+      <div class="dv-m-stepper">
+        <button class="dv-m-stepper-btn" id="dv-m-black-minus">−</button>
+        <div class="dv-m-stepper-readout">⬛ <span id="dv-m-black-count">0</span>장</div>
+        <button class="dv-m-stepper-btn" id="dv-m-black-plus">＋</button>
+      </div>
+      <div class="dv-m-white-readout">⬜ <span id="dv-m-white-count">0</span>장</div>
+      <button class="dv-btn dv-btn-primary" id="dv-m-btn-confirm-pick">확정</button>
+    </div>
+    <div class="dv-m-setup-wait hidden" id="dv-m-setup-wait">⏳ <span id="dv-m-setup-wait-name">???</span>님이 타일을 고르는 중...</div>
+
+    <!-- 상대 타일판 (내 차례일 때만) -->
+    <div class="dv-m-opponents-wrap hidden" id="dv-m-opponents-wrap">
+      <div class="dv-m-opp-seat dv-m-opp-top hidden" id="dv-m-opp-top"><div class="dv-m-opp-label" id="dv-m-opp-top-label"></div><div class="dv-m-opp-board" id="dv-m-opp-top-board"></div></div>
+      <div class="dv-m-opp-row">
+        <div class="dv-m-opp-seat dv-m-opp-left hidden" id="dv-m-opp-left"><div class="dv-m-opp-label" id="dv-m-opp-left-label"></div><div class="dv-m-opp-board" id="dv-m-opp-left-board"></div></div>
+        <div class="dv-m-opp-seat dv-m-opp-right hidden" id="dv-m-opp-right"><div class="dv-m-opp-label" id="dv-m-opp-right-label"></div><div class="dv-m-opp-board" id="dv-m-opp-right-board"></div></div>
+      </div>
+    </div>
+    <div class="dv-m-not-my-turn hidden" id="dv-m-not-my-turn">
+      🀫 상대 타일판은 내 차례가 되면 여기에 표시돼요<br>지금은 TV 화면에서 전황을 확인하세요
+    </div>
+
+    <!-- 숫자 패드 오버레이 -->
+    <div class="dv-m-numpad-overlay hidden" id="dv-m-numpad-overlay">
+      <div class="dv-m-numpad-title" id="dv-m-numpad-title">숫자를 선택하세요</div>
+      <div class="dv-m-numpad" id="dv-m-numpad"></div>
+      <div class="dv-m-numpad-confirm hidden" id="dv-m-numpad-confirm">
+        <span id="dv-m-numpad-confirm-text"></span>
+        <div class="dv-m-numpad-confirm-btns">
+          <button class="dv-m-action-btn" id="dv-m-btn-numpad-cancel">취소</button>
+          <button class="dv-m-action-btn dv-m-action-btn-primary" id="dv-m-btn-declare">선언!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- choose 페이즈 -->
+    <div class="dv-m-choose-bar hidden" id="dv-m-choose-bar">
+      <button class="dv-m-action-btn" id="dv-m-btn-stop">✋ 멈추기</button>
+      <button class="dv-m-action-btn dv-m-action-btn-primary" id="dv-m-btn-continue">🔥 한 번 더</button>
+    </div>
+
+    <!-- draw 페이즈 -->
+    <div class="dv-m-draw-bar hidden" id="dv-m-draw-bar">
+      <button class="dv-m-action-btn dv-m-draw-btn-black" id="dv-m-btn-draw-black">⬛ 흑 뽑기 (<span id="dv-m-draw-black-count">0</span>)</button>
+      <button class="dv-m-action-btn dv-m-draw-btn-white" id="dv-m-btn-draw-white">⬜ 백 뽑기 (<span id="dv-m-draw-white-count">0</span>)</button>
+    </div>
+
+    <!-- revealOwn / tiebreak / jokerPlace 안내 -->
+    <div class="dv-m-hint-bar hidden" id="dv-m-revealown-hint">💥 틀렸어요! 더미가 비어서 내 타일 중 하나를 직접 공개해야 해요 — 아래 내 타일판에서 골라주세요</div>
+    <div class="dv-m-hint-bar hidden" id="dv-m-jokerplace-hint">★ 조커를 놓을 위치를 아래 내 타일판에서 골라주세요</div>
+    <div class="dv-m-tiebreak-bar hidden" id="dv-m-tiebreak-bar">
+      <span class="dv-m-tiebreak-label">같은 숫자가 있어요 — 어디에 놓을까요?</span>
+      <div class="dv-m-tiebreak-btns">
+        <button class="dv-m-action-btn" id="dv-m-btn-tiebreak-left">⬅ 왼쪽</button>
+        <button class="dv-m-action-btn" id="dv-m-btn-tiebreak-right">오른쪽 ➡</button>
+      </div>
+    </div>
+
+    <!-- 내 타일판 (하단 고정, 항상 표시) -->
+    <div class="dv-m-hand-wrap">
+      <div class="dv-m-drawn-slot hidden" id="dv-m-drawn-slot"></div>
+      <div class="dv-m-hand" id="dv-m-hand"></div>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="dv-screen hidden" data-screen="result">
+    <div class="dv-result-panel">
+      <div class="dv-result-title" id="result-title">🏆 결과</div>
+      <div class="dv-result-my-rank" id="result-my-rank">-</div>
+      <div class="dv-result-list" id="result-ranking-list"></div>
+      <button class="dv-btn dv-btn-primary" id="btn-rematch">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

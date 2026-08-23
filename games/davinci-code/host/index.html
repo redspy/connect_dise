@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다빈치 코드 — Host</title>
+  <link rel="stylesheet" href="/src/style.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body class="host-board dv-host">
+
+  <!-- ══════════════════════════════════════════
+       로비 (data-phase="lobby")
+  ══════════════════════════════════════════ -->
+  <div class="dv-overlay" data-phase="lobby">
+    <game-lobby title="다빈치 코드 🀫" min-players="2">
+      <div class="dv-lobby-desc-title">게임 방법</div>
+      <ul class="dv-lobby-desc-list">
+        <li>내 타일은 나만 보고, 숫자 오름차순으로 자동 정렬돼요</li>
+        <li>내 차례에 상대 뒷면 타일 하나를 골라 숫자를 추측하세요</li>
+        <li>맞히면 계속 추측할 수 있고, 틀리면 이번 턴에 뽑은 타일이 공개돼요</li>
+        <li>모든 타일이 공개된 상대부터 탈락 — 마지막까지 살아남으면 승리!</li>
+      </ul>
+      <div class="dv-option-row">
+        <span class="dv-option-label">추측 제한시간:</span>
+        <div class="dv-option-choices">
+          <label><input type="radio" name="dv-timer" value="30"> 30초</label>
+          <label><input type="radio" name="dv-timer" value="60" checked> 60초</label>
+          <label><input type="radio" name="dv-timer" value="120"> 120초</label>
+          <label><input type="radio" name="dv-timer" value="inf"> 무제한</label>
+        </div>
+      </div>
+      <div class="dv-option-row">
+        <span class="dv-option-label">동점 타일 배치:</span>
+        <div class="dv-option-choices">
+          <label><input type="radio" name="dv-tierule" value="official" checked> 공식(흑이 왼쪽)</label>
+          <label><input type="radio" name="dv-tierule" value="free"> 자유 배치</label>
+        </div>
+        <p class="dv-option-hint">자유 배치는 원작 하우스룰이에요. 원작 그대로 하려면 공식을 선택하세요.</p>
+      </div>
+      <div class="dv-option-row">
+        <span class="dv-option-label">조커 포함:</span>
+        <div class="dv-option-choices">
+          <label><input type="checkbox" name="dv-jokers"> 흑/백 조커 각 1장 추가(26장, 공식 발매판)</label>
+        </div>
+      </div>
+      <button id="demoPlayBtn" class="primary-btn demo-btn dv-demo-btn">🤖 데모 플레이 실행</button>
+    </game-lobby>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       게임 중 (data-phase="playing")
+  ══════════════════════════════════════════ -->
+  <div class="dv-overlay hidden" data-phase="playing">
+    <div class="dv-playing-header">
+      <div class="dv-turn-info">
+        <div class="dv-timer-ring" id="dv-timer-ring"><span id="dv-timer-label">60</span></div>
+        <span class="dv-turn-player-dot" id="dv-turn-player-dot"></span>
+        <span class="dv-turn-player-name" id="dv-turn-player-name">-</span>
+        <span class="dv-turn-hint" id="dv-setup-banner">님의 차례</span>
+      </div>
+      <div class="dv-pool-badges">
+        <span class="dv-pool-badge dv-pool-badge-black">⬛ <span id="dv-pool-black-count">0</span></span>
+        <span class="dv-pool-badge dv-pool-badge-white">⬜ <span id="dv-pool-white-count">0</span></span>
+      </div>
+      <button class="dv-btn dv-btn-danger-sm" id="btn-restart-game">리셋</button>
+    </div>
+
+    <div class="dv-players-panel" id="dv-players-panel"></div>
+
+    <div class="dv-guess-stage hidden" id="dv-guess-stage"></div>
+    <div class="dv-vignette" id="dv-vignette"></div>
+
+    <div class="dv-table" id="dv-table"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       결과 (data-phase="result")
+  ══════════════════════════════════════════ -->
+  <div class="dv-overlay hidden" data-phase="result">
+    <div class="dv-result-panel">
+      <div class="dv-result-title" id="dv-result-title">🏆 결과</div>
+      <div class="dv-result-list" id="dv-result-list"></div>
+      <button class="dv-btn dv-btn-primary" id="btn-restart-result">다시하기</button>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

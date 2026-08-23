@@ -113,6 +113,8 @@ export default defineConfig({
         pitTradeMobile: resolve(__dirname, 'games/pit-trade/mobile/index.html'),
         rummikubHost:   resolve(__dirname, 'games/rummikub/host/index.html'),
         rummikubMobile: resolve(__dirname, 'games/rummikub/mobile/index.html'),
+        davinciCodeHost:   resolve(__dirname, 'games/davinci-code/host/index.html'),
+        davinciCodeMobile: resolve(__dirname, 'games/davinci-code/mobile/index.html'),
       },
     },
   },
