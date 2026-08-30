@@ -24,6 +24,11 @@ export class SessionManager {
   }
 
   createSession(hostSocketId, gameId) {
+    // 이 소켓이 이미 다른(혹은 같은) 세션에 host/player로 묶여 있으면 거부 —
+    // 안 그러면 매핑이 새 세션으로 덮어써지면서 기존 세션이 정리되지 않는
+    // 유령 세션으로 영구히 남는다(그 세션의 플레이어들은 호스트가 사라진 줄 모름).
+    if (this.socketToSession.has(hostSocketId)) return null;
+
     const sessionId = generateId().slice(0, 6);
     const localIp = getLocalIp();
     this.sessions.set(sessionId, {
@@ -46,6 +51,10 @@ export class SessionManager {
   joinSession(sessionId, socketId, reconnectId = null) {
     const session = this.sessions.get(sessionId);
     if (!session) return null;
+
+    // 이 소켓이 이미 어떤 세션에든 host/player로 묶여 있으면 거부(위 createSession과 동일 이유).
+    // 진짜 재연결은 항상 새 Socket.IO 연결(=새 socketId)로 들어오므로 이 체크에 걸리지 않는다.
+    if (this.socketToSession.has(socketId)) return null;
 
     // ── 재연결 시도 ───────────────────────────────────────────────
     // stable player ID를 안다고 해서 무조건 그 자리를 가로챌 수 있으면 안 됨 —
@@ -121,10 +130,11 @@ export class SessionManager {
     session.players.splice(idx, 1);
     session.readyPlayers.delete(playerId);
 
+    const { readyCount, totalCount } = this.getReadyStatus(session);
     return {
       player,
-      readyCount: session.readyPlayers.size,
-      totalCount: session.players.length,
+      readyCount,
+      totalCount,
       hostSocketId: session.hostSocketId,
     };
   }
@@ -134,17 +144,39 @@ export class SessionManager {
     const session = this.sessions.get(sessionId);
     if (!info || !session) return null;
 
-    session.readyPlayers.add(info.playerId); // stable ID로 저장
-    const readyCount = session.readyPlayers.size;
-    const totalCount = session.players.length;
+    session.readyPlayers.add(info.playerId); // stable ID로 저장(재연결 시에도 준비 상태 유지)
+    const { readyCount, totalCount } = this.getReadyStatus(session);
     const allReady = readyCount >= totalCount && totalCount > 0;
     return { readyCount, totalCount, allReady };
+  }
+
+  /**
+   * 연결이 끊긴(grace period 중인) 플레이어는 분모·분자 양쪽에서 제외하고
+   * ready 집계를 계산한다 — disconnect 중에도 readyPlayers Set 자체는 보존하므로
+   * (재연결 시 다시 준비 눌러야 하는 불편 방지) 집계 시점에만 필터링한다.
+   * @param {{players: Array<{id:string, connected?:boolean}>, readyPlayers: Set<string>}} session
+   */
+  getReadyStatus(session) {
+    const connectedPlayers = session.players.filter(p => p.connected !== false);
+    const totalCount = connectedPlayers.length;
+    const readyCount = connectedPlayers.filter(p => session.readyPlayers.has(p.id)).length;
+    return { readyCount, totalCount };
   }
 
   resetSession(sessionId) {
     const session = this.sessions.get(sessionId);
     if (!session) return;
     session.readyPlayers = new Set();
+  }
+
+  /**
+   * 외부(서버)가 소켓 생존 프로브 등으로 "이 플레이어의 기존 연결은 이미 죽었다"고
+   * 판정했을 때, 재연결(joinSession의 reconnectId 분기)이 허용되도록 강제 전환한다.
+   */
+  markDisconnected(sessionId, playerId) {
+    const session = this.sessions.get(sessionId);
+    const player = session?.players.find(p => p.id === playerId);
+    if (player) player.connected = false;
   }
 
   /** stable playerId → 현재 socketId 조회 (직접 메시지 전송용) */

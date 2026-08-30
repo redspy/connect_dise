@@ -144,9 +144,6 @@ export class MobileBaseGame {
   /** 호스트에서 오는 특정 타입 메시지 핸들러 등록. 체이닝 가능. */
   onMessage(type, callback) { this.sdk.onMessage(type, callback); return this; }
 
-  /** 진동 */
-  vibrate(pattern) { this.sdk.vibrate(pattern); }
-
   /** 센서 권한 요청 */
   requestSensors() { return this.sdk.requestSensors(); }
 

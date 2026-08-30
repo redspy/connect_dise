@@ -121,32 +121,55 @@ export class LobbyPanel extends HTMLElement {
       const profile = profilesMap?.get(id) ?? null;
       const avatarUrl = profile?.avatarUrl ?? null;
       const avatarEmoji = profile?.avatarEmoji ?? null;
-      const initial = (profile?.nickname ?? '?').charAt(0).toUpperCase();
+      const nickname = profile?.nickname ?? null;
+      const initial = (nickname ?? '?').charAt(0).toUpperCase();
+
       const card = document.createElement('div');
       card.className = 'lobby-player-card';
       card.dataset.playerId = id;
-      card.innerHTML = `
-        <div class="lp-avatar-wrap">
-          <div class="lp-avatar" style="border-color:${player.color}">
-            ${avatarEmoji
-              ? `<span class="lp-emoji">${avatarEmoji}</span>`
-              : avatarUrl
-              ? `<img src="${avatarUrl}" alt="">`
-              : `<span class="lp-initial" style="color:${player.color}">${initial}</span>`
-            }
-          </div>
-          <button class="lp-kick-btn" data-player-id="${id}" title="강퇴">✕</button>
-        </div>
-        <div class="lp-name">${profile?.nickname ?? '대기 중...'}</div>
-      `;
-      grid.appendChild(card);
 
-      // 강퇴 버튼 클릭 이벤트
-      const kickBtn = card.querySelector('.lp-kick-btn');
+      const avatarWrap = document.createElement('div');
+      avatarWrap.className = 'lp-avatar-wrap';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'lp-avatar';
+      avatar.style.borderColor = player.color; // player.color는 서버가 고정 팔레트에서 부여 — 신뢰 가능
+      if (avatarEmoji) {
+        const emojiEl = document.createElement('span');
+        emojiEl.className = 'lp-emoji';
+        emojiEl.textContent = avatarEmoji; // 사용자 입력 — textContent로만 삽입(마크업 해석 안 됨)
+        avatar.appendChild(emojiEl);
+      } else if (avatarUrl) {
+        const img = document.createElement('img');
+        img.alt = '';
+        img.src = avatarUrl; // DOM 프로퍼티 대입 — innerHTML 문자열 조합이 아니라 태그 주입 자체가 불가능
+        avatar.appendChild(img);
+      } else {
+        const initialEl = document.createElement('span');
+        initialEl.className = 'lp-initial';
+        initialEl.style.color = player.color;
+        initialEl.textContent = initial; // 사용자 입력(닉네임 첫 글자) — textContent로만 삽입
+        avatar.appendChild(initialEl);
+      }
+      avatarWrap.appendChild(avatar);
+
+      const kickBtn = document.createElement('button');
+      kickBtn.className = 'lp-kick-btn';
+      kickBtn.dataset.playerId = id;
+      kickBtn.title = '강퇴';
+      kickBtn.textContent = '✕';
       kickBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this._onKickFn) this._onKickFn(id);
       });
+      avatarWrap.appendChild(kickBtn);
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'lp-name';
+      nameEl.textContent = nickname ?? '대기 중...'; // 사용자 입력(닉네임) — textContent로만 삽입
+
+      card.append(avatarWrap, nameEl);
+      grid.appendChild(card);
     }
   }
 

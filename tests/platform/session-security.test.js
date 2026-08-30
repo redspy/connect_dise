@@ -13,6 +13,21 @@ let serverProc;
 function connect() {
   return new Promise((resolve, reject) => {
     const sock = ioClient(BASE_URL, { transports: ['websocket'], reconnection: false });
+    // 실제 MobileSDK는 재연결 하이재킹 방지용 생존 확인 핑에 즉시 ack한다 —
+    // 이 헬퍼도 진짜 클라이언트처럼 동작하도록 동일하게 흉내낸다. 이게 없으면
+    // "연결이 살아있는데도 확인 핑에 응답이 없어 죽은 것으로 오판"되어
+    // 하이재킹 방지 테스트가 거꾸로 실패한다.
+    sock.on('platform:_livenessPing', (ack) => { if (typeof ack === 'function') ack(); });
+    sock.on('connect', () => resolve(sock));
+    sock.on('connect_error', reject);
+  });
+}
+
+// 생존 확인 핑에 절대 응답하지 않는 "좀비" 연결을 흉내낸다(실제로는 살아있지만
+// 서버 입장에서는 응답 없음 = 죽은 것으로 판정되는 케이스 재현용).
+function connectSilent() {
+  return new Promise((resolve, reject) => {
+    const sock = ioClient(BASE_URL, { transports: ['websocket'], reconnection: false });
     sock.on('connect', () => resolve(sock));
     sock.on('connect_error', reject);
   });
@@ -212,11 +227,16 @@ test('정상 재연결: 실제로 연결이 끊긴 플레이어는 유예 시간
   player.emit('platform:joinSession', { sessionId });
   const { payload: joined } = await once(player, 'platform:joined');
   const stableId = joined.player.id;
+  player.emit('platform:playerReady', { sessionId });
+  await once(host, 'platform:readyUpdate'); // 1/1 준비완료
 
+  const disconnectReadyUpdate = once(host, 'platform:readyUpdate');
   player.close(); // 실제로 연결 끊김
+  assert.equal((await disconnectReadyUpdate).payload.totalCount, 0, 'disconnect 시 0/0으로 즉시 재집계되어야 함');
   await new Promise((r) => setTimeout(r, 300)); // 서버가 disconnect 이벤트를 처리할 시간
 
   const reconnecting = await connect();
+  const rejoinReadyUpdate = once(host, 'platform:readyUpdate');
   reconnecting.emit('platform:joinSession', { sessionId, reconnectId: stableId });
   const result = await once(reconnecting, 'platform:joined', 2000);
 
@@ -224,5 +244,121 @@ test('정상 재연결: 실제로 연결이 끊긴 플레이어는 유예 시간
   assert.equal(result.payload.reconnected, true);
   assert.equal(result.payload.player.id, stableId);
 
+  // 회귀 포인트: 재연결로 다시 집계에 포함돼야 하는데 disconnect 때 보낸
+  // readyUpdate가 stale한 채로 남아있으면 호스트 화면 카운트가 안 돌아옴
+  const rejoinReady = await rejoinReadyUpdate;
+  assert.equal(rejoinReady.timedOut, false, '재연결 시에도 readyUpdate가 다시 전송되어야 함');
+  assert.equal(rejoinReady.payload.totalCount, 1, '재연결 후 다시 1/1로 집계되어야 함');
+  assert.equal(rejoinReady.payload.readyCount, 1, '재연결 전 준비완료 상태가 유지되어 즉시 1/1이어야 함');
+
   host.close(); reconnecting.close();
+});
+
+test('이미 세션에 묶인 소켓은 새 세션을 만들거나 다른 세션에 참가할 수 없다 (중복 획득 방지)', async () => {
+  const host = await connect();
+  host.emit('platform:createSession', { gameId: 'test' });
+  await once(host, 'platform:sessionCreated');
+
+  // 이미 host로 묶인 같은 소켓이 또 createSession을 시도 — 유령 세션 생성 방지
+  const secondCreatePromise = once(host, 'platform:sessionCreated', 800);
+  host.emit('platform:createSession', { gameId: 'test' });
+  assert.equal((await secondCreatePromise).timedOut, true, '이미 세션에 묶인 소켓은 새 세션을 또 만들 수 없어야 함');
+
+  const otherHost = await connect();
+  otherHost.emit('platform:createSession', { gameId: 'test' });
+  const { payload: otherCreated } = await once(otherHost, 'platform:sessionCreated');
+
+  // 이미 참가된 플레이어 소켓이 다른 세션에 또 참가 시도
+  const player = await connect();
+  player.emit('platform:joinSession', { sessionId: otherCreated.sessionId });
+  await once(player, 'platform:joined');
+
+  player.emit('platform:joinSession', { sessionId: otherCreated.sessionId });
+  const dupJoin = await once(player, 'platform:joined', 800);
+  assert.equal(dupJoin.timedOut, true, '이미 세션에 묶인 소켓은 (같은 세션이든 다른 세션이든) 다시 join할 수 없어야 함');
+
+  host.close(); otherHost.close(); player.close();
+});
+
+test('강퇴된 소켓은 Socket.IO room에서도 제거되어 이후 세션 브로드캐스트를 받지 않는다', async () => {
+  const host = await connect();
+  host.emit('platform:createSession', { gameId: 'test' });
+  const { payload: created } = await once(host, 'platform:sessionCreated');
+  const sessionId = created.sessionId;
+
+  const player = await connect();
+  player.emit('platform:joinSession', { sessionId });
+  const { payload: joined } = await once(player, 'platform:joined');
+
+  const kickedPromise = once(player, 'platform:kicked');
+  host.emit('platform:kickPlayer', { sessionId, playerId: joined.player.id });
+  assert.equal((await kickedPromise).timedOut, false, '강퇴 알림 자체는 받아야 함');
+
+  // 강퇴 후 room 브로드캐스트(platform:reset)가 더 이상 도달하지 않아야 함
+  const resetAfterKick = once(player, 'platform:reset', 800);
+  host.emit('platform:reset', { sessionId });
+  assert.equal((await resetAfterKick).timedOut, true, '강퇴된 소켓은 세션 room에서 완전히 빠져야 하므로 이후 브로드캐스트를 받으면 안 됨');
+
+  host.close(); player.close();
+});
+
+test('연결이 끊긴 플레이어는 준비완료 집계(allReady)에서 제외된다', async () => {
+  const host = await connect();
+  host.emit('platform:createSession', { gameId: 'test' });
+  const { payload: created } = await once(host, 'platform:sessionCreated');
+  const sessionId = created.sessionId;
+
+  const p1 = await connect();
+  p1.emit('platform:joinSession', { sessionId });
+  await once(p1, 'platform:joined');
+  p1.emit('platform:playerReady', { sessionId });
+  await once(host, 'platform:readyUpdate'); // p1 준비완료 (1/1)
+
+  p1.close(); // p1 연결 끊김 (아직 grace period 중, readyPlayers엔 남아있음)
+  const disconnectReadyUpdate = await once(host, 'platform:readyUpdate', 1000);
+  assert.equal(disconnectReadyUpdate.timedOut, false, 'disconnect 시 readyUpdate가 즉시 재전송되어야 함');
+  assert.equal(disconnectReadyUpdate.payload.totalCount, 0, '연결 끊긴 플레이어는 totalCount에서 제외되어야 함');
+
+  const p2 = await connect();
+  p2.emit('platform:joinSession', { sessionId });
+  await once(p2, 'platform:joined');
+  const allReadyPromise = once(host, 'platform:allReady', 800);
+  p2.emit('platform:playerReady', { sessionId });
+  const readyUpdate2 = await once(host, 'platform:readyUpdate');
+
+  assert.equal(readyUpdate2.payload.totalCount, 1, 'p1은 여전히 연결 끊김 상태라 집계에서 빠져야 함');
+  assert.equal(readyUpdate2.payload.readyCount, 1, 'p2만 카운트되어야 함');
+  assert.equal((await allReadyPromise).timedOut, false, 'p1(연결끊김) 없이 p2만으로도 allReady가 발동해야 함');
+
+  host.close(); p2.close();
+});
+
+test('생존 프로브 실패(응답 없는 좀비 연결) 시 구 소켓을 실제로 끊어 방치하지 않는다', async () => {
+  const host = await connect();
+  host.emit('platform:createSession', { gameId: 'test' });
+  const { payload: created } = await once(host, 'platform:sessionCreated');
+  const sessionId = created.sessionId;
+
+  // 생존 확인 핑에 응답하지 않는 "좀비" 연결(실제로는 살아있지만 서버 입장에선
+  // 응답이 없어 죽은 것으로 판정됨)
+  const zombie = await connectSilent();
+  zombie.emit('platform:joinSession', { sessionId });
+  const { payload: joined } = await once(zombie, 'platform:joined');
+  const stableId = joined.player.id;
+
+  const zombieDisconnectPromise = once(zombie, 'disconnect', 3000);
+
+  const reconnecting = await connect();
+  reconnecting.emit('platform:joinSession', { sessionId, reconnectId: stableId });
+  const result = await once(reconnecting, 'platform:joined', 3000);
+
+  assert.equal(result.timedOut, false, '좀비로 판정된 연결의 자리는 재연결이 허용되어야 함');
+  assert.equal(result.payload.reconnected, true);
+
+  // 핵심 회귀 포인트: 매핑만 지우고 방치하면 좀비 소켓은 "연결된 것처럼 보이지만
+  // 모든 메시지가 조용히 무시되는" 상태가 된다 — 실제로 disconnect 이벤트를
+  // 받아야 그 클라이언트도 스스로 재연결을 시도할 수 있다.
+  assert.equal((await zombieDisconnectPromise).timedOut, false, '좀비로 판정된 구 소켓은 실제로 disconnect되어야 함');
+
+  host.close(); zombie.close(); reconnecting.close();
 });

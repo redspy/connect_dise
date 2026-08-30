@@ -107,7 +107,7 @@ host.broadcast('battleStart', { players: [...] });
 
 | 메서드 | 반환 타입 | 설명 |
 |--------|----------|------|
-| `getPlayers()` | `Player[]` | 현재 접속 중인 플레이어 배열 (Map values 복사) |
+| `getPlayers()` | `Player[]` | 플레이어 배열 (Map values 복사). **grace period(연결 일시 끊김) 중인 플레이어도 포함** — "현재 소켓이 열려 있는 플레이어"가 아니라 "세션에서 아직 제거되지 않은 플레이어" 전체임 |
 | `getSessionId()` | `string` | 현재 세션 ID |
 | `getQRUrl()` | `string` | QR 코드로 표시할 URL |
 | `resetSession()` | `void` | 세션 리셋 (`platform:reset` emit) |
@@ -234,11 +234,13 @@ await mobile.showQRScanner();
 // BarcodeDetector 미지원 브라우저에서는 수동 URL 입력 폴백
 ```
 
-### QR 스캔 버튼 자동 관리
+### 재연결 UI 자동 관리
 
-MobileSDK는 연결 상태에 따라 QR 스캔 버튼을 자동으로 표시/숨김합니다:
-- 연결 전 / `disconnect` / `hostDisconnected` → 버튼 표시 (화면 우상단 고정)
-- `platform:joined` 수신 → 버튼 숨김
+MobileSDK는 연결 상태에 따라 전체화면 오버레이(`#_sdk-reconnect-ui`)를 자동으로 표시/숨김합니다(우상단 고정 버튼이 아님 — 문서 구버전 설명 정정):
+
+- 이미 세션에 입장한 적이 있는 상태(`_sessionId`·`_player` 보유)에서 연결이 끊기면 **가벼운 "연결 복구 중..." 스피너 모달**(`_showPassiveReconnectUI`)을 표시 — Socket.IO가 자동 재연결을 시도하는 동안의 대기 화면
+- 애초에 `?session=`이 없거나 세션 정보 자체가 없는 상태면 **"방에 연결하기" 전체 모달**(`_showFullReconnectUI`, QR 스캔·방 코드 직접 입력·`onCreateRoom` 지정 시 "새 방 만들기" 버튼 포함)을 표시
+- `platform:joined` 수신 → 오버레이 제거
 
 ### 유틸리티 메서드
 
@@ -430,7 +432,7 @@ this.showScreen('waiting');
 | `onAllReady()` | - | 전원 준비 완료 |
 | `onReset()` | - | 세션 리셋 |
 | `onHostDisconnect()` | - | 호스트 연결 끊김 (MobileSDK가 QR 스캔 버튼을 자동 표시) |
-| `onKicked()` | - | 호스트에 의해 강퇴됨 (기본: 아무것도 하지 않음 — 필요시 안내 메시지 등을 override) |
+| `onKicked()` | - | 호스트에 의해 강퇴됨. `MobileSDK`가 곧바로(다음 tick) `/`(홈)로 이동시키므로, 이 훅은 그 직전 짧은 순간에 안내 메시지 등을 보여주고 싶을 때만 override하면 됨(기본은 아무것도 하지 않음) |
 
 ### 자동 홈 버튼
 

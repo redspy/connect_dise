@@ -104,6 +104,11 @@ export class HostBaseGame {
     this.sdk.on('playerLeave', (playerId) => {
       this._players.delete(playerId);
       this._disconnectedPlayers.delete(playerId);
+      // 최종 퇴장 확정 시점이므로 배너용 보조 상태도 함께 정리 — 안 지우면
+      // 데모 attract 모드처럼 장시간 켜두는 키오스크 호스트에서 플레이어가
+      // 계속 드나들 때마다 이 두 Map이 세션 내내 무한히 커진다.
+      this._disconnectedColors.delete(playerId);
+      this._playerNicknames.delete(playerId);
       this._refreshReconnectBanner();
       this._resetIdleTimer();
       this.onPlayerLeave(playerId);
@@ -231,11 +236,17 @@ export class HostBaseGame {
     // 연결 끊긴 플레이어 색상 점
     const dotsEl = document.getElementById('_hbg-dots');
     if (dotsEl) {
-      dotsEl.innerHTML = [...this._disconnectedPlayers].map(id => {
+      dotsEl.innerHTML = '';
+      for (const id of this._disconnectedPlayers) {
         const color = this._disconnectedColors.get(id) ?? this._players.get(id)?.color ?? '#888';
-        const name  = this._playerNicknames.get(id) ?? '';
-        return `<div class="_hbg-pdot" style="background:${color};box-shadow:0 0 6px ${color}80" title="${name}"></div>`;
-      }).join('');
+        const name  = this._playerNicknames.get(id) ?? ''; // 사용자 입력(닉네임) — title 프로퍼티로만 대입
+        const dot = document.createElement('div');
+        dot.className = '_hbg-pdot';
+        dot.style.background = color;
+        dot.style.boxShadow = `0 0 6px ${color}80`;
+        dot.title = name;
+        dotsEl.appendChild(dot);
+      }
     }
 
     // 이름 텍스트

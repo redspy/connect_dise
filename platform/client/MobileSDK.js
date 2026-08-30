@@ -37,6 +37,12 @@ export class MobileSDK extends EventTarget {
       if (this._sessionId) this._doJoinSession(this._sessionId);
     });
 
+    // 서버가 재연결 하이재킹 방지를 위해 "이 소켓이 진짜 살아있는지" 확인할 때
+    // 즉시 ack — 응답이 없으면(죽은 좀비 연결로 판정되어) 서버가 재연결을 허용함.
+    socket.on('platform:_livenessPing', (ack) => {
+      if (typeof ack === 'function') ack();
+    });
+
     socket.on('platform:joined', ({ player, reconnected }) => {
       this._player = player;
       // stable player ID를 sessionStorage에 저장 (탭 생존 기간 동안 유지)
@@ -74,8 +80,13 @@ export class MobileSDK extends EventTarget {
     socket.on('platform:kicked', () => {
       sessionStorage.removeItem(RECONNECT_KEY(this._sessionId));
       this._p2p?.closeAll();
+      this._player = null;
+      this._sessionId = null;
       this._emit('kicked', {});
-      this._showReconnectUI();
+      // 강퇴는 "다시 스캔해서 재연결"할 대상이 아니므로 재연결 모달 대신 홈으로
+      // 즉시 이동한다. 게임이 onKicked()를 override해 안내 화면을 먼저 보여주고
+      // 싶다면 이 이동 전에 처리할 시간을 주기 위해 다음 tick으로 미룬다.
+      setTimeout(() => { window.location.href = '/'; }, 0);
     });
 
     socket.on('disconnect', () => {
@@ -190,10 +201,6 @@ export class MobileSDK extends EventTarget {
 
   onMotion(callback) {
     this._sensorManager.onMotion(callback);
-  }
-
-  vibrate(pattern) {
-    if (navigator.vibrate) navigator.vibrate(pattern);
   }
 
   get socketId() {

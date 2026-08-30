@@ -15,6 +15,17 @@ app.use(express.static(join(__dirname, '..', 'dist')));
 const io = new Server(httpServer, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
   maxHttpBufferSize: 5e6, // 5MB — 그림 릴레이 base64 이미지 전송 허용
+  // 기본값(pingInterval 25s + pingTimeout 20s)이면 죽은 소켓을 최대 45초까지
+  // "연결됨"으로 오판할 수 있어, ready 집계 등 connected 플래그를 참조하는 로직이
+  // 그만큼 부정확해짐. 재연결 하이재킹 방지 자체는 아래 liveness probe(isSocketAlive)가
+  // 매 재연결 시도마다 직접 확인하므로 이 값에 의존하지 않는다 — 즉 이 설정은
+  // "일반적인 죽은 연결 감지 지연 단축"만이 목적이라, 와이파이↔LTE 전환처럼
+  // 정상적인 핸드오버 시간(보통 5~10초, 길면 그 이상)보다 짧게 잡으면 오히려
+  // 전환 도중에 먼저 끊어버려 재연결을 더 유발하는 역효과가 난다. 하이재킹 방지를
+  // 이 값에 기대지 않아도 되므로 굳이 공격적으로 줄일 이유가 없어, 기본값보다는
+  // 짧지만 흔한 핸드오버 구간은 넉넉히 덮는 값으로 잡음.
+  pingInterval: 20000,
+  pingTimeout: 15000,
 });
 
 const sm = new SessionManager();
@@ -28,6 +39,19 @@ function verifySender(socket, sessionId, requiredRole = null) {
   if (!info || info.sessionId !== sessionId) return null;
   if (requiredRole && info.role !== requiredRole) return null;
   return info;
+}
+
+// 재연결 하이재킹 방지 로직이 "아직 connected===true인 소켓"을 거부하기 전에,
+// 그 소켓이 진짜 살아있는지 짧은 ack 타임아웃으로 직접 확인한다.
+// (클라이언트의 MobileSDK는 이 핑에 즉시 ack하도록 구현되어 있음)
+function isSocketAlive(socketId, timeoutMs = 1500) {
+  return new Promise((resolve) => {
+    const target = io.sockets.sockets.get(socketId);
+    if (!target) { resolve(false); return; }
+    target.timeout(timeoutMs).emit('platform:_livenessPing', (err) => {
+      resolve(!err);
+    });
+  });
 }
 
 // ─── 국내 주식(코스피/코스닥) 일별 시세 프록시 ───────────────────────────
@@ -83,13 +107,47 @@ io.on('connection', (socket) => {
   // ─── Platform events ────────────────────────────────────────────────────────
 
   socket.on('platform:createSession', ({ gameId }) => {
-    const { sessionId, localIp } = sm.createSession(socket.id, gameId);
+    const result = sm.createSession(socket.id, gameId);
+    if (!result) {
+      socket.emit('error', 'Socket already bound to a session');
+      return;
+    }
+    const { sessionId, localIp } = result;
     socket.join(sessionId);
     socket.emit('platform:sessionCreated', { sessionId, localIp });
     console.log(`[${gameId}] Session ${sessionId} created (IP: ${localIp})`);
   });
 
-  socket.on('platform:joinSession', ({ sessionId, reconnectId = null }) => {
+  socket.on('platform:joinSession', async ({ sessionId, reconnectId = null }) => {
+    // 재연결 하이재킹 방지(§SessionManager.joinSession)는 "connected===true인
+    // 플레이어는 재연결 거부"가 원칙이지만, 서버의 disconnect 감지는
+    // pingInterval+pingTimeout(최대 수십 초)이 지나야 일어나므로, 와이파이↔LTE
+    // 전환처럼 실제로는 끊겼지만 서버가 아직 눈치채지 못한 "좀비 연결"도 똑같이
+    // connected===true로 보인다. 그대로 거부하면 정상적인 순간 끊김까지 최대
+    // pingTimeout만큼 로비 밖으로 튕기게 되므로, 거부하기 전에 구 소켓이 실제로
+    // 살아있는지 짧은 타임아웃으로 직접 확인(probe)한다.
+    if (reconnectId) {
+      const existing = sm.getSession(sessionId)?.players.find(p => p.id === reconnectId);
+      if (existing?.connected) {
+        const alive = await isSocketAlive(existing.socketId);
+        if (alive) {
+          socket.emit('error', 'Session not found or invalid');
+          return;
+        }
+        // 응답 없음 = 좀비 연결로 판정. socketToSession 매핑만 지우고 소켓 객체는
+        // 그대로 두면, 그 소켓이 사실 지터로 ack만 늦었을 뿐 살아있는 경우
+        // "연결된 것처럼 보이지만 보내는 메시지가 전부 조용히 무시되는" 상태로
+        // 방치된다 — 실제로 끊어서 그 클라이언트도 자기 disconnect 이벤트를 받고
+        // 스스로 재연결을 시도하도록 강제한다.
+        const zombieSocket = io.sockets.sockets.get(existing.socketId);
+        if (zombieSocket) {
+          zombieSocket.disconnect(true); // 기존 disconnect 핸들러가 connected=false 처리까지 담당
+        } else {
+          sm.markDisconnected(sessionId, reconnectId); // 소켓 자체가 이미 없으면 상태만 직접 정리
+        }
+      }
+    }
+
     const result = sm.joinSession(sessionId, socket.id, reconnectId);
     if (!result) {
       socket.emit('error', 'Session not found or invalid');
@@ -112,6 +170,11 @@ io.on('connection', (socket) => {
     if (reconnected) {
       // 호스트에게 재연결 알림 (playerJoin 재호출 없이)
       io.to(session.hostSocketId).emit('platform:playerRejoined', { player });
+      // disconnect 시점에 즉시 재전송했던 readyUpdate(연결 끊긴 플레이어 제외 집계)가
+      // 재연결로 다시 무효화되므로, 최신 집계를 한 번 더 보내야 호스트 화면의
+      // 카운트가 stale 상태로 남지 않는다.
+      const { readyCount, totalCount } = sm.getReadyStatus(session);
+      io.to(session.hostSocketId).emit('platform:readyUpdate', { readyCount, totalCount });
     } else {
       io.to(session.hostSocketId).emit('platform:playerJoined', { player });
       console.log(`Player ${player.id} joined session ${sessionId} (color: ${player.color})`);
@@ -160,12 +223,21 @@ io.on('connection', (socket) => {
       // 플레이어 클라이언트에 강퇴 알림
       io.to(socketId).emit('platform:kicked', {});
 
+      // Socket.IO room에서도 제거 — 안 그러면 강퇴된 소켓이 여전히 세션 room
+      // 브로드캐스트(platform:reset/allReady/hostDisconnected 등)를 계속 수신함
+      const kickedSocket = io.sockets.sockets.get(socketId);
+      kickedSocket?.leave(sessionId);
+
       // 호스트에 플레이어 제거 알림
       io.to(session.hostSocketId).emit('platform:playerLeft', { playerId });
-      io.to(session.hostSocketId).emit('platform:readyUpdate', {
-        readyCount: session.readyPlayers.size,
-        totalCount: session.players.length,
-      });
+      const { readyCount, totalCount } = sm.getReadyStatus(session);
+      io.to(session.hostSocketId).emit('platform:readyUpdate', { readyCount, totalCount });
+
+      // grace period 중(연결 끊김 상태)인 플레이어를 강퇴한 경우, 남아있던
+      // 5분 유예 타이머도 함께 정리(안 지워도 finalizePlayerRemoval이 이미
+      // 없는 플레이어라 no-op으로 끝나긴 하지만, 굳이 5분을 기다릴 이유가 없음)
+      const kickTimer = disconnectTimers.get(playerId);
+      if (kickTimer) { clearTimeout(kickTimer); disconnectTimers.delete(playerId); }
 
       console.log(`[${sessionId}] Player ${playerId} kicked`);
     }
@@ -243,6 +315,15 @@ io.on('connection', (socket) => {
         io.to(sessionId).emit('hostDisconnected');
         console.log(`Session ${sessionId} closed — host disconnected`);
 
+        // 세션이 통째로 사라졌으니, 그 세션 소속 플레이어들의 그레이스 타이머도
+        // 더 이상 의미가 없다 — 정리 안 해도 나중에 no-op으로 끝나긴 하지만
+        // (session이 이미 없어 finalizePlayerRemoval이 null 반환), 세션 생성/파괴가
+        // 잦은 환경(데모 attract 모드 등)에서 타이머가 계속 쌓이는 걸 방지.
+        for (const p of data?.players ?? []) {
+          const timer = disconnectTimers.get(p.id);
+          if (timer) { clearTimeout(timer); disconnectTimers.delete(p.id); }
+        }
+
       } else if (data?.player) {
         const { player, hostSocketId } = data;
         const oldSocketId = socket.id;
@@ -250,6 +331,14 @@ io.on('connection', (socket) => {
         // 호스트에게 일시 연결 끊김 알림 (선택적 UI용)
         io.to(hostSocketId).emit('platform:playerDisconnected', { playerId: player.id });
         console.log(`[${sessionId}] Player ${player.id} disconnected — grace ${RECONNECT_GRACE_MS / 1000}s`);
+
+        // 연결 끊긴 플레이어는 준비 완료 여부와 무관하게 즉시 집계에서 제외
+        // (readyPlayers Set 자체는 보존 — 재연결 시 다시 준비 누를 필요 없게)
+        const liveSession = sm.getSession(sessionId);
+        if (liveSession) {
+          const { readyCount, totalCount } = sm.getReadyStatus(liveSession);
+          io.to(hostSocketId).emit('platform:readyUpdate', { readyCount, totalCount });
+        }
 
         // 유예 기간 후 완전 제거
         const timer = setTimeout(() => {
