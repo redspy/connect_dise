@@ -2,6 +2,18 @@ import { HostSDK } from '../../../platform/client/HostSDK.js';
 import { HostBaseGame } from '../../../platform/client/HostBaseGame.js';
 import { DemoSimulator } from './DemoSimulator.js';
 
+// 실전 모드: 상품 슬롯 ↔ 실제 코스피/코스닥 종목 매핑 (코스피 4 + 코스닥 4)
+const REAL_TICKER_MAP = {
+  diamond: { code: '005930', label: '삼성전자' },
+  gold:    { code: '000660', label: 'SK하이닉스' },
+  oil:     { code: '005380', label: '현대차' },
+  wheat:   { code: '051910', label: 'LG화학' },
+  coffee:  { code: '247540', label: '에코프로비엠' },
+  wood:    { code: '086520', label: '에코프로' },
+  sugar:   { code: '293490', label: '카카오게임즈' },
+  spices:  { code: '196170', label: '알테오젠' },
+};
+
 class PitTradeHost extends HostBaseGame {
   constructor(sdk) {
     super(sdk, { overlayClass: 'phase-overlay', qrContainerId: 'qr-box' });
@@ -18,6 +30,11 @@ class PitTradeHost extends HostBaseGame {
     // 동적 시세 변동
     this._prices = {};
     this._priceTimer = null;
+
+    // 실전 모드 (실제 코스피/코스닥 시세 리플레이)
+    this._realMarketMode = false;
+    this._realReturns = {};   // commodity -> number[] (일별 등락률, 순차 재생)
+    this._realDayIndex = {};  // commodity -> 다음에 재생할 인덱스 (소진 시 처음부터 순환)
 
     // 동시성 거래 락 (Transaction Lock)
     this._isTradingLocked = false;
@@ -72,6 +89,13 @@ class PitTradeHost extends HostBaseGame {
     const restartBtn = document.getElementById('btn-restart-result');
     if (restartBtn) {
       restartBtn.onclick = () => this.resetSession();
+    }
+
+    const realMarketToggle = document.getElementById('realMarketToggle');
+    if (realMarketToggle) {
+      realMarketToggle.onchange = () => {
+        this._realMarketMode = realMarketToggle.checked;
+      };
     }
   }
 
@@ -197,6 +221,12 @@ class PitTradeHost extends HostBaseGame {
     // 웅성거림 배경음 정지
     this._stopAmbientNoise();
 
+    // 실전 모드 상태 초기화 (체크박스 선택 자체는 유지)
+    this._realReturns = {};
+    this._realDayIndex = {};
+    const realMarketStatus = document.getElementById('realMarketStatus');
+    if (realMarketStatus) realMarketStatus.classList.add('hidden');
+
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
 
@@ -213,7 +243,7 @@ class PitTradeHost extends HostBaseGame {
 
   // ─── 게임 라이프사이클 엔진 ───
 
-  _startGame() {
+  async _startGame() {
     this._gameActive = true;
     this._isTradingLocked = false;
     this._activeTrades.clear();
@@ -237,7 +267,15 @@ class PitTradeHost extends HostBaseGame {
     const allCommodities = ['diamond', 'gold', 'oil', 'wheat', 'coffee', 'wood', 'sugar', 'spices'];
     const activeCommodities = allCommodities.slice(0, P);
 
-    // 초기 시세 설정
+    // 실전 모드: 실제 코스피/코스닥 시세를 미리 로드(카드 배포 전에 완료해야 함)
+    if (this._realMarketMode) {
+      await this._loadRealMarketData(activeCommodities);
+    } else {
+      this._realReturns = {};
+      this._realDayIndex = {};
+    }
+
+    // 초기 시세 설정 (실전 모드여도 게임 점수 밸런스를 위해 기준가는 그대로 유지 — 변동폭만 실데이터 사용)
     const defaultPrices = { diamond: 100, gold: 80, oil: 70, wheat: 60, coffee: 50, wood: 40, sugar: 30, spices: 20 };
     this._prices = {};
     activeCommodities.forEach(c => {
@@ -308,26 +346,95 @@ class PitTradeHost extends HostBaseGame {
     }
   }
 
+  // 실전 모드: 활성 상품들의 실제 최근 시세를 서버 프록시(/api/kr-stock)로 조회해
+  // 종목별 일별 등락률(%) 배열로 변환해둔다. 하나라도 실패하면 이번 라운드는
+  // 안전하게 랜덤 모드로 폴백한다(게임이 멈추면 안 되므로).
+  async _loadRealMarketData(activeCommodities) {
+    const statusEl = document.getElementById('realMarketStatus');
+    if (statusEl) {
+      statusEl.textContent = '📡 코스피·코스닥 최근 시세 불러오는 중...';
+      statusEl.classList.remove('hidden');
+    }
+
+    try {
+      const results = await Promise.all(activeCommodities.map(async (c) => {
+        const ticker = REAL_TICKER_MAP[c];
+        if (!ticker) return [c, null];
+        const res = await fetch(`/api/kr-stock/${ticker.code}?days=12`);
+        if (!res.ok) throw new Error(`${ticker.label} 조회 실패 (HTTP ${res.status})`);
+        const { rows } = await res.json();
+        if (!rows || rows.length < 2) throw new Error(`${ticker.label} 데이터 부족`);
+        const returns = [];
+        for (let i = 1; i < rows.length; i++) {
+          returns.push((rows[i].close - rows[i - 1].close) / rows[i - 1].close);
+        }
+        return [c, returns];
+      }));
+
+      this._realReturns = {};
+      this._realDayIndex = {};
+      results.forEach(([c, returns]) => {
+        if (returns) {
+          this._realReturns[c] = returns;
+          this._realDayIndex[c] = 0;
+        }
+      });
+
+      if (statusEl) {
+        statusEl.textContent = `✅ 실전 모드 적용됨 (${activeCommodities.length}개 종목, 최근 ${Math.max(...Object.values(this._realReturns).map(r => r.length)) + 1}거래일 시세 순환 재생)`;
+      }
+    } catch (err) {
+      console.warn('[pit-trade] 실전 모드 시세 로드 실패, 랜덤 모드로 대체:', err.message);
+      this._realReturns = {};
+      this._realDayIndex = {};
+      if (statusEl) {
+        statusEl.textContent = '⚠️ 실시간 시세를 불러오지 못해 랜덤 모드로 진행합니다.';
+      }
+    }
+  }
+
   // 동적 시세 변동 타이머
   _startPriceFluctuations() {
+    const useRealData = this._realMarketMode && Object.keys(this._realReturns).length > 0;
+
     this._priceTimer = setInterval(() => {
       const commodities = Object.keys(this._prices);
       if (commodities.length === 0) return;
 
       const randomComm = commodities[Math.floor(Math.random() * commodities.length)];
-      const events = [
-        { name: '🔥 골드러시 발효! 시세 급증', multiplier: 1.5, text: '의 시장 가치가 급등했습니다!' },
-        { name: '📉 공급 과잉 발생! 가치 폭락', multiplier: 0.7, text: '의 유통량이 증가해 시세가 하락했습니다.' }
-      ];
-      const event = events[Math.floor(Math.random() * events.length)];
-      
-      const prevPrice = this._prices[randomComm];
-      this._prices[randomComm] = Math.round(prevPrice * event.multiplier);
-
+      const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재', sugar: '🍬 설탕', spices: '🌶️ 향신료' };
       const ticker = document.getElementById('news-ticker');
-      if (ticker) {
-        const commNames = { diamond: '💎 다이아몬드', gold: '🪙 골드', oil: '🛢️ 석유', wheat: '🌾 밀', coffee: '☕ 커피', wood: '🪵 목재', sugar: '🍬 설탕', spices: '🌶️ 향신료' };
-        ticker.textContent = `📢 [속보] ${commNames[randomComm]}${event.text}`;
+
+      if (useRealData && this._realReturns[randomComm]) {
+        // 실전 모드: 그 상품에 매핑된 실제 종목의 다음 거래일 등락률을 순서대로 재생
+        // (소진되면 다시 처음부터 순환 — 라운드는 독점/종치기 전까지 무한히 이어질 수 있으므로)
+        const returns = this._realReturns[randomComm];
+        const idx = this._realDayIndex[randomComm] % returns.length;
+        const pct = returns[idx];
+        this._realDayIndex[randomComm] = idx + 1;
+
+        const prevPrice = this._prices[randomComm];
+        this._prices[randomComm] = Math.max(1, Math.round(prevPrice * (1 + pct)));
+
+        if (ticker) {
+          const label = REAL_TICKER_MAP[randomComm]?.label || randomComm;
+          const pctText = `${pct >= 0 ? '+' : ''}${(pct * 100).toFixed(2)}%`;
+          const arrow = pct >= 0 ? '📈' : '📉';
+          ticker.textContent = `${arrow} [실시세] ${commNames[randomComm]}(${label}) 실제 시세 반영: ${pctText}`;
+        }
+      } else {
+        const events = [
+          { name: '🔥 골드러시 발효! 시세 급증', multiplier: 1.5, text: '의 시장 가치가 급등했습니다!' },
+          { name: '📉 공급 과잉 발생! 가치 폭락', multiplier: 0.7, text: '의 유통량이 증가해 시세가 하락했습니다.' }
+        ];
+        const event = events[Math.floor(Math.random() * events.length)];
+
+        const prevPrice = this._prices[randomComm];
+        this._prices[randomComm] = Math.round(prevPrice * event.multiplier);
+
+        if (ticker) {
+          ticker.textContent = `📢 [속보] ${commNames[randomComm]}${event.text}`;
+        }
       }
 
       this._renderCommodityPrices();

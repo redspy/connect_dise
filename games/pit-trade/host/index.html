@@ -37,6 +37,14 @@
           <button id="demoPlayBtn" class="btn-demo">🤖 데모 플레이 실행</button>
         </div>
 
+        <div class="lobby-controls">
+          <label style="color: #e2e8f0; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="realMarketToggle">
+            📊 실전 모드: 코스피·코스닥 최근 1주일 실시세로 진행
+          </label>
+        </div>
+        <p id="realMarketStatus" class="hidden" style="color: #fbbf24; font-size: 13px; margin: 4px 0 0;"></p>
+
         <h2 class="section-title">참가자 목록 (<span id="player-count">0</span>명)</h2>
         <div id="lobby-grid" class="player-grid">
           <!-- Dynamically populated -->

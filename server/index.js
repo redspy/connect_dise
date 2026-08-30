@@ -19,6 +19,42 @@ const io = new Server(httpServer, {
 
 const sm = new SessionManager();
 
+// ─── 국내 주식(코스피/코스닥) 일별 시세 프록시 ───────────────────────────
+// 브라우저에서 직접 외부 API를 부르면 CORS에 막히므로 서버가 대신 호출해 중계함.
+// (games/pit-trade 실전 모드 전용 — 네이버 금융 공개 시세 API, 키 불필요)
+app.get('/api/kr-stock/:code', async (req, res) => {
+  const { code } = req.params;
+  if (!/^\d{6}$/.test(code)) {
+    res.status(400).json({ error: 'invalid_code' });
+    return;
+  }
+  const days = Math.min(Math.max(Number(req.query.days) || 12, 1), 30);
+  const end = new Date();
+  const start = new Date(end.getTime() - days * 24 * 3600 * 1000);
+  const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
+
+  try {
+    const url = `https://api.finance.naver.com/siseJson.naver?symbol=${code}&requestType=1&startTime=${fmt(start)}&endTime=${fmt(end)}&timeframe=day`;
+    const upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const text = await upstream.text();
+
+    // 응답이 strict JSON이 아닌 JS 배열 리터럴이라 관대하게 파싱
+    const rows = [];
+    const re = /\["(\d{8})",\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)/g;
+    let m;
+    while ((m = re.exec(text))) {
+      rows.push({
+        date: m[1],
+        open: Number(m[2]), high: Number(m[3]), low: Number(m[4]), close: Number(m[5]), volume: Number(m[6]),
+      });
+    }
+    res.json({ code, rows });
+  } catch (err) {
+    console.error(`[kr-stock proxy] ${code} 조회 실패:`, err.message);
+    res.status(502).json({ error: 'upstream_failed' });
+  }
+});
+
 // 플레이어 연결 끊김 후 실제 제거까지의 유예 시간 (뒤로가기/백그라운드 전환 후 재접속 허용)
 const RECONNECT_GRACE_MS = 5 * 60_000; // 5분
 const disconnectTimers = new Map(); // playerId → timer
