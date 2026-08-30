@@ -1,3 +1,5 @@
+const BOT_IDS = ['bot_alpha', 'bot_beta', 'bot_gamma'];
+
 export class TriviaVegasDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -26,24 +28,13 @@ export class TriviaVegasDemoSimulator {
     this.isDemo = true;
     this.game._isDemo = true;
 
-    // 1. 현재 실제 접속한 플레이어 상태 스냅샷 저장
-    this.snapshot = {
-      players: new Map(this.game.players),
-      sdkPlayers: new Map(this.game.sdk._players),
-      playerNicknames: new Map(this.game._playerNicknames)
-    };
-
     const bots = [
       { id: 'bot_alpha', nickname: '🤖 알파 조종사', color: '#00f3ff' },
       { id: 'bot_beta', nickname: '🤖 베타 조종사', color: '#ff3c3c' },
       { id: 'bot_gamma', nickname: '🤖 감마 조종사', color: '#39ff14' }
     ];
 
-    // 2. 데모용 가상 플레이어 설정
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
-
+    // 2. 데모용 가상 플레이어 설정 (실제 플레이어까지 지우지 않도록 봇 id만 추가 — 전체 clear() 금지)
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
       this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
@@ -54,21 +45,18 @@ export class TriviaVegasDemoSimulator {
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
     this.game._isDemo = false;
     this.clearTimeouts();
 
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
-
-    // 3. 스냅샷 복구
-    if (this.snapshot) {
-      this.snapshot.players.forEach((val, key) => this.game.players.set(key, val));
-      this.snapshot.sdkPlayers.forEach((val, key) => this.game.sdk._players.set(key, val));
-      this.snapshot.playerNicknames.forEach((val, key) => this.game._playerNicknames.set(key, val));
-      this.snapshot = null;
-    }
+    // 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear() 금지)
+    BOT_IDS.forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+    });
+    this.snapshot = null;
   }
 
   queueBotEstimates(question) {

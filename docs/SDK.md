@@ -13,6 +13,7 @@
 4. [MobileBaseGame](#mobilebasegame)
 5. [P2PManager](#p2pmanager)
 6. [공유 컴포넌트](#공유-컴포넌트)
+   - [LobbyPanel](#lobbypanel)
    - [AppBar](#appbar)
    - [QRDisplay](#qrdisplay)
    - [QRScanner](#qrscanner)
@@ -55,12 +56,13 @@ const host = new HostSDK({ gameId: 'my-game' });
 |--------|----------|----------|
 | `sessionReady` | `{ sessionId: string, qrUrl: string }` | 세션 생성 완료, QR URL 준비 |
 | `playerJoin` | `player: { id, color }` | 새 플레이어 입장 |
+| `playerDisconnect` | `{ playerId: string }` | 플레이어 일시 연결 끊김 (grace period 시작 시점 — 최종 퇴장은 아직 아님) |
 | `playerLeave` | `playerId: string` | 플레이어 연결 해제 (grace period 만료 후) |
 | `playerRejoin` | `player: { id, color }` | 플레이어 재연결 (grace period 내 복귀) |
 | `readyUpdate` | `{ readyCount: number, total: number }` | 준비 상태 변경 |
 | `allReady` | `{}` | 모든 플레이어 준비 완료 |
 | `reset` | `{}` | 세션 리셋 후 |
-| `hostDisconnect` | `{}` | (예비) 호스트 소켓 이벤트 |
+| `hostDisconnect` | `{}` | ⚠️ 등록은 되어 있으나 **사실상 도달 불가능**: 서버는 호스트 소켓이 끊긴 시점에 `hostDisconnected`를 세션 room에 브로드캐스트하는데, 이 시점엔 호스트 자신의 소켓이 이미 room에서 빠져 있어 실제로는 남아있는 모바일 클라이언트만 수신함. 호스트 쪽에서 이 이벤트를 쓰는 코드가 있다면 절대 호출되지 않는다고 가정할 것 |
 
 `on()`은 `this`를 반환하므로 체이닝 가능합니다.
 
@@ -109,6 +111,8 @@ host.broadcast('battleStart', { players: [...] });
 | `getSessionId()` | `string` | 현재 세션 ID |
 | `getQRUrl()` | `string` | QR 코드로 표시할 URL |
 | `resetSession()` | `void` | 세션 리셋 (`platform:reset` emit) |
+| `kickPlayer(playerId)` | `void` | 해당 플레이어 강퇴 (`platform:kickPlayer` emit — 재연결 유예 없이 즉시 제거) |
+| `socketId` | `string \| null` (getter) | 호스트 자신의 현재 Socket.IO 소켓 ID |
 | `getRawSocket()` | `Socket` | Socket.IO 소켓 직접 접근 |
 
 ### QR URL 형식
@@ -133,7 +137,14 @@ host.broadcast('battleStart', { players: [...] });
 import { MobileSDK } from '../../platform/client/MobileSDK.js';
 
 const mobile = new MobileSDK();
+
+// 호스트 없이 폰만으로 방을 만드는 기능을 지원하려면:
+const mobile = new MobileSDK({
+  onCreateRoom: () => { /* 숨김 host iframe을 띄워 세션을 생성하는 등 */ },
+});
 ```
+
+생성자 인자: `{ onCreateRoom?: () => void }`(둘 다 선택). `onCreateRoom`을 지정하면 `?session=` 없이 접속했을 때 뜨는 "방에 연결하기" 폴백 모달에 "🏠 새 방 만들기" 버튼이 추가로 노출됩니다 — MobileSDK 자신은 호스트리스 세션을 생성하는 방법을 모르므로, 실제 생성은 게임 쪽(숨김 host iframe 임베딩 등)이 담당하고 완료되면 `mobile.joinSession(sessionId)`로 결과만 넘겨받습니다.
 
 생성자 호출 시:
 1. URL에서 `?session=` 파라미터 추출
@@ -154,10 +165,13 @@ const mobile = new MobileSDK();
 
 | 이벤트 | 콜백 인자 | 발생 시점 |
 |--------|----------|----------|
+| `connect` | `{}` | Socket.IO 연결 성공(최초 연결 및 자동 재연결 포함) |
+| `disconnect` | `{}` | Socket.IO 연결 끊김 (QR 스캔 버튼 자동 노출 트리거) |
 | `join` | `player: { id, color }` | 세션 입장 완료 (신규) |
 | `rejoin` | `player: { id, color }` | 재연결 완료 (grace period 내 복귀) |
 | `allReady` | `{}` | 모든 플레이어 준비 완료 |
 | `reset` | `{}` | 세션 리셋 후 |
+| `kicked` | `{}` | 호스트에 의해 강퇴됨 (앱이 자동으로 초기 화면으로 전환) |
 | `hostDisconnect` | `{}` | 호스트 연결 종료 |
 | `error` | `message: string` | 세션 없음 등 에러 |
 
@@ -232,6 +246,8 @@ MobileSDK는 연결 상태에 따라 QR 스캔 버튼을 자동으로 표시/숨
 |--------|----------|------|
 | `getMyPlayer()` | `{ id, color } \| null` | 나 자신의 플레이어 정보 |
 | `getSessionId()` | `string` | 현재 세션 ID |
+| `joinSession(sessionId)` | `void` | 생성자 시점에 `?session=`이 없어 미확정 상태로 시작한 경우, 이미 연결된 소켓을 재사용해 사후에 세션 참가를 확정 (페이지 새로고침 불필요 — 호스트리스 "폰으로 방 만들기" 패턴에서 사용) |
+| `socketId` | `string \| null` (getter) | 자신의 현재 Socket.IO 소켓 ID |
 | `vibrate(pattern)` | `void` | 진동 패턴 (ms 배열). `navigator.vibrate` 래핑 |
 
 ---
@@ -260,9 +276,11 @@ class MyGame extends HostBaseGame {
 ### 자동 관리 기능
 
 - **플레이어 Map**: `this.players` (id → player), 입장/퇴장/재연결 시 자동 갱신
-- **QR 렌더링**: `qrContainerId` 옵션 지정 시 `sessionReady`에서 자동 렌더링 (width: 200)
+- **QR 렌더링**: `qrContainerId` 옵션 지정 시 `sessionReady`에서 자동 렌더링 (width: 200). `<game-lobby>`가 있으면 그쪽 QR을 우선 사용
 - **오버레이 전환**: `setPhase(name)`으로 `data-phase` 기반 자동 전환
 - **자동 리셋**: 게임 진행 중(`lobby`/`loading` 아닌 phase) 모든 플레이어가 퇴장하면 자동으로 `resetSession()` 호출
+- **60초 유휴 자동 데모**: 로비 phase에서 60초간 아무 변화가 없고 `this._players.size === 0`이면, 게임의 `_demoSimulator`(또는 `demoSimulator`)에 `startDemo()`가 있을 경우 자동 호출. 실제 플레이어가 이미 있으면 절대 끼어들지 않으며, 게임별 수동 "🤖 데모 플레이 실행" 버튼 핸들러에는 이 가드가 자동 적용되지 않으므로 별도로 `if (this.playerCount > 0) return;`를 넣어야 함
+- **iframe 임베드 브리지**: 이 호스트 페이지가 다른 페이지의 숨김 `<iframe>`으로 실행 중이면(`window.parent !== window`), 세션 생성 완료 시 부모 창에 `postMessage({ type: 'platform:embeddedSessionReady', sessionId, qrUrl }, location.origin)`을 자동 전송(호스트리스 "폰으로 방 만들기" 패턴에서 사용). iframe이 아니면 완전히 no-op
 
 ### 오버레이 컨벤션 (HTML)
 
@@ -296,8 +314,12 @@ class MyGame extends HostBaseGame {
 | `sendToPlayer(id, type, payload)` | 특정 플레이어에게 메시지 전송 |
 | `onMessage(type, callback)` | 게임 메시지 핸들러 등록. 체이닝 가능 |
 | `resetSession()` | 세션 리셋 |
+| `kickPlayer(playerId)` | 해당 플레이어 강퇴 |
 | `getPlayer(id)` | 특정 플레이어 객체 조회 |
 | `getQRUrl()` | 현재 QR URL 반환 |
+| `setPlayerName(id, name)` | 플레이어 닉네임 등록(재접속 배너에 이름 표시용 — 게임이 `setProfile` 수신 시 호출) |
+| `renderLobbyPlayers(profilesMap?)` | `<game-lobby>`에 현재 플레이어 목록 렌더링 |
+| `updateLobbyReady(readyCount)` | `<game-lobby>`의 준비 인원 텍스트·시작 버튼 상태 갱신 |
 
 ### 라이프사이클 훅
 
@@ -307,6 +329,7 @@ class MyGame extends HostBaseGame {
 |----|------|----------|
 | `onSetup({ qrUrl, sessionId })` | `{ qrUrl: string, sessionId: string }` | 세션 준비 완료 (QR 렌더링 후) |
 | `onPlayerJoin(player)` | `{ id, color }` | 플레이어 입장 (players에 이미 추가됨) |
+| `onPlayerDisconnect(playerId)` | `string` | 플레이어 일시 연결 끊김 (grace period 시작 — 아직 players에서 제거되지 않음) |
 | `onPlayerRejoin(player)` | `{ id, color }` | 플레이어 재연결 (players에 이미 갱신됨) |
 | `onPlayerLeave(playerId)` | `string` | 플레이어 퇴장 (players에서 이미 제거됨) |
 | `onReadyUpdate({ readyCount, total })` | `{ readyCount, total }` | 준비 상태 변경 |
@@ -407,6 +430,11 @@ this.showScreen('waiting');
 | `onAllReady()` | - | 전원 준비 완료 |
 | `onReset()` | - | 세션 리셋 |
 | `onHostDisconnect()` | - | 호스트 연결 끊김 (MobileSDK가 QR 스캔 버튼을 자동 표시) |
+| `onKicked()` | - | 호스트에 의해 강퇴됨 (기본: 아무것도 하지 않음 — 필요시 안내 메시지 등을 override) |
+
+### 자동 홈 버튼
+
+모든 화면 좌하단에 작은 "⌂" 버튼을 자동 삽입합니다(`_injectHomeButton()`, 게임 코드에서 별도 호출 불필요). 클릭 시 확인창을 띄운 뒤 `/`(게임 선택 화면)로 이동 — 준비 대기 중이거나 게임 도중 언제든 나갈 수 있는 탈출구입니다.
 
 ### 사용 예시
 
@@ -479,6 +507,57 @@ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 
 ## 공유 컴포넌트
 
+### LobbyPanel
+
+`platform/client/shared/LobbyPanel.js`
+
+호스트 로비 화면 공통 Web Component(`<game-lobby>`). QR/방코드, 참가자 카드 그리드(강퇴 버튼 포함), 준비 상태 텍스트, 시작 버튼을 전담합니다. **모든 게임은 커스텀 로비 UI를 직접 구현하지 말고 이 컴포넌트를 써야 합니다.**
+
+#### HTML 설정
+
+```html
+<!-- 기본 -->
+<game-lobby title="게임이름" min-players="2"></game-lobby>
+
+<!-- 게임 설명/설정 슬롯: 자식 요소가 QR 옆 사이드 영역으로 자동 이동 -->
+<game-lobby title="Dobble" min-players="2">
+  <div class="my-rules">...</div>
+  <select id="sel-mode">...</select>
+</game-lobby>
+
+<!-- 배너 이미지(선택) -->
+<game-lobby title="눈치 10단" min-players="2" banner="/games/nunchi-ten/assets/main.png"></game-lobby>
+```
+
+#### JS API
+
+```js
+const lobby = document.querySelector('game-lobby');
+lobby.onStart = () => game._startGame();      // 시작 버튼 클릭 콜백
+lobby.onKick = (playerId) => game.kickPlayer(playerId); // 참가자 카드의 강퇴(✕) 버튼 클릭 콜백
+lobby.setSession(sessionId, qrUrl);           // 방 코드 + URL 표시
+lobby.renderPlayers(playersMap, profilesMap); // 참가자 카드 그리드 렌더링
+lobby.setReady(readyCount, total);            // 준비 상태 텍스트 갱신
+lobby.updateStartButton(readyCount, total);   // 시작 버튼 활성화/텍스트 갱신 (반환값: canStart boolean)
+lobby.qrContainer;                            // QR 렌더링 대상 <div> (renderQR에 그대로 전달)
+```
+
+`HostBaseGame`을 상속하면 `renderLobbyPlayers()`/`updateLobbyReady()`가 이 컴포넌트를 자동으로 찾아 위임 호출하므로 대부분의 게임은 `lobby.onStart`/`lobby.onKick` 연결 정도만 직접 하면 됩니다.
+
+#### 테마 CSS 변수
+
+```css
+body.my-game-host {
+  --lobby-accent: var(--my-game-accent);      /* 시작 버튼 등 강조색 — 반드시 오버라이드할 것 */
+  --lobby-accent-dim: ...;
+  /* --lobby-panel-bg, --lobby-panel2-bg, --lobby-border, --lobby-text, --lobby-sub, --lobby-avatar-size 도 조정 가능 */
+}
+```
+
+오버라이드를 생략하면 플랫폼 기본값(골드 `#f59e0b`)으로 조용히 폴백되므로, 게임 고유 강조색이 골드가 아니라면 반드시 연결해야 합니다.
+
+---
+
 ### AppBar
 
 `platform/client/shared/AppBar.js`
@@ -486,27 +565,25 @@ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 
 게임 호스트 화면의 공통 상단 바 컴포넌트. 모든 게임이 공유하는 뒤로가기·타이틀·다시하기 UI를 제공합니다.
 
+`AppBar`는 `customElements.define('game-appbar', AppBar)`로 등록된 **Web Component**입니다. `new AppBar(...)`처럼 클래스를 직접 생성자 호출하면 안 됩니다 — 커스텀 `constructor()`가 없어 인자가 전부 무시되고, DOM에 붙지 않아 `connectedCallback()`(실제 렌더링)이 실행되지 않습니다. 반드시 HTML 태그로 배치한 뒤, JS에서는 `querySelector`로 찾아 속성/콜백만 연결하세요. `HostBaseGame.js`가 이미 `AppBar.js`를 import해 커스텀 엘리먼트를 등록해주므로 게임 쪽에서 별도 import도 불필요합니다.
+
 #### HTML 설정
 
 ```html
-<!-- head에 CSS 로드 -->
-<link rel="stylesheet" href="/platform/client/shared/appbar.css" />
-
-<!-- body에 AppBar 컨테이너 배치 -->
-<header id="game-appbar"></header>
+<!-- body에 배치. title/back-url/back-label은 HTML 속성으로 지정 -->
+<game-appbar
+  title="눈치 10단"
+  back-url="/"
+  back-label="← 로비"
+></game-appbar>
 ```
 
 #### 초기화
 
 ```js
-import { AppBar } from '../../../platform/client/shared/AppBar.js';
-
-const appbar = new AppBar('game-appbar', {
-  title: '눈치 10단',   // 게임 타이틀
-  backUrl: '/',         // 뒤로가기 URL (기본값: '/')
-  backLabel: '← 로비', // 뒤로가기 버튼 텍스트 (기본값: '← 로비')
-  onRestart: () => game.resetSession(), // 다시하기 콜백 (미제공 시 버튼 숨김)
-});
+const appbar = document.querySelector('game-appbar');
+appbar.onRestart = () => game.resetSession(); // 다시하기 버튼 등록 (미설정 시 버튼 자체가 생성되지 않음)
+appbar.setTitle('새 타이틀');                  // 타이틀 변경 (선택)
 ```
 
 #### 오른쪽 슬롯 활용 (게임별 정보 추가)
@@ -517,7 +594,7 @@ const roundEl = document.createElement('div');
 roundEl.id = 'round-display';
 roundEl.className = 'round-display';
 roundEl.textContent = 'Round - / 10';
-appbar.prependRight(roundEl);
+document.querySelector('game-appbar').prependRight(roundEl);
 // 이후 document.getElementById('round-display').textContent = ... 로 업데이트
 ```
 

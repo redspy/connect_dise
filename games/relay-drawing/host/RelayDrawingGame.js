@@ -123,6 +123,7 @@ export class RelayDrawingGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
         } else {
           this._demoSimulator.stopDemo();

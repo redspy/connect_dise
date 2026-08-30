@@ -48,11 +48,16 @@ export class SessionManager {
     if (!session) return null;
 
     // ── 재연결 시도 ───────────────────────────────────────────────
+    // stable player ID를 안다고 해서 무조건 그 자리를 가로챌 수 있으면 안 됨 —
+    // 실제로 연결이 끊겨 유예 상태(connected===false)인 플레이어만 재연결을 허용.
+    // (연결이 살아있는 플레이어의 세션을 다른 소켓이 탈취하는 것을 방지)
     if (reconnectId) {
       const player = session.players.find(p => p.id === reconnectId);
       if (player) {
+        if (player.connected) return null; // 아직 연결 중인 플레이어 — 탈취 시도로 간주해 거부
         this.socketToSession.delete(player.socketId); // 구 소켓 매핑 제거
         player.socketId = socketId;
+        player.connected = true;
         this.socketToSession.set(socketId, { sessionId, role: 'player', playerId: player.id });
         return { player: { id: player.id, socketId, color: player.color }, reconnected: true };
       }
@@ -64,6 +69,7 @@ export class SessionManager {
       id: generateId(),   // stable ID — 게임 데이터 키
       socketId,           // 현재 전송용 소켓 ID
       color: playerColors[colorIndex],
+      connected: true,
     };
     session.players.push(player);
     this.socketToSession.set(socketId, { sessionId, role: 'player', playerId: player.id });
@@ -89,8 +95,9 @@ export class SessionManager {
       for (const p of session.players) this.socketToSession.delete(p.socketId);
       return [{ sessionId, role: 'host', data: { players: session.players } }];
     } else {
-      // 플레이어 연결 끊김 → 유예 기간 동안 세션 유지
+      // 플레이어 연결 끊김 → 유예 기간 동안 세션 유지 (재연결 가능 상태로 표시)
       const player = session.players.find(p => p.id === playerId);
+      if (player) player.connected = false;
       return [{
         sessionId,
         role: 'player',

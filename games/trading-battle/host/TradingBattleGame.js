@@ -85,6 +85,7 @@ export class TradingBattleGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._demoSimulator.isDemo) {
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
         }
       };
@@ -103,6 +104,11 @@ export class TradingBattleGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._demoSimulator.isDemo) {
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
     this._initPlayerPosition(player.id);
     this.renderLobbyPlayers(this._getLobbyProfiles());
   }

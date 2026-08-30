@@ -54,6 +54,7 @@ class DiceGame extends HostBaseGame {
     if (demoBtn) {
       demoBtn.addEventListener('click', () => {
         if (!this.demoSimulator.isDemo) {
+          if (this.playerCount > 0) return;
           this.demoSimulator.startDemo();
         } else {
           this.demoSimulator.stopDemo();

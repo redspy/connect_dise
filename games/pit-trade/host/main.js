@@ -35,6 +35,7 @@ class PitTradeHost extends HostBaseGame {
     this._realMarketMode = false;
     this._realReturns = {};   // commodity -> number[] (일별 등락률, 순차 재생)
     this._realDayIndex = {};  // commodity -> 다음에 재생할 인덱스 (소진 시 처음부터 순환)
+    this._startGeneration = 0; // _startGame() 재진입/리셋 경합 방지용 세대 토큰
 
     // 동시성 거래 락 (Transaction Lock)
     this._isTradingLocked = false;
@@ -201,6 +202,7 @@ class PitTradeHost extends HostBaseGame {
   }
 
   onReset() {
+    this._startGeneration++; // 진행 중인 _startGame()의 await를 무효화
     this._gameActive = false;
     this._isDemo = false;
     this._playerHands.clear();
@@ -244,6 +246,10 @@ class PitTradeHost extends HostBaseGame {
   // ─── 게임 라이프사이클 엔진 ───
 
   async _startGame() {
+    // 재진입 가드용 세대 토큰 — await 도중 resetSession()/onReset()이 호출되면
+    // 이 토큰이 바뀌므로, fetch가 늦게 끝나도 이미 리셋된 라운드를 되살리지 않고 조용히 중단함.
+    const generation = ++this._startGeneration;
+
     this._gameActive = true;
     this._isTradingLocked = false;
     this._activeTrades.clear();
@@ -273,6 +279,12 @@ class PitTradeHost extends HostBaseGame {
     } else {
       this._realReturns = {};
       this._realDayIndex = {};
+    }
+
+    // await 도중 리셋(onReset)이 발생했으면 이 라운드는 이미 무효 — 카드 배포/phase 전환 없이 중단
+    if (generation !== this._startGeneration) {
+      console.log('[pit-trade] _startGame: await 중 리셋 감지, 라운드 시작 취소');
+      return;
     }
 
     // 초기 시세 설정 (실전 모드여도 게임 점수 밸런스를 위해 기준가는 그대로 유지 — 변동폭만 실데이터 사용)

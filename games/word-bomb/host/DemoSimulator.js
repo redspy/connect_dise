@@ -1,14 +1,11 @@
+const BOT_IDS = ['bot_1', 'bot_2', 'bot_3'];
+
 export class DemoSimulator {
   constructor(game) {
     this.game = game;
     this.isDemo = false;
     this.state = 'idle'; // idle -> seeding -> running -> result -> restoring
     this.timeouts = [];
-
-    // 세션 백업용
-    this._realPlayersBackup = new Map();
-    this._realNicknamesBackup = new Map();
-    this._realSdkPlayersBackup = new Map();
   }
 
   _updateDOMState(stateName) {
@@ -27,20 +24,6 @@ export class DemoSimulator {
     if (this.isDemo) return;
     this.isDemo = true;
     this.game._isDemo = true;
-
-    // 1. 실제 세션 데이터 안전하게 백업
-    this._realPlayersBackup.clear();
-    this._realNicknamesBackup.clear();
-    this._realSdkPlayersBackup.clear();
-
-    this.game.players.forEach((v, k) => this._realPlayersBackup.set(k, { ...v }));
-    this.game._playerNicknames.forEach((v, k) => this._realNicknamesBackup.set(k, v));
-    this.game.sdk._players.forEach((v, k) => this._realSdkPlayersBackup.set(k, { ...v }));
-
-    // 실세션 지우기
-    this.game.players.clear();
-    this.game._playerNicknames.clear();
-    this.game.sdk._players.clear();
 
     this._updateDOMState('seeding');
 
@@ -85,21 +68,18 @@ export class DemoSimulator {
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
     this.game._isDemo = false;
     this.clearTimeouts();
 
-    // 준비 셋 정리
-    this.game._readyPlayers.clear();
-
-    // 2. 백업했던 실제 플레이어 정보 복구
-    this.game.players.clear();
-    this.game._playerNicknames.clear();
-    this.game.sdk._players.clear();
-
-    this._realPlayersBackup.forEach((v, k) => this.game.players.set(k, v));
-    this._realNicknamesBackup.forEach((v, k) => this.game._playerNicknames.set(k, v));
-    this._realSdkPlayersBackup.forEach((v, k) => this.game.sdk._players.set(k, v));
+    // 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear() 금지)
+    BOT_IDS.forEach(id => {
+      this.game._readyPlayers.delete(id);
+      this.game.players.delete(id);
+      this.game._playerNicknames.delete(id);
+      this.game.sdk._players.delete(id);
+    });
 
     this._updateDOMState('idle');
   }

@@ -19,6 +19,17 @@ const io = new Server(httpServer, {
 
 const sm = new SessionManager();
 
+// 소켓이 실제로 그 세션의 (그리고 필요하면 특정 역할의) 구성원인지 확인.
+// 클라이언트가 보낸 sessionId를 그대로 신뢰하지 않고, 서버가 소켓 연결 시점에
+// 기록해둔 socketToSession 매핑을 유일한 진실로 삼는다 — 다른 세션을 리셋/강퇴하거나
+// 메시지를 위조해 보내는 것을 막기 위함.
+function verifySender(socket, sessionId, requiredRole = null) {
+  const info = sm.socketToSession.get(socket.id);
+  if (!info || info.sessionId !== sessionId) return null;
+  if (requiredRole && info.role !== requiredRole) return null;
+  return info;
+}
+
 // ─── 국내 주식(코스피/코스닥) 일별 시세 프록시 ───────────────────────────
 // 브라우저에서 직접 외부 API를 부르면 CORS에 막히므로 서버가 대신 호출해 중계함.
 // (games/pit-trade 실전 모드 전용 — 네이버 금융 공개 시세 API, 키 불필요)
@@ -35,7 +46,14 @@ app.get('/api/kr-stock/:code', async (req, res) => {
 
   try {
     const url = `https://api.finance.naver.com/siseJson.naver?symbol=${code}&requestType=1&startTime=${fmt(start)}&endTime=${fmt(end)}&timeframe=day`;
-    const upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    let upstream;
+    try {
+      upstream = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
     const text = await upstream.text();
 
     // 응답이 strict JSON이 아닌 JS 배열 리터럴이라 관대하게 파싱
@@ -101,6 +119,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('platform:playerReady', ({ sessionId }) => {
+    if (!verifySender(socket, sessionId, 'player')) return;
     const result = sm.setReady(sessionId, socket.id);
     if (!result) return;
     const session = sm.getSession(sessionId);
@@ -115,12 +134,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('platform:reset', ({ sessionId }) => {
+    if (!verifySender(socket, sessionId, 'host')) return;
     sm.resetSession(sessionId);
     io.to(sessionId).emit('platform:reset', {});
     console.log(`[${sessionId}] Session reset`);
   });
 
   socket.on('platform:kickPlayer', ({ sessionId, playerId }) => {
+    if (!verifySender(socket, sessionId, 'host')) return;
     const session = sm.getSession(sessionId);
     if (!session) return;
 
@@ -153,19 +174,21 @@ io.on('connection', (socket) => {
   // ─── Game message routing ─────────────────────────────────────────────────
 
   socket.on('game:toHost', ({ sessionId, type, payload }) => {
+    const info = verifySender(socket, sessionId, 'player');
+    if (!info) return;
     const session = sm.getSession(sessionId);
     if (!session) return;
-    const info = sm.socketToSession.get(socket.id);
-    const stablePlayerId = info?.playerId ?? socket.id;
-    io.to(session.hostSocketId).emit('game:fromPlayer', { from: stablePlayerId, type, payload });
+    io.to(session.hostSocketId).emit('game:fromPlayer', { from: info.playerId, type, payload });
   });
 
   socket.on('game:toPlayer', ({ sessionId, to, type, payload }) => {
+    if (!verifySender(socket, sessionId, 'host')) return;
     const socketId = sm.getSocketId(sessionId, to);
     if (socketId) io.to(socketId).emit('game:fromHost', { type, payload });
   });
 
   socket.on('game:broadcast', ({ sessionId, type, payload }) => {
+    if (!verifySender(socket, sessionId, 'host')) return;
     const session = sm.getSession(sessionId);
     if (!session) return;
     for (const p of session.players) {
@@ -177,15 +200,17 @@ io.on('connection', (socket) => {
 
   // 호스트 → 플레이어: offer 전달
   socket.on('p2p:offer', ({ sessionId, to, sdp }) => {
+    if (!verifySender(socket, sessionId, 'host')) return;
     const socketId = sm.getSocketId(sessionId, to);
     if (socketId) io.to(socketId).emit('p2p:offer', { sdp });
   });
 
   // 플레이어 → 호스트: answer 전달
   socket.on('p2p:answer', ({ sessionId, sdp }) => {
+    const info = verifySender(socket, sessionId, 'player');
+    if (!info) return;
     const session = sm.getSession(sessionId);
-    const info = sm.socketToSession.get(socket.id);
-    if (session && info) {
+    if (session) {
       io.to(session.hostSocketId).emit('p2p:answer', { from: info.playerId, sdp });
     }
   });
@@ -194,12 +219,14 @@ io.on('connection', (socket) => {
   // to 있음 → 호스트→플레이어, to 없음 → 플레이어→호스트
   socket.on('p2p:ice', ({ sessionId, to, candidate }) => {
     if (to) {
+      if (!verifySender(socket, sessionId, 'host')) return;
       const socketId = sm.getSocketId(sessionId, to);
       if (socketId) io.to(socketId).emit('p2p:ice', { candidate });
     } else {
+      const info = verifySender(socket, sessionId, 'player');
+      if (!info) return;
       const session = sm.getSession(sessionId);
-      const info = sm.socketToSession.get(socket.id);
-      if (session && info) {
+      if (session) {
         io.to(session.hostSocketId).emit('p2p:ice', { from: info.playerId, candidate });
       }
     }

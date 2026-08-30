@@ -33,6 +33,7 @@ export class OmokGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
         } else {
           this._demoSimulator.stopDemo();
@@ -87,6 +88,8 @@ export class OmokGame extends HostBaseGame {
     if (this._isDemo) {
       console.log('[Omok] Real player joined during demo. Stopping demo match.');
       this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
     }
     this.renderLobbyPlayers();
   }

@@ -71,6 +71,7 @@ export class NunchiGame extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
+        if (this.playerCount > 0) return;
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
         }
@@ -83,6 +84,7 @@ export class NunchiGame extends HostBaseGame {
   onPlayerJoin(player) {
     if (this._isDemo) {
       this._demoSimulator.stopDemo();
+      this.resetSession();
     }
     if (this._gameStarted) {
       // 게임 중 합류 — 관전자로 초기화 (카드 없음)

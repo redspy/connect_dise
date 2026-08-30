@@ -1,3 +1,5 @@
+const BOT_IDS = ['bot_alpha', 'bot_beta', 'bot_gamma'];
+
 export class DimensionWeaverDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -15,7 +17,6 @@ export class DimensionWeaverDemoSimulator {
       { id: 'bot_gamma', nickname: '🤖 감마(게이트)', color: '#ffd700' }
     ];
 
-    this.game.players.clear();
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
       this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
@@ -26,12 +27,15 @@ export class DimensionWeaverDemoSimulator {
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
     this.game._isDemo = false;
     this.clearTimeouts();
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
+    BOT_IDS.forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+    });
     document.getElementById('demo-indicator-banner')?.classList.add('hidden');
   }
 

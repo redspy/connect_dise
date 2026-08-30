@@ -90,6 +90,11 @@ export class HerdLogicGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
     this._resetIdleTimer();
     this.renderLobbyPlayers(this._playerNicknames);
   }

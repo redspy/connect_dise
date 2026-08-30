@@ -130,7 +130,11 @@ class HiddenAgentGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
-    if (this._isDemoActive) return; // 데모 중 실유저 난입 방어
+    if (this._isDemoActive) {
+      this._demoSimulator.stop();
+      this.resetSession();
+      return;
+    }
     this._updateLobby();
   }
 

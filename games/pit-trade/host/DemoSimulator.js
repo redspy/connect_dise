@@ -39,9 +39,12 @@ export class DemoSimulator {
       { id: 'bot_3', nickname: '🤖 피터 린치', color: '#00f3ff' }
     ];
 
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
+    // 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear() 금지)
+    bots.forEach(b => {
+      this.game.players.delete(b.id);
+      this.game.sdk._players.delete(b.id);
+      this.game._playerNicknames.delete(b.id);
+    });
 
     // SDK 표준 이벤트를 활용하여 가상 봇 입장 진행 (공개 핸들러 API 경유)
     bots.forEach(b => {
@@ -235,8 +238,11 @@ export class DemoSimulator {
     this.isDemo = false;
     this.game._isDemo = false;
     this.stopTradingLoop();
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
+    // 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear() 금지)
+    ['bot_1', 'bot_2', 'bot_3'].forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+    });
   }
 }

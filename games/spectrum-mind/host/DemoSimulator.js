@@ -1,3 +1,5 @@
+const BOT_IDS = ['bot_alpha', 'bot_beta', 'bot_gamma'];
+
 export class SpectrumDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -20,12 +22,10 @@ export class SpectrumDemoSimulator {
 
     this.game._isDemo = true;
 
-    // 2. 현재 상태 스냅샷 저장
+    // 2. 현재 상태 스냅샷 저장 (플레이어/닉네임/sdk._players는 getter-only 프로퍼티라
+    // 통째로 재대입하면 TypeError가 나고, 그 사이 실제 플레이어가 들어왔을 수도 있으므로
+    // 스냅샷·복원 대상에서 제외한다 — 정리는 항상 봇 id만 골라 제거하는 방식으로 처리)
     this._snapshot = {
-      players: new Map(this.game.players),
-      sdkPlayers: new Map(this.game.sdk._players),
-      playerNicknames: new Map(this.game._playerNicknames),
-      scores: new Map(this.game._scores),
       round: this.game._round,
       maxRounds: this.game._maxRounds,
       gameActive: this.game._gameActive,
@@ -95,20 +95,23 @@ export class SpectrumDemoSimulator {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) demoPlayBtn.textContent = '🤖 데모 플레이 실행';
 
-    // 5. 스냅샷 원상복구 보장
+    // 5. 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear()/재대입 금지 —
+    // this.game.players는 getter-only라 재대입 시 TypeError가 남)
+    BOT_IDS.forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+      this.game._scores.delete(id);
+    });
+
+    // 라운드/페이즈 등 플레이어와 무관한 게임 진행 상태만 스냅샷으로 복원
     if (this._snapshot) {
-      this.game.players = new Map(this._snapshot.players);
-      this.game.sdk._players = new Map(this._snapshot.sdkPlayers);
-      this.game._playerNicknames = new Map(this._snapshot.playerNicknames);
-      this.game._scores = new Map(this._snapshot.scores);
       this.game._round = this._snapshot.round;
       this.game._maxRounds = this._snapshot.maxRounds;
       this.game._gameActive = this._snapshot.gameActive;
       this.game.setPhase(this._snapshot.phase);
       this._snapshot = null;
     } else {
-      this.game.players.clear();
-      this.game.sdk._players.clear();
       this.game.resetSession();
     }
   }

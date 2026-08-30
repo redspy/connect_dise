@@ -141,10 +141,7 @@ export class TriviaVegasGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
-          // 실유저가 있는 경우 시작 가드
-          if (this.players.size > 0 && !confirm('현재 접속해 있는 실제 플레이어가 있습니다. 데모를 시작하시겠습니까? (기존 로비 유저들은 백업 후 복원됩니다)')) {
-            return;
-          }
+          if (this.players.size > 0) return;
           this._demoSimulator.startDemo();
           demoPlayBtn.textContent = '⏹️ 데모 중지';
           this._showDemoBanner(true);
@@ -215,6 +212,12 @@ export class TriviaVegasGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+      this._showDemoBanner(false);
+      this.resetSession();
+      return;
+    }
     this._resetIdleTimer();
     this.renderLobbyPlayers(this._playerNicknames);
   }

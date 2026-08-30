@@ -66,6 +66,7 @@ class DixitGame extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
+        if (this.playerCount > 0) return;
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
         }

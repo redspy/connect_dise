@@ -1,3 +1,5 @@
+const BOT_IDS = ['bot_alpha', 'bot_beta', 'bot_gamma'];
+
 export class HerdLogicDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -30,10 +32,6 @@ export class HerdLogicDemoSimulator {
       { id: 'bot_gamma', nickname: '🤖 감마 조종사', color: '#39ff14' }
     ];
 
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
-
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
       this.game.players.set(b.id, { id: b.id, color: b.color, nickname: b.nickname });
@@ -44,6 +42,7 @@ export class HerdLogicDemoSimulator {
   }
 
   stopDemo() {
+    if (!this.isDemo) return;
     this.isDemo = false;
     this.game._isDemo = false;
     this.clearTimeouts();
@@ -62,9 +61,11 @@ export class HerdLogicDemoSimulator {
     const demoBanner = document.getElementById('demo-indicator-banner');
     if (demoBanner) demoBanner.classList.add('hidden');
 
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
+    BOT_IDS.forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+    });
   }
 
   queueBotAnswers(question) {

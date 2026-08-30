@@ -59,6 +59,7 @@ export class DobbleGame extends HostBaseGame {
     const demoPlayBtn = document.getElementById('demoPlayBtn');
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
+        if (this.playerCount > 0) return;
         if (!this._isDemo) {
           this._demoSimulator.startDemo();
         }
@@ -71,6 +72,8 @@ export class DobbleGame extends HostBaseGame {
   onPlayerJoin(player) {
     if (this._isDemo) {
       this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
     }
     this._scores.set(player.id, 0);
     this._renderLobby();

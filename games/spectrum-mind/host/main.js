@@ -73,6 +73,11 @@ export class SpectrumGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo && !player.id.startsWith('bot_')) {
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
     if (this._lobbyEl) {
       this._lobbyEl.onStart = () => {
         if (this.players.size >= 2) this._startGame();

@@ -92,18 +92,21 @@ platform:joinSession
 
 - `reconnectId`: 이전 stable player ID (재연결 시 sessionStorage에서 전달)
 
+- `player` 페이로드 실제 구조: `{ id: string, socketId: string, color: string }`. `socketId`는 서버 내부 라우팅(직접 메시지 전송)에 쓰이는 현재 소켓 ID로, 재연결 때마다 바뀝니다 — 게임 로직에서 플레이어를 식별하는 키로는 항상 안정적인 `id`(stable player ID)를 쓰고 `socketId`는 사용하지 마세요.
+- 재연결 하이재킹 방지: `reconnectId`로 지목한 플레이어가 **실제로 연결이 끊긴 상태(grace period 진입 상태)** 가 아니면 서버가 재연결을 거부합니다(연결이 살아있는 플레이어의 자리를 다른 소켓이 가로채는 것을 방지).
+
 **신규 입장 시**:
 
 ```
 서버 → 모바일
 platform:joined
-{ player: { id: string, color: string }, reconnected: false }
+{ player: { id, socketId, color }, reconnected: false }
 ```
 
 ```
 서버 → 호스트
 platform:playerJoined
-{ player: { id: string, color: string } }
+{ player: { id, socketId, color } }
 ```
 
 **재연결 시** (`reconnectId`로 기존 플레이어 매칭):
@@ -111,13 +114,13 @@ platform:playerJoined
 ```
 서버 → 모바일
 platform:joined
-{ player: { id: string, color: string }, reconnected: true }
+{ player: { id, socketId, color }, reconnected: true }
 ```
 
 ```
 서버 → 호스트
 platform:playerRejoined
-{ player: { id: string, color: string } }
+{ player: { id, socketId, color } }
 ```
 
 **실패 시** (세션 없음):
@@ -168,6 +171,43 @@ platform:reset
 
 - `readyPlayers` Set 초기화
 - 플레이어 목록은 유지됨
+
+---
+
+### 강퇴
+
+```
+호스트 → 서버
+platform:kickPlayer
+{ sessionId: string, playerId: string }
+```
+
+```
+서버 → 해당 플레이어
+platform:kicked
+{}
+```
+
+```
+서버 → 호스트
+platform:playerLeft
+{ playerId: string }
+```
+
+```
+서버 → 호스트
+platform:readyUpdate
+{ readyCount: number, totalCount: number }
+```
+
+- 세션에서 해당 플레이어를 즉시 제거(재연결 유예 없음)
+- `MobileSDK`는 `kicked` 이벤트 수신 시 앱을 초기 화면(홈)으로 자동 전환
+
+---
+
+### 서버 측 권한 검증 (모든 세션 스코프 이벤트 공통)
+
+`sessionId`를 페이로드로 받는 모든 이벤트(`platform:reset`, `platform:kickPlayer`, `platform:playerReady`, `game:toHost`, `game:toPlayer`, `game:broadcast`, `p2p:*`)는 서버가 **소켓의 실제 세션 소속과 역할**을 `socketToSession` 매핑으로 재검증합니다 — 페이로드의 `sessionId`를 그대로 신뢰하지 않습니다. 다른 세션을 대상으로 리셋/강퇴/메시지 전송을 시도하면 서버가 조용히 무시합니다(별도 에러 응답 없음). 호스트 전용 이벤트(`platform:reset`, `platform:kickPlayer`, `game:toPlayer`, `game:broadcast`, `p2p:offer`)는 발신자 역할이 `host`인지도 함께 확인합니다.
 
 ---
 
@@ -408,6 +448,7 @@ p2p:ice
 | `platform:joinSession` | 모바일 | `{ sessionId, reconnectId? }` |
 | `platform:playerReady` | 모바일 | `{ sessionId }` |
 | `platform:reset` | 호스트 | `{ sessionId }` |
+| `platform:kickPlayer` | 호스트 | `{ sessionId, playerId }` |
 | `game:toHost` | 모바일 | `{ sessionId, type, payload }` |
 | `game:toPlayer` | 호스트 | `{ sessionId, to, type, payload }` |
 | `game:broadcast` | 호스트 | `{ sessionId, type, payload }` |
@@ -428,6 +469,7 @@ p2p:ice
 | `platform:readyUpdate` | 호스트 | `{ readyCount, totalCount }` |
 | `platform:allReady` | 전체 세션 | `{}` |
 | `platform:reset` | 전체 세션 | `{}` |
+| `platform:kicked` | 해당 플레이어 | `{}` |
 | `hostDisconnected` | 전체 세션 | `{}` |
 | `game:fromPlayer` | 호스트 | `{ from, type, payload }` |
 | `game:fromHost` | 모바일 | `{ type, payload }` |

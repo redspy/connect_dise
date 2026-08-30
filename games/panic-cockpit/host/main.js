@@ -31,6 +31,7 @@ export class PanicCockpitGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
           demoPlayBtn.textContent = '⏹️ 데모 중지';
         } else {
@@ -49,6 +50,11 @@ export class PanicCockpitGame extends HostBaseGame {
   }
 
   onPlayerJoin(player) {
+    if (this._isDemo) {
+      this._demoSimulator.stopDemo();
+      this.resetSession();
+      return;
+    }
     this._resetIdleTimer();
     this.renderLobbyPlayers(this._playerNicknames);
   }

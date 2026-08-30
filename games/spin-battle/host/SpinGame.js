@@ -64,6 +64,7 @@ export class SpinGame extends HostBaseGame {
     if (demoPlayBtn) {
       demoPlayBtn.onclick = () => {
         if (!this._isDemo) {
+          if (this.playerCount > 0) return;
           this._demoSimulator.startDemo();
         } else {
           this._demoSimulator.stopDemo();
@@ -78,6 +79,7 @@ export class SpinGame extends HostBaseGame {
     if (!player.id.startsWith('bot_')) {
       if (this._isDemo) {
         this._demoSimulator.stopDemo();
+        this.resetSession();
         const demoBanner = document.getElementById('demo-banner');
         if (demoBanner) {
           demoBanner.textContent = '🔌 실제 플레이어 입장으로 데모 중단됨';

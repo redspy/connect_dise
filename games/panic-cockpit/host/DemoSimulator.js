@@ -1,3 +1,5 @@
+const BOT_IDS = ['bot_alpha', 'bot_beta', 'bot_gamma'];
+
 export class PanicCockpitDemoSimulator {
   constructor(game) {
     this.game = game;
@@ -12,23 +14,12 @@ export class PanicCockpitDemoSimulator {
     this.game._isDemo = true;
     this.game._demoSimulator = this;
 
-    // 1. 실제 세션 상태 스냅샷 저장
-    this.snapshot = {
-      players: new Map(this.game.players),
-      sdkPlayers: new Map(this.game.sdk._players),
-      playerNicknames: new Map(this.game._playerNicknames)
-    };
-
-    // 2. 가상 봇 추가
+    // 가상 봇 추가 (실제 플레이어까지 지우지 않도록 봇 id만 추가 — 전체 clear() 금지)
     const bots = [
       { id: 'bot_alpha', nickname: '🤖 알파 조종사', color: '#00f3ff' },
       { id: 'bot_beta', nickname: '🤖 베타 조종사', color: '#ff3c3c' },
       { id: 'bot_gamma', nickname: '🤖 감마 조종사', color: '#39ff14' }
     ];
-
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
 
     bots.forEach(b => {
       this.game._playerNicknames.set(b.id, b.nickname);
@@ -59,17 +50,13 @@ export class PanicCockpitDemoSimulator {
     this.game._commands = [];
     this.game._playerWidgets.clear();
 
-    // 2. 스냅샷 복원
-    this.game.players.clear();
-    this.game.sdk._players.clear();
-    this.game._playerNicknames.clear();
-
-    if (this.snapshot) {
-      for (const [k, v] of this.snapshot.players) this.game.players.set(k, v);
-      for (const [k, v] of this.snapshot.sdkPlayers) this.game.sdk._players.set(k, v);
-      for (const [k, v] of this.snapshot.playerNicknames) this.game._playerNicknames.set(k, v);
-      this.snapshot = null;
-    }
+    // 2. 실제 플레이어까지 지우지 않도록 봇 id만 골라서 정리 (전체 clear() 금지)
+    BOT_IDS.forEach(id => {
+      this.game.players.delete(id);
+      this.game.sdk._players.delete(id);
+      this.game._playerNicknames.delete(id);
+    });
+    this.snapshot = null;
 
     // 3. 로비 화면 갱신
     this.game.renderLobbyPlayers(this.game._playerNicknames);
